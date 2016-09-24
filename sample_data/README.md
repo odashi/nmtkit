@@ -3,9 +3,11 @@ NMTKit Sample Data
 
 This directory includes a small parallel corpus for English-Japanese translation.
 These data are extracted from [TANAKA Corpus](http://www.edrdg.org/wiki/index.php/Tanaka_Corpus).
+
 English sentences are tokenized using [Stanford Tokenizer](http://nlp.stanford.edu/software/tokenizer.html) and lowercased.
 Japanese sentences are tokenized using [KyTea](http://www.phontron.com/kytea/).
-All texts are encoded in UTF-8. sentence separator is '\n' and word separator is ' '.
+
+All texts are encoded in UTF-8. Sentence separator is `'\n'` and word separator is `' '`.
 
 Corpus Statistics
 -----------------
