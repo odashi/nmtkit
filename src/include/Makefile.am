@@ -1,2 +1,3 @@
 nobase_include_HEADERS = \
-	nmtkit/common.h
+  nmtkit/exception.h \
+  nmtkit/vocabulary.h
