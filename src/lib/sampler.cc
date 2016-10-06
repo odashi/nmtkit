@@ -37,9 +37,13 @@ void loadCorpus(
 
 namespace NMTKit {
 
-MonotoneSampler::MonotoneSampler(
-    const string &src_filepath, const string& trg_filepath,
-    const Vocabulary &src_vocab, const Vocabulary &trg_vocab) {
+Sampler::Sampler(
+    const string &src_filepath,
+    const string& trg_filepath,
+    const Vocabulary &src_vocab,
+    const Vocabulary &trg_vocab,
+    bool forever)
+: forever_(forever) {
   ::loadCorpus(src_filepath, src_vocab, &src_samples_);
   ::loadCorpus(trg_filepath, trg_vocab, &trg_samples_);
   NMTKIT_CHECK_EQ(
@@ -48,19 +52,23 @@ MonotoneSampler::MonotoneSampler(
   reset();
 }
 
-void MonotoneSampler::reset() {
+void Sampler::reset() {
   current_ = 0;
 }
 
-void MonotoneSampler::getSamples(vector<Sample> *result) {
+void Sampler::getSamples(vector<Sample> *result) {
   NMTKIT_CHECK(hasSamples(), "No more samples in the sampler.");
 
   result->clear();
   result->emplace_back(Sample {src_samples_[current_], trg_samples_[current_]});
   ++current_;
+
+  if (forever_ && !hasSamples()) {
+    reset();
+  }
 }
 
-bool MonotoneSampler::hasSamples() const {
+bool Sampler::hasSamples() const {
   return current_ < src_samples_.size();
 }
 
