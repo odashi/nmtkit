@@ -1,50 +1,62 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
+#include <vector>
+#include <string>
 #include <nmtkit/vocabulary.h>
+
+using namespace std;
 
 BOOST_AUTO_TEST_SUITE(VocabularyTest)
 
-BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile) {
-  NMTKit::Vocabulary vocab("data/sample.vocab");
-  BOOST_CHECK_EQUAL(5, vocab.size());
-  BOOST_CHECK_EQUAL(0, vocab.getID("<unk>"));
-  BOOST_CHECK_EQUAL(1, vocab.getID("<s>"));
-  BOOST_CHECK_EQUAL(2, vocab.getID("</s>"));
-  BOOST_CHECK_EQUAL(3, vocab.getID("foo"));
-  BOOST_CHECK_EQUAL(4, vocab.getID("bar"));
-  BOOST_CHECK_EQUAL(0, vocab.getID("baz"));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(0));
-  BOOST_CHECK_EQUAL("<s>", vocab.getWord(1));
-  BOOST_CHECK_EQUAL("</s>", vocab.getWord(2));
-  BOOST_CHECK_EQUAL("foo", vocab.getWord(3));
-  BOOST_CHECK_EQUAL("bar", vocab.getWord(4));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(5));
+BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
+  NMTKit::Vocabulary vocab("data/small.en.vocab");
+  BOOST_CHECK_EQUAL(500, vocab.size());
+  vector<string> topk {"<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
+  for (int i = 0; i < topk.size(); ++i) {
+    BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
+    BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
+  }
+  BOOST_CHECK_EQUAL(0, vocab.getID("unknown-word"));
+  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(500));
   BOOST_CHECK_EQUAL("<unk>", vocab.getWord(-1));
 }
 
-BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus) {
-  NMTKit::Vocabulary vocab("data/lipsum.tok", 100);
+BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
+  NMTKit::Vocabulary vocab("data/small.ja.vocab");
+  BOOST_CHECK_EQUAL(500, vocab.size());
+  vector<string> topk {"<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
+  for (int i = 0; i < topk.size(); ++i) {
+    BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
+    BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
+  }
+  BOOST_CHECK_EQUAL(0, vocab.getID("未知語"));
+  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(500));
+  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(-1));
+}
+
+BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
+  NMTKit::Vocabulary vocab("data/small.en.tok", 100);
   BOOST_CHECK_EQUAL(100, vocab.size());
-  BOOST_CHECK_EQUAL(0, vocab.getID("<unk>"));
-  BOOST_CHECK_EQUAL(1, vocab.getID("<s>"));
-  BOOST_CHECK_EQUAL(2, vocab.getID("</s>"));
-  BOOST_CHECK_EQUAL(3, vocab.getID("."));
-  BOOST_CHECK_EQUAL(4, vocab.getID(","));
-  BOOST_CHECK_EQUAL(5, vocab.getID("ne"));
-  BOOST_CHECK_EQUAL(10, vocab.getID("no"));
-  BOOST_CHECK_EQUAL(15, vocab.getID("cu"));
-  BOOST_CHECK_EQUAL(20, vocab.getID("vim"));
+  vector<string> topk {"<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
+  for (int i = 0; i < topk.size(); ++i) {
+    BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
+    BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
+  }
   BOOST_CHECK_EQUAL(0, vocab.getID("unknown-word"));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(0));
-  BOOST_CHECK_EQUAL("<s>", vocab.getWord(1));
-  BOOST_CHECK_EQUAL("</s>", vocab.getWord(2));
-  BOOST_CHECK_EQUAL(".", vocab.getWord(3));
-  BOOST_CHECK_EQUAL(",", vocab.getWord(4));
-  BOOST_CHECK_EQUAL("ne", vocab.getWord(5));
-  BOOST_CHECK_EQUAL("no", vocab.getWord(10));
-  BOOST_CHECK_EQUAL("cu", vocab.getWord(15));
-  BOOST_CHECK_EQUAL("vim", vocab.getWord(20));
+  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(100));
+  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(-1));
+}
+
+BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
+  NMTKit::Vocabulary vocab("data/small.ja.tok", 100);
+  BOOST_CHECK_EQUAL(100, vocab.size());
+  vector<string> topk {"<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
+  for (int i = 0; i < topk.size(); ++i) {
+    BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
+    BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
+  }
+  BOOST_CHECK_EQUAL(0, vocab.getID("未知語"));
   BOOST_CHECK_EQUAL("<unk>", vocab.getWord(100));
   BOOST_CHECK_EQUAL("<unk>", vocab.getWord(-1));
 }

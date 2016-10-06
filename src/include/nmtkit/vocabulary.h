@@ -17,7 +17,7 @@ class Vocabulary {
     int getID(const std::string &word) const;
     std::string getWord(int id) const;
 
-    int size() const { return itos_.size(); }
+    int size() const;
   
   private:
     std::map<std::string, int> stoi_;
@@ -27,3 +27,4 @@ class Vocabulary {
 }  // namespace NMTKit
 
 #endif  // NMTKIT_VOCABULARY_H_
+

@@ -100,4 +100,9 @@ string Vocabulary::getWord(int id) const {
   return itos_[id];
 }
 
+int Vocabulary::size() const {
+  return itos_.size();
+}
+
 }  // namespace NMTKit
+
