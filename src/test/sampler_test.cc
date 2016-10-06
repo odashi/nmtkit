@@ -26,6 +26,8 @@ BOOST_AUTO_TEST_CASE(CheckMonotoneIteration) {
     {18, 4, 158, 435, 12, 19, 3},
     {0, 4, 0, 164, 6, 309, 20, 19, 3},
   };
+
+  // Checks first n samples
   vector<NMTKit::Sample> samples;
   for (int i = 0; i < expected_src.size(); ++i) {
     BOOST_CHECK(sampler.hasSamples());
@@ -38,12 +40,28 @@ BOOST_AUTO_TEST_CASE(CheckMonotoneIteration) {
         expected_trg[i].begin(), expected_trg[i].end(),
         samples[0].target.begin(), samples[0].target.end());
   }
+
+  // Checks remaining samples
   for (int i = expected_src.size(); i < 500; ++i) {
     BOOST_CHECK(sampler.hasSamples());
     sampler.getSamples(&samples);
     BOOST_CHECK_EQUAL(1, samples.size());
   }
   BOOST_CHECK(!sampler.hasSamples());
+
+  // Checks rewinding
+  sampler.reset();
+  for (int i = 0; i < expected_src.size(); ++i) {
+    BOOST_CHECK(sampler.hasSamples());
+    sampler.getSamples(&samples);
+    BOOST_CHECK_EQUAL(1, samples.size());
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected_src[i].begin(), expected_src[i].end(),
+        samples[0].source.begin(), samples[0].source.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected_trg[i].begin(), expected_trg[i].end(),
+        samples[0].target.begin(), samples[0].target.end());
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
