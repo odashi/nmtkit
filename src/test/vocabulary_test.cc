@@ -12,7 +12,8 @@ BOOST_AUTO_TEST_SUITE(VocabularyTest)
 BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
   NMTKit::Vocabulary vocab("data/small.en.vocab");
   BOOST_CHECK_EQUAL(500, vocab.size());
-  vector<string> topk {"<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
+  const vector<string> topk {
+    "<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
   for (int i = 0; i < topk.size(); ++i) {
     BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
@@ -25,7 +26,8 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
 BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
   NMTKit::Vocabulary vocab("data/small.ja.vocab");
   BOOST_CHECK_EQUAL(500, vocab.size());
-  vector<string> topk {"<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
+  const vector<string> topk {
+    "<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
   for (int i = 0; i < topk.size(); ++i) {
     BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
@@ -38,7 +40,8 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
   NMTKit::Vocabulary vocab("data/small.en.tok", 100);
   BOOST_CHECK_EQUAL(100, vocab.size());
-  vector<string> topk {"<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
+  const vector<string> topk {
+    "<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
   for (int i = 0; i < topk.size(); ++i) {
     BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
@@ -51,7 +54,8 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
   NMTKit::Vocabulary vocab("data/small.ja.tok", 100);
   BOOST_CHECK_EQUAL(100, vocab.size());
-  vector<string> topk {"<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
+  const vector<string> topk {
+    "<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
   for (int i = 0; i < topk.size(); ++i) {
     BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));

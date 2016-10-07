@@ -10,7 +10,7 @@ using namespace std;
 
 namespace NMTKit {
 
-Vocabulary::Vocabulary(const string &vocab_filename) {
+Vocabulary::Vocabulary(const string & vocab_filename) {
   ifstream ifs(vocab_filename);
   NMTKIT_CHECK(
       ifs.is_open(),
@@ -37,7 +37,7 @@ Vocabulary::Vocabulary(const string &vocab_filename) {
       "</s>", itos_[2], "2nd entry of the vocabulary should be \"</s>\".");
 }
 
-Vocabulary::Vocabulary(const string &corpus_filename, int size) {
+Vocabulary::Vocabulary(const string & corpus_filename, int size) {
   NMTKIT_CHECK(size >= 3, "Size should be equal or greater than 3.");
   ifstream ifs(corpus_filename);
   NMTKIT_CHECK(
@@ -52,14 +52,14 @@ Vocabulary::Vocabulary(const string &corpus_filename, int size) {
     vector<string> words;
     boost::split(
         words, line, boost::is_space(), boost::algorithm::token_compress_on);
-    for (const string &word : words) {
+    for (const string & word : words) {
       ++freq[word];
     }
   }
 
   // Selects most frequent words.
   vector<pair<int, string>> entries;
-  for (const auto &entry : freq) {
+  for (const auto & entry : freq) {
     entries.emplace_back(make_pair(entry.second, entry.first));
   }
   sort(entries.begin(), entries.end(), greater<pair<int, string>>());
@@ -72,24 +72,24 @@ Vocabulary::Vocabulary(const string &corpus_filename, int size) {
   itos_.emplace_back("<s>");
   itos_.emplace_back("</s>");
   for (int i = 3; i < size && i - 3 < entries.size(); ++i) {
-    const string &word = entries[i - 3].second;
+    const string & word = entries[i - 3].second;
     stoi_[word] = i;
     itos_.emplace_back(word);
   }
 }
 
-void Vocabulary::save(const string &vocab_filename) {
+void Vocabulary::save(const string & vocab_filename) {
   ofstream ofs(vocab_filename);
   NMTKIT_CHECK(
       ofs.is_open(),
       "Could not open vocabulary file to save: " + vocab_filename);
   ofs << itos_.size() << endl;
-  for (const string &word : itos_) {
+  for (const string & word : itos_) {
     ofs << word << endl;
   }
 }
 
-int Vocabulary::getID(const string &word) const {
+int Vocabulary::getID(const string & word) const {
   const auto &entry = stoi_.find(word);
   if (entry == stoi_.end()) return 0;  // ID of <unk>
   return entry->second;

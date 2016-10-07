@@ -8,13 +8,19 @@
 namespace NMTKit {
 
 class Vocabulary {
+  Vocabulary() = delete;
+  Vocabulary(const Vocabulary &) = delete;
+  Vocabulary(Vocabulary &&) = delete;
+  Vocabulary & operator=(const Vocabulary &) = delete;
+  Vocabulary & operator=(Vocabulary &&) = delete;
+
   public:
-    explicit Vocabulary(const std::string &vocab_filename);
-    Vocabulary(const std::string &corpus_filename, int size);
+    explicit Vocabulary(const std::string & vocab_filename);
+    Vocabulary(const std::string & corpus_filename, int size);
 
-    void save(const std::string &vocab_filename);
+    void save(const std::string & vocab_filename);
 
-    int getID(const std::string &word) const;
+    int getID(const std::string & word) const;
     std::string getWord(int id) const;
 
     int size() const;

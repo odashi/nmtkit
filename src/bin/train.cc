@@ -16,7 +16,7 @@ namespace PT = boost::property_tree;
 
 namespace {
 
-PO::variables_map parseArgs(int argc, char *argv[]) {
+PO::variables_map parseArgs(int argc, char * argv[]) {
   PO::options_description opt_generic("Generic options");
   opt_generic.add_options()
     ("help", "Print this manual and exit.")
@@ -48,9 +48,9 @@ PO::variables_map parseArgs(int argc, char *argv[]) {
   }
 
   // check required arguments
-  vector<string> required_args = {"config", "output"};
+  const vector<string> required_args = {"config", "output"};
   bool ok = true;
-  for (const string &arg : required_args) {
+  for (const string & arg : required_args) {
     if (!args.count(arg)) {
       cerr << "Missing argument: --" << arg << endl;
       ok = false;
@@ -64,7 +64,7 @@ PO::variables_map parseArgs(int argc, char *argv[]) {
   return args;
 }
 
-void makeDirectory(const FS::path &dirpath) {
+void makeDirectory(const FS::path & dirpath) {
   NMTKIT_CHECK(
       !FS::exists(dirpath),
       "Directory or file already exists: " + dirpath.string());
@@ -73,7 +73,7 @@ void makeDirectory(const FS::path &dirpath) {
       "Could not create directory: " + dirpath.string());
 }
 
-void run(int argc, char *argv[]) try {
+void run(int argc, char * argv[]) try {
   // parse commandline args and config file.
   const auto args = ::parseArgs(argc, argv);
   PT::ptree config;
@@ -112,14 +112,14 @@ void run(int argc, char *argv[]) try {
   cout << boost::algorithm::join(test_src[0], " ") << endl;
   cout << boost::algorithm::join(test_trg[0], " ") << endl;
   */
-} catch (exception &ex) {
+} catch (exception & ex) {
   cerr << ex.what() << endl;
   exit(1);
 }
 
 }  // namespace
 
-int main(int argc, char *argv[]) {
+int main(int argc, char * argv[]) {
   ::run(argc, argv);
   return 0;
 }
