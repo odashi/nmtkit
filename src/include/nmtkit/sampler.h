@@ -3,47 +3,39 @@
 
 #include <string>
 #include <vector>
-#include <nmtkit/vocabulary.h>
+#include <nmtkit/basic_types.h>
 
 namespace NMTKit {
 
-struct Sample {
-  std::vector<int> source;
-  std::vector<int> target;
-};
-
+// Abstract class to define the interface of sample iteration.
 class Sampler {
-  Sampler() = delete;
   Sampler(const Sampler &) = delete;
   Sampler(Sampler &&) = delete;
   Sampler & operator=(const Sampler &) = delete;
   Sampler & operator=(Sampler &&) = delete;
 
   public:
-    Sampler(
-        const std::string & src_filepath,
-        const std::string & trg_filepath,
-        const Vocabulary & src_vocab,
-        const Vocabulary & trg_vocab,
-        int batch_size,
-        bool forever);
+  Sampler() {}
+  virtual ~Sampler() {}
 
-    void reset();
+  // Reset all inner states. Sampler should starts iterating samples with always
+  // same order after resetting.
+  virtual void reset() = 0;
 
-    void getSamples(std::vector<Sample> * result);
+  // Retrieves next samples.
+  // Arguments:
+  //   result: Placeholder to store new samples. Old data will be deleted
+  //           automatically before storing new samples.
+  virtual void getSamples(std::vector<Sample> * result) = 0;
 
-    bool hasSamples() const;
-    long numIterated() const;
-  
-  private:
-    void rewind();
+  // Checks whether or not the sampler has unprocessed samples.
+  // Returns:
+  //   true if the sampler has more samples, false otherwise.
+  virtual bool hasSamples() const = 0;
 
-    std::vector<std::vector<int>> src_samples_;
-    std::vector<std::vector<int>> trg_samples_;
-    int batch_size_;
-    bool forever_;
-    int current_;
-    long iterated_;
+  // Retrieves number of already iterated samples.
+  // After calling reset(), this value sill be set as 0.
+  virtual long numIterated() const = 0;
 };
 
 }  // namespace NMTKit

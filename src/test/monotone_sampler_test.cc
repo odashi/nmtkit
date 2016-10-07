@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <vector>
-#include <nmtkit/sampler.h>
+#include <nmtkit/monotone_sampler.h>
 
 using namespace std;
 
@@ -30,7 +30,7 @@ const vector<vector<int>> expected_trg = {
 
 }  // namespace
 
-BOOST_AUTO_TEST_SUITE(SamplerTest)
+BOOST_AUTO_TEST_SUITE(MonotoneSamplerTest)
 
 BOOST_AUTO_TEST_CASE(CheckFiniteMonotoneIteration) {
   // NOTE: corpus_size should not be divisible by batch_size
@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(CheckFiniteMonotoneIteration) {
 
   NMTKit::Vocabulary src_vocab(::src_vocab_filename);
   NMTKit::Vocabulary trg_vocab(::trg_vocab_filename);
-  NMTKit::Sampler sampler(
+  NMTKit::MonotoneSampler sampler(
       ::src_tok_filename, ::trg_tok_filename,
       src_vocab, trg_vocab, batch_size, false);
 
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(CheckInfiniteMonotoneIteration) {
 
   NMTKit::Vocabulary src_vocab(::src_vocab_filename);
   NMTKit::Vocabulary trg_vocab(::trg_vocab_filename);
-  NMTKit::Sampler sampler(
+  NMTKit::MonotoneSampler sampler(
       ::src_tok_filename, ::trg_tok_filename,
       src_vocab, trg_vocab, batch_size, true);
 

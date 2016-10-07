@@ -1,4 +1,4 @@
-#include <nmtkit/sampler.h>
+#include <nmtkit/monotone_sampler.h>
 
 #include <algorithm>
 #include <fstream>
@@ -37,7 +37,7 @@ void loadCorpus(
 
 namespace NMTKit {
 
-Sampler::Sampler(
+MonotoneSampler::MonotoneSampler(
     const string & src_filepath,
     const string & trg_filepath,
     const Vocabulary & src_vocab,
@@ -54,16 +54,16 @@ Sampler::Sampler(
   reset();
 }
 
-void Sampler::rewind() {
+void MonotoneSampler::rewind() {
   current_ = 0;
 }
 
-void Sampler::reset() {
+void MonotoneSampler::reset() {
   rewind();
   iterated_ = 0;
 }
 
-void Sampler::getSamples(vector<Sample> * result) {
+void MonotoneSampler::getSamples(vector<Sample> * result) {
   NMTKIT_CHECK(hasSamples(), "No more samples in the sampler.");
 
   result->clear();
@@ -82,11 +82,11 @@ void Sampler::getSamples(vector<Sample> * result) {
   }
 }
 
-bool Sampler::hasSamples() const {
+bool MonotoneSampler::hasSamples() const {
   return current_ < src_samples_.size();
 }
 
-long Sampler::numIterated() const {
+long MonotoneSampler::numIterated() const {
   return iterated_;
 }
 
