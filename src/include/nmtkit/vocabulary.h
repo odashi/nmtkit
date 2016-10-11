@@ -14,20 +14,20 @@ class Vocabulary {
   Vocabulary & operator=(const Vocabulary &) = delete;
   Vocabulary & operator=(Vocabulary &&) = delete;
 
-  public:
-    explicit Vocabulary(const std::string & vocab_filename);
-    Vocabulary(const std::string & corpus_filename, int size);
+public:
+  explicit Vocabulary(const std::string & vocab_filename);
+  Vocabulary(const std::string & corpus_filename, int size);
 
-    void save(const std::string & vocab_filename);
+  void save(const std::string & vocab_filename);
 
-    int getID(const std::string & word) const;
-    std::string getWord(int id) const;
+  int getID(const std::string & word) const;
+  std::string getWord(int id) const;
 
-    int size() const;
-  
-  private:
-    std::map<std::string, int> stoi_;
-    std::vector<std::string> itos_;
+  int size() const;
+
+private:
+  std::map<std::string, int> stoi_;
+  std::vector<std::string> itos_;
 };
 
 }  // namespace NMTKit

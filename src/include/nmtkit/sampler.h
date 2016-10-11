@@ -14,7 +14,7 @@ class Sampler {
   Sampler & operator=(const Sampler &) = delete;
   Sampler & operator=(Sampler &&) = delete;
 
-  public:
+public:
   Sampler() {}
   virtual ~Sampler() {}
 
