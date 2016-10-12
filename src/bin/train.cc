@@ -1,11 +1,15 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
+#undef BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <nmtkit/exception.h>
+#include <nmtkit/monotone_sampler.h>
+#include <nmtkit/random_sampler.h>
 #include <nmtkit/vocabulary.h>
 
 using namespace std;
@@ -76,12 +80,16 @@ void makeDirectory(const FS::path & dirpath) {
 void run(int argc, char * argv[]) try {
   // parse commandline args and config file.
   const auto args = ::parseArgs(argc, argv);
-  PT::ptree config;
-  PT::read_ini(args["config"].as<string>(), config);
 
   // create output directory.
   FS::path outdir(args["output"].as<string>());
   ::makeDirectory(outdir);
+
+  // copy and parse config file.
+  FS::path cfgfile = outdir / "config.ini";
+  FS::copy_file(args["config"].as<string>(), cfgfile);
+  PT::ptree config;
+  PT::read_ini(cfgfile.string(), config);
 
   // create vocabulary.
   NMTKit::Vocabulary src_vocab(
@@ -93,6 +101,26 @@ void run(int argc, char * argv[]) try {
   src_vocab.save((outdir / "source.vocab").string());
   trg_vocab.save((outdir / "target.vocab").string());
 
+  // create samplers.
+  NMTKit::RandomSampler train_sampler(
+      config.get<string>("Corpus.train_source"),
+      config.get<string>("Corpus.train_target"),
+      src_vocab, trg_vocab,
+      config.get<unsigned>("Train.train_max_length"),
+      config.get<unsigned>("Train.batch_size"),
+      config.get<unsigned>("Train.random_seed"));
+  NMTKit::MonotoneSampler dev_sampler(
+      config.get<string>("Corpus.development_source"),
+      config.get<string>("Corpus.development_target"),
+      src_vocab, trg_vocab,
+      config.get<unsigned>("Train.development_max_length"),
+      1);
+  NMTKit::MonotoneSampler test_sampler(
+      config.get<string>("Corpus.test_source"),
+      config.get<string>("Corpus.test_target"),
+      src_vocab, trg_vocab,
+      config.get<unsigned>("Train.test_max_length"),
+      1);
 } catch (exception & ex) {
   cerr << ex.what() << endl;
   exit(1);
