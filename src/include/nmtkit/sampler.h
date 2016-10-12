@@ -18,9 +18,8 @@ public:
   Sampler() {}
   virtual ~Sampler() {}
 
-  // Reset all inner states. Sampler should starts iterating samples with always
-  // same order after resetting.
-  virtual void reset() = 0;
+  // Rewinds input sequence.
+  virtual void rewind() = 0;
 
   // Retrieves next samples.
   // Arguments:
@@ -32,10 +31,6 @@ public:
   // Returns:
   //   true if the sampler has more samples, false otherwise.
   virtual bool hasSamples() const = 0;
-
-  // Retrieves number of already iterated samples.
-  // After calling reset(), this value sill be set as 0.
-  virtual long numIterated() const = 0;
 };
 
 }  // namespace NMTKit
