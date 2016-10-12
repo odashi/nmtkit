@@ -19,6 +19,7 @@ public:
       const std::string & trg_filepath,
       const Vocabulary & src_vocab,
       const Vocabulary & trg_vocab,
+      unsigned max_length,
       unsigned batch_size);
 
   ~MonotoneSampler() override {}

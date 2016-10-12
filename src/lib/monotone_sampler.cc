@@ -12,15 +12,16 @@ MonotoneSampler::MonotoneSampler(
     const string & trg_filepath,
     const Vocabulary & src_vocab,
     const Vocabulary & trg_vocab,
+    unsigned max_length,
     unsigned batch_size)
 : batch_size_(batch_size) {
-  Corpus::loadFromTokenFile(src_filepath, src_vocab, &src_samples_);
-  Corpus::loadFromTokenFile(trg_filepath, trg_vocab, &trg_samples_);
-  NMTKIT_CHECK_EQ(
-      src_samples_.size(), trg_samples_.size(),
-      "Number of sentences in source and target corpus are different.");
+  Corpus::loadParallelSentences(
+      src_filepath, trg_filepath,
+      src_vocab, trg_vocab, max_length,
+      &src_samples_, &trg_samples_);
   NMTKIT_CHECK(src_samples_.size() > 0, "Corpus files are empty.");
   NMTKIT_CHECK(batch_size_ > 0, "batch_size should be greater than 0.");
+
   rewind();
 }
 

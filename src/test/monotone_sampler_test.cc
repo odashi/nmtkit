@@ -14,6 +14,7 @@ const string trg_tok_filename = "data/small.ja.tok";
 const string src_vocab_filename = "data/small.en.vocab";
 const string trg_vocab_filename = "data/small.ja.vocab";
 const unsigned corpus_size = 500;  // #samples in the sample corpus
+const unsigned max_length = 100;
 const unsigned batch_size = 64;
 const unsigned tail_size = corpus_size % batch_size;
 
@@ -39,7 +40,7 @@ BOOST_AUTO_TEST_CASE(CheckIteration) {
   NMTKit::Vocabulary trg_vocab(::trg_vocab_filename);
   NMTKit::MonotoneSampler sampler(
       ::src_tok_filename, ::trg_tok_filename,
-      src_vocab, trg_vocab, ::batch_size);
+      src_vocab, trg_vocab, ::max_length, ::batch_size);
 
   BOOST_CHECK(sampler.hasSamples());
 

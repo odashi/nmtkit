@@ -6,29 +6,84 @@
 
 using namespace std;
 
+namespace {
+
+// Reads one line from the input stream and split into words.
+bool readTokens(ifstream * ifs, vector<string> * words) {
+  string line;
+  if (!getline(*ifs, line)) {
+    return false;
+  }
+  boost::trim(line);
+  boost::split(
+      *words, line, boost::is_space(), boost::algorithm::token_compress_on);
+  return true;
+}
+
+// Converts words into word-IDs.
+void convertToIDs(
+    const vector<string> & words,
+    const NMTKit::Vocabulary & vocab,
+    vector<unsigned> * ids) {
+  ids->resize(words.size());
+  for (unsigned i = 0; i < words.size(); ++i) {
+    (*ids)[i] = vocab.getID(words[i]);
+  }
+}
+
+}  // namespace
+
 namespace NMTKit {
 
-void Corpus::loadFromTokenFile(
+void Corpus::loadSingleSentences(
     const string & filepath,
-    const NMTKit::Vocabulary & vocab,
+    const Vocabulary & vocab,
     vector<vector<unsigned>> * result) {
   ifstream ifs(filepath);
   NMTKIT_CHECK(
-      ifs.is_open(), "Could not open corpus file to load: " + filepath);
+      ifs.is_open(), "Could not open the corpus file to load: " + filepath);
 
-  // Loads all lines and converts all words into word IDs.
   result->clear();
-  string line;
-  while (getline(ifs, line)) {
-    boost::trim(line);
-    vector<string> words;
-    boost::split(
-        words, line, boost::is_space(), boost::algorithm::token_compress_on);
-    vector<unsigned> word_ids;
-    for (const string & word : words) {
-      word_ids.emplace_back(vocab.getID(word));
+  vector<string> words;
+  while (::readTokens(&ifs, &words)) {
+    result->emplace_back(vector<unsigned>());
+    ::convertToIDs(words, vocab, &result->back());
+  }
+}
+
+void Corpus::loadParallelSentences(
+    const string & src_filepath,
+    const string & trg_filepath,
+    const Vocabulary & src_vocab,
+    const Vocabulary & trg_vocab,
+    unsigned max_length,
+    vector<vector<unsigned>> * src_result,
+    vector<vector<unsigned>> * trg_result) {
+  ifstream src_ifs(src_filepath), trg_ifs(trg_filepath);
+  NMTKIT_CHECK(
+      src_ifs.is_open(),
+      "Could not open the source corpus file to load: " + src_filepath);
+  NMTKIT_CHECK(
+      trg_ifs.is_open(),
+      "Could not open the target corpus file to load: " + trg_filepath);
+  NMTKIT_CHECK(max_length > 0, "max_length should be greater than 0.");
+
+  src_result->clear();
+  trg_result->clear();
+  vector<string> src_words, trg_words;
+  while (
+      ::readTokens(&src_ifs, &src_words) &&
+      ::readTokens(&trg_ifs, &trg_words)) {
+
+    // Filters sentences.
+    if (src_words.size() > max_length || trg_words.size() > max_length) {
+      continue;
     }
-    result->emplace_back(word_ids);
+
+    src_result->emplace_back(vector<unsigned>());
+    trg_result->emplace_back(vector<unsigned>());
+    ::convertToIDs(src_words, src_vocab, &src_result->back());
+    ::convertToIDs(trg_words, trg_vocab, &trg_result->back());
   }
 }
 
