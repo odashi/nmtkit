@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_SUITE(RandomTest)
 BOOST_AUTO_TEST_CASE(CheckReset) {
   NMTKit::Random rnd;
   const int M = 1000000;
-  const vector<int> seeds {0, 1, 10, 100};
+  const vector<unsigned> seeds {0, 1, 10, 100};
   const vector<vector<int>> expected_list {
     {  97874,  185956,  430700},
     {-165769,  994818,  440973},
@@ -26,8 +26,8 @@ BOOST_AUTO_TEST_CASE(CheckReset) {
   }
 
   // Checks user seeds twice.
-  for (int phase = 0; phase < 2; ++phase) {
-    for (int i = 0; i < seeds.size(); ++i) {
+  for (unsigned phase = 0; phase < 2; ++phase) {
+    for (unsigned i = 0; i < seeds.size(); ++i) {
       rnd.reset(seeds[i]);
       for (const int expected : expected_list[i]) {
         BOOST_CHECK_EQUAL(expected, rnd.uniform(-M, M));
@@ -38,18 +38,18 @@ BOOST_AUTO_TEST_CASE(CheckReset) {
 
 BOOST_AUTO_TEST_CASE(CheckUniformDistribution) {
   NMTKit::Random rnd;
-  const int N = 100000;
-  const vector<int> ranges {1, 2, 4, 8};
-  const vector<int> seeds {0, 1, 10, 100};
-  for (const int r : ranges) {
-    for (const int s : seeds) {
-      vector<int> freq(r);
+  const unsigned N = 100000;
+  const vector<unsigned> ranges {1, 2, 4, 8};
+  const vector<unsigned> seeds {0, 1, 10, 100};
+  for (const unsigned r : ranges) {
+    for (const unsigned s : seeds) {
+      vector<unsigned> freq(r);
       rnd.reset(s);
-      const int M = N * r;
-      for (int i = 0; i < M; ++i) {
+      const unsigned M = N * r;
+      for (unsigned i = 0; i < M; ++i) {
         ++freq[rnd.uniform(0, r)];
       }
-      for (int i = 0; i < r; ++i) {
+      for (unsigned i = 0; i < r; ++i) {
         BOOST_CHECK_CLOSE(static_cast<double>(N), freq[i], 2.0);
       }
     }
@@ -58,9 +58,9 @@ BOOST_AUTO_TEST_CASE(CheckUniformDistribution) {
 
 BOOST_AUTO_TEST_CASE(CheckShufflingPermutations) {
   NMTKit::Random rnd;
-  const vector<int> lengths {1, 2, 4, 8};
-  const vector<int> seeds {0, 1, 10, 100};
-  const vector<vector<vector<int>>> expected_list {
+  const vector<unsigned> lengths {1, 2, 4, 8};
+  const vector<unsigned> seeds {0, 1, 10, 100};
+  const vector<vector<vector<unsigned>>> expected_list {
     {{0}, {0}, {0}, {0}},
     {{1, 0}, {0, 1}, {1, 0}, {1, 0}},
     {{2, 0, 3, 1}, {1, 3, 0, 2}, {3, 1, 2, 0}, {2, 3, 0, 1}},
@@ -68,9 +68,9 @@ BOOST_AUTO_TEST_CASE(CheckShufflingPermutations) {
      {6, 3, 2, 5, 0, 4, 7, 1}, {4, 5, 3, 1, 2, 6, 7, 0}},
   };
 
-  for (int l = 0; l < lengths.size(); ++l) {
-    for (int s = 0; s < seeds.size(); ++s) {
-      vector<int> samples(lengths[l]);
+  for (unsigned l = 0; l < lengths.size(); ++l) {
+    for (unsigned s = 0; s < seeds.size(); ++s) {
+      vector<unsigned> samples(lengths[l]);
       iota(samples.begin(), samples.end(), 0);
       rnd.reset(seeds[s]);
       rnd.shuffle(&samples);
@@ -83,26 +83,26 @@ BOOST_AUTO_TEST_CASE(CheckShufflingPermutations) {
 
 BOOST_AUTO_TEST_CASE(CheckShufflingDistributions) {
   NMTKit::Random rnd;
-  const int N = 100000;
-  const vector<int> lengths {1, 2, 4, 8};
-  const vector<int> seeds {0, 1, 10, 100};
+  const unsigned N = 100000;
+  const vector<unsigned> lengths {1, 2, 4, 8};
+  const vector<unsigned> seeds {0, 1, 10, 100};
 
-  for (const int l : lengths) {
-    for (const int s : seeds) {
-      vector<int> samples(l);
+  for (const unsigned l : lengths) {
+    for (const unsigned s : seeds) {
+      vector<unsigned> samples(l);
       iota(samples.begin(), samples.end(), 0);
-      vector<vector<int>> freq(l, vector<int>(l));
+      vector<vector<unsigned>> freq(l, vector<unsigned>(l));
       rnd.reset(s);
-      for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < l; ++j) {
+      for (unsigned i = 0; i < N; ++i) {
+        for (unsigned j = 0; j < l; ++j) {
           rnd.shuffle(&samples);
-          for (int k = 0; k < l; ++k) {
+          for (unsigned k = 0; k < l; ++k) {
             ++freq[k][samples[k]];
           }
         }
       }
-      for (int i = 0; i < l; ++i) {
-        for (int j = 0; j < l; ++j) {
+      for (unsigned i = 0; i < l; ++i) {
+        for (unsigned j = 0; j < l; ++j) {
           BOOST_CHECK_CLOSE(static_cast<double>(N), freq[i][j], 1.0);
         }
       }

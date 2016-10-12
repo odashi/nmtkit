@@ -24,7 +24,7 @@ public:
   static void loadFromTokenFile(
       const std::string & filepath,
       const Vocabulary & vocab,
-      std::vector<std::vector<int>> * result);
+      std::vector<std::vector<unsigned>> * result);
 };
 
 }  // namespace NMTKit

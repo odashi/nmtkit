@@ -20,8 +20,8 @@ public:
       const std::string & trg_filepath,
       const Vocabulary & src_vocab,
       const Vocabulary & trg_vocab,
-      int batch_size,
-      int random_seed);
+      unsigned batch_size,
+      unsigned random_seed);
 
   ~RandomSampler() override {}
 
@@ -30,13 +30,13 @@ public:
   bool hasSamples() const override;
 
 private:
-  std::vector<std::vector<int>> src_samples_;
-  std::vector<std::vector<int>> trg_samples_;
-  int batch_size_;
-  int current_;
+  std::vector<std::vector<unsigned>> src_samples_;
+  std::vector<std::vector<unsigned>> trg_samples_;
+  unsigned batch_size_;
+  unsigned current_;
   
   Random rnd_;
-  std::vector<int> ids_;
+  std::vector<unsigned> ids_;
 };
 
 }  // namespace NMTKit

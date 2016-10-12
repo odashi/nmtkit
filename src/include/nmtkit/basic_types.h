@@ -7,8 +7,8 @@
 namespace NMTKit {
 
 struct Sample {
-  std::vector<int> source;
-  std::vector<int> target;
+  std::vector<unsigned> source;
+  std::vector<unsigned> target;
 };
 
 }  // namespace NMTKit

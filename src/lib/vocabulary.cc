@@ -17,13 +17,13 @@ Vocabulary::Vocabulary(const string & vocab_filename) {
       "Could not open vocabulary file to load: " + vocab_filename);
 
   // Loads vocabulary size.
-  int vocab_size;
+  unsigned vocab_size;
   ifs >> vocab_size;
   NMTKIT_CHECK(
       vocab_size >= 3, "Vocabulary size should be equal or greater than 3.");
 
   // Loads each entry.
-  for (int i = 0; i < vocab_size; ++i) {
+  for (unsigned i = 0; i < vocab_size; ++i) {
     string word;
     ifs >> word;
     stoi_[word] = i;
@@ -37,7 +37,7 @@ Vocabulary::Vocabulary(const string & vocab_filename) {
       "</s>", itos_[2], "2nd entry of the vocabulary should be \"</s>\".");
 }
 
-Vocabulary::Vocabulary(const string & corpus_filename, int size) {
+Vocabulary::Vocabulary(const string & corpus_filename, unsigned size) {
   NMTKIT_CHECK(size >= 3, "Size should be equal or greater than 3.");
   ifstream ifs(corpus_filename);
   NMTKIT_CHECK(
@@ -45,7 +45,7 @@ Vocabulary::Vocabulary(const string & corpus_filename, int size) {
       "Could not open corpus file to load: " + corpus_filename);
 
   // Counts word frequencies.
-  map<string, int> freq;
+  map<string, unsigned> freq;
   string line;
   while (getline(ifs, line)) {
     boost::trim(line);
@@ -58,11 +58,11 @@ Vocabulary::Vocabulary(const string & corpus_filename, int size) {
   }
 
   // Selects most frequent words.
-  vector<pair<int, string>> entries;
+  vector<pair<unsigned, string>> entries;
   for (const auto & entry : freq) {
     entries.emplace_back(make_pair(entry.second, entry.first));
   }
-  sort(entries.begin(), entries.end(), greater<pair<int, string>>());
+  sort(entries.begin(), entries.end(), greater<pair<unsigned, string>>());
   
   // Store entries.
   stoi_["<unk>"] = 0;
@@ -71,7 +71,7 @@ Vocabulary::Vocabulary(const string & corpus_filename, int size) {
   itos_.emplace_back("<unk>");
   itos_.emplace_back("<s>");
   itos_.emplace_back("</s>");
-  for (int i = 3; i < size && i - 3 < entries.size(); ++i) {
+  for (unsigned i = 3; i < size && i - 3 < entries.size(); ++i) {
     const string & word = entries[i - 3].second;
     stoi_[word] = i;
     itos_.emplace_back(word);
@@ -89,18 +89,18 @@ void Vocabulary::save(const string & vocab_filename) {
   }
 }
 
-int Vocabulary::getID(const string & word) const {
+unsigned Vocabulary::getID(const string & word) const {
   const auto &entry = stoi_.find(word);
   if (entry == stoi_.end()) return 0;  // ID of <unk>
   return entry->second;
 }
 
-string Vocabulary::getWord(int id) const {
+string Vocabulary::getWord(unsigned id) const {
   if (id < 0 or id >= itos_.size()) return "<unk>";  // out of range
   return itos_[id];
 }
 
-int Vocabulary::size() const {
+unsigned Vocabulary::size() const {
   return itos_.size();
 }
 

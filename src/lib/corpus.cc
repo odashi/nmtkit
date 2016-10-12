@@ -11,7 +11,7 @@ namespace NMTKit {
 void Corpus::loadFromTokenFile(
     const string & filepath,
     const NMTKit::Vocabulary & vocab,
-    vector<vector<int>> * result) {
+    vector<vector<unsigned>> * result) {
   ifstream ifs(filepath);
   NMTKIT_CHECK(
       ifs.is_open(), "Could not open corpus file to load: " + filepath);
@@ -24,7 +24,7 @@ void Corpus::loadFromTokenFile(
     vector<string> words;
     boost::split(
         words, line, boost::is_space(), boost::algorithm::token_compress_on);
-    vector<int> word_ids;
+    vector<unsigned> word_ids;
     for (const string & word : words) {
       word_ids.emplace_back(vocab.getID(word));
     }

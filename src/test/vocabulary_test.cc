@@ -14,7 +14,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
   BOOST_CHECK_EQUAL(500, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
-  for (int i = 0; i < topk.size(); ++i) {
+  for (unsigned i = 0; i < topk.size(); ++i) {
     BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
   }
@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
   BOOST_CHECK_EQUAL(500, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
-  for (int i = 0; i < topk.size(); ++i) {
+  for (unsigned i = 0; i < topk.size(); ++i) {
     BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
   }
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
   BOOST_CHECK_EQUAL(100, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
-  for (int i = 0; i < topk.size(); ++i) {
+  for (unsigned i = 0; i < topk.size(); ++i) {
     BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
   }
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
   BOOST_CHECK_EQUAL(100, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
-  for (int i = 0; i < topk.size(); ++i) {
+  for (unsigned i = 0; i < topk.size(); ++i) {
     BOOST_CHECK_EQUAL(i, vocab.getID(topk[i]));
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
   }

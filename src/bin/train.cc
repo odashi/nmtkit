@@ -86,32 +86,13 @@ void run(int argc, char * argv[]) try {
   // create vocabulary.
   NMTKit::Vocabulary src_vocab(
       config.get<string>("Corpus.train_source"),
-      config.get<int>("Model.source_vocabulary"));
+      config.get<unsigned>("Model.source_vocabulary"));
   NMTKit::Vocabulary trg_vocab(
       config.get<string>("Corpus.train_target"),
-      config.get<int>("Model.target_vocabulary"));
+      config.get<unsigned>("Model.target_vocabulary"));
   src_vocab.save((outdir / "source.vocab").string());
   trg_vocab.save((outdir / "target.vocab").string());
 
-  // load all corpus.
-  /*
-  vector<vector<string>> train_src, train_trg;
-  vector<vector<string>> dev_src, dev_trg;
-  vector<vector<string>> test_src, test_trg;
-  ::loadCorpus(config, "Corpus.train_source", &train_src);
-  ::loadCorpus(config, "Corpus.train_target", &train_trg);
-  ::loadCorpus(config, "Corpus.development_source", &dev_src);
-  ::loadCorpus(config, "Corpus.development_target", &dev_trg);
-  ::loadCorpus(config, "Corpus.test_source", &test_src);
-  ::loadCorpus(config, "Corpus.test_target", &test_trg);
-
-  cout << boost::algorithm::join(train_src[0], " ") << endl;
-  cout << boost::algorithm::join(train_trg[0], " ") << endl;
-  cout << boost::algorithm::join(dev_src[0], " ") << endl;
-  cout << boost::algorithm::join(dev_trg[0], " ") << endl;
-  cout << boost::algorithm::join(test_src[0], " ") << endl;
-  cout << boost::algorithm::join(test_trg[0], " ") << endl;
-  */
 } catch (exception & ex) {
   cerr << ex.what() << endl;
   exit(1);

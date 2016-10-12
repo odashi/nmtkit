@@ -19,7 +19,7 @@ public:
       const std::string & trg_filepath,
       const Vocabulary & src_vocab,
       const Vocabulary & trg_vocab,
-      int batch_size);
+      unsigned batch_size);
 
   ~MonotoneSampler() override {}
 
@@ -28,10 +28,10 @@ public:
   bool hasSamples() const override;
 
 private:
-  std::vector<std::vector<int>> src_samples_;
-  std::vector<std::vector<int>> trg_samples_;
-  int batch_size_;
-  int current_;
+  std::vector<std::vector<unsigned>> src_samples_;
+  std::vector<std::vector<unsigned>> trg_samples_;
+  unsigned batch_size_;
+  unsigned current_;
 };
 
 }  // namespace NMTKit

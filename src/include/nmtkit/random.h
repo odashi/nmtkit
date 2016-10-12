@@ -1,6 +1,7 @@
 #ifndef NMTKIT_RANDOM_H_
 #define NMTKIT_RANDOM_H_
 
+#include <algorithm>
 #include <random>
 #include <vector>
 
@@ -19,7 +20,7 @@ public:
   // Initializes all states.
   // Arguments:
   //   seed: Seed value for the internal randomizer.
-  void reset(unsigned int seed);
+  void reset(unsigned seed);
 
   // Generates an integer with range [minval, maxval) by sampling from the
   // uniform distribution.
@@ -31,10 +32,20 @@ public:
   //   Generated integer value.
   int uniform(int minval, int maxval);
 
-  // Shuffles given integer vector.
+  // Shuffles given vector.
   // Arguments:
   //   arr: Target vector.
-  void shuffle(std::vector<int> * arr);
+  template <typename T>
+  void shuffle(std::vector<T> * arr) {
+    // Implementing Fisher-Yates algorithm.
+    const unsigned M = arr->size();
+    for (unsigned i = 0; i < M - 1; ++i) {
+      const unsigned j = uniform(i, M);
+      if (j > i) {
+        std::swap((*arr)[i], (*arr)[j]);
+      }
+    }
+  }
 
 private:
   std::mt19937 gen_;

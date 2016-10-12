@@ -13,8 +13,8 @@ RandomSampler::RandomSampler(
     const string & trg_filepath,
     const Vocabulary & src_vocab,
     const Vocabulary & trg_vocab,
-    int batch_size,
-    int random_seed)
+    unsigned batch_size,
+    unsigned random_seed)
 : batch_size_(batch_size) {
   Corpus::loadFromTokenFile(src_filepath, src_vocab, &src_samples_);
   Corpus::loadFromTokenFile(trg_filepath, trg_vocab, &trg_samples_);
@@ -39,7 +39,7 @@ void RandomSampler::getSamples(vector<Sample> * result) {
   NMTKIT_CHECK(hasSamples(), "No more samples.");
 
   result->clear();
-  for (int i = 0; i < batch_size_ && hasSamples(); ++i) {
+  for (unsigned i = 0; i < batch_size_ && hasSamples(); ++i) {
     result->emplace_back(
         Sample {src_samples_[ids_[current_]], trg_samples_[ids_[current_]]});
     ++current_;

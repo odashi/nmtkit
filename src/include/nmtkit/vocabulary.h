@@ -16,17 +16,17 @@ class Vocabulary {
 
 public:
   explicit Vocabulary(const std::string & vocab_filename);
-  Vocabulary(const std::string & corpus_filename, int size);
+  Vocabulary(const std::string & corpus_filename, unsigned size);
 
   void save(const std::string & vocab_filename);
 
-  int getID(const std::string & word) const;
-  std::string getWord(int id) const;
+  unsigned getID(const std::string & word) const;
+  std::string getWord(unsigned id) const;
 
-  int size() const;
+  unsigned size() const;
 
 private:
-  std::map<std::string, int> stoi_;
+  std::map<std::string, unsigned> stoi_;
   std::vector<std::string> itos_;
 };
 
