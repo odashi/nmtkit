@@ -32,21 +32,6 @@ public:
   //   Generated integer value.
   int uniform(int minval, int maxval);
 
-  // Shuffles given vector.
-  // Arguments:
-  //   arr: Target vector.
-  template <typename T>
-  void shuffle(std::vector<T> * arr) {
-    // Implementing Fisher-Yates algorithm.
-    const unsigned M = arr->size();
-    for (unsigned i = 0; i < M - 1; ++i) {
-      const unsigned j = uniform(i, M);
-      if (j > i) {
-        std::swap((*arr)[i], (*arr)[j]);
-      }
-    }
-  }
-
 private:
   std::mt19937 gen_;
 };

@@ -1,6 +1,7 @@
 #include <nmtkit/random_sampler.h>
 
 #include <numeric>
+#include <nmtkit/array.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
 
@@ -32,7 +33,7 @@ RandomSampler::RandomSampler(
 
 void RandomSampler::rewind() {
   current_ = 0;
-  rnd_.shuffle(&ids_);
+  Array::shuffle(&ids_, &rnd_);
 }
 
 void RandomSampler::getSamples(vector<Sample> * result) {
