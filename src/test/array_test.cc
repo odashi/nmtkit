@@ -1,6 +1,7 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
+#include <functional>
 #include <numeric>
 #include <vector>
 #include <nmtkit/array.h>
@@ -9,6 +10,45 @@
 using namespace std;
 
 BOOST_AUTO_TEST_SUITE(ArrayTest)
+
+BOOST_AUTO_TEST_CASE(CheckSorting1) {
+  const vector<vector<int>> test_data {
+    {},
+    {1},
+    {1, 2, 3, 4, 5},
+    {2, 4, 3, 1, 5},
+    {5, 4, 3, 2, 1},
+    {1, 2, 1, 3, 1, 2, 1},
+  };
+  const vector<vector<int>> expected_less {
+    {},
+    {1},
+    {1, 2, 3, 4, 5},
+    {1, 2, 3, 4, 5},
+    {1, 2, 3, 4, 5},
+    {1, 1, 1, 1, 2, 2, 3},
+  };
+  const vector<vector<int>> expected_greater {
+    {},
+    {1},
+    {5, 4, 3, 2, 1},
+    {5, 4, 3, 2, 1},
+    {5, 4, 3, 2, 1},
+    {3, 2, 2, 1, 1, 1, 1},
+  };
+  for (unsigned i = 0; i < test_data.size(); ++i) {
+    vector<int> input = test_data[i];
+    NMTKit::Array::sort(&input, less<int>());
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected_less[i].begin(), expected_less[i].end(),
+        input.begin(), input.end());
+    input = test_data[i];
+    NMTKit::Array::sort(&input, greater<int>());
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected_greater[i].begin(), expected_greater[i].end(),
+        input.begin(), input.end());
+  }
+}
 
 BOOST_AUTO_TEST_CASE(CheckShufflingPermutations) {
   NMTKit::Random rnd;
