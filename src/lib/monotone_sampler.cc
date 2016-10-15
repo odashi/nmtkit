@@ -5,7 +5,7 @@
 
 using namespace std;
 
-namespace NMTKit {
+namespace nmtkit {
 
 MonotoneSampler::MonotoneSampler(
     const string & src_filepath,
@@ -44,5 +44,5 @@ bool MonotoneSampler::hasSamples() const {
   return current_ < src_samples_.size();
 }
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 

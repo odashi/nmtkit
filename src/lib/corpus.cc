@@ -23,7 +23,7 @@ bool readTokens(ifstream * ifs, vector<string> * words) {
 // Converts words into word-IDs.
 void convertToIDs(
     const vector<string> & words,
-    const NMTKit::Vocabulary & vocab,
+    const nmtkit::Vocabulary & vocab,
     vector<unsigned> * ids) {
   ids->resize(words.size());
   for (unsigned i = 0; i < words.size(); ++i) {
@@ -33,7 +33,7 @@ void convertToIDs(
 
 }  // namespace
 
-namespace NMTKit {
+namespace nmtkit {
 
 void Corpus::loadSingleSentences(
     const string & filepath,
@@ -87,5 +87,5 @@ void Corpus::loadParallelSentences(
   }
 }
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 

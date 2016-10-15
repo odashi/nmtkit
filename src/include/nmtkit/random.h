@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-namespace NMTKit {
+namespace nmtkit {
 
 // Customized random sampler
 class Random {
@@ -36,7 +36,7 @@ private:
   std::mt19937 gen_;
 };
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 
 #endif  // NMTKIT_RANDOM_H_
 

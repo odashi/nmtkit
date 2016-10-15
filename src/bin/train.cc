@@ -92,30 +92,30 @@ void run(int argc, char * argv[]) try {
   PT::read_ini(cfgfile.string(), config);
 
   // create vocabulary.
-  NMTKit::Vocabulary src_vocab(
+  nmtkit::Vocabulary src_vocab(
       config.get<string>("Corpus.train_source"),
       config.get<unsigned>("Model.source_vocabulary"));
-  NMTKit::Vocabulary trg_vocab(
+  nmtkit::Vocabulary trg_vocab(
       config.get<string>("Corpus.train_target"),
       config.get<unsigned>("Model.target_vocabulary"));
   src_vocab.save((outdir / "source.vocab").string());
   trg_vocab.save((outdir / "target.vocab").string());
 
   // create samplers.
-  NMTKit::RandomSampler train_sampler(
+  nmtkit::RandomSampler train_sampler(
       config.get<string>("Corpus.train_source"),
       config.get<string>("Corpus.train_target"),
       src_vocab, trg_vocab,
       config.get<unsigned>("Train.train_max_length"),
       config.get<unsigned>("Train.batch_size"),
       config.get<unsigned>("Train.random_seed"));
-  NMTKit::MonotoneSampler dev_sampler(
+  nmtkit::MonotoneSampler dev_sampler(
       config.get<string>("Corpus.development_source"),
       config.get<string>("Corpus.development_target"),
       src_vocab, trg_vocab,
       config.get<unsigned>("Train.development_max_length"),
       1);
-  NMTKit::MonotoneSampler test_sampler(
+  nmtkit::MonotoneSampler test_sampler(
       config.get<string>("Corpus.test_source"),
       config.get<string>("Corpus.test_target"),
       src_vocab, trg_vocab,

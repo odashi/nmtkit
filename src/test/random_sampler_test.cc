@@ -49,15 +49,15 @@ const vector<vector<unsigned>> expected_trg2 {
 BOOST_AUTO_TEST_SUITE(RandomSamplerTest)
 
 BOOST_AUTO_TEST_CASE(CheckIteration) {
-  NMTKit::Vocabulary src_vocab(::src_vocab_filename);
-  NMTKit::Vocabulary trg_vocab(::trg_vocab_filename);
-  NMTKit::RandomSampler sampler(
+  nmtkit::Vocabulary src_vocab(::src_vocab_filename);
+  nmtkit::Vocabulary trg_vocab(::trg_vocab_filename);
+  nmtkit::RandomSampler sampler(
       ::src_tok_filename, ::trg_tok_filename,
       src_vocab, trg_vocab, ::max_length, ::batch_size, ::random_seed);
 
   BOOST_CHECK(sampler.hasSamples());
 
-  vector<NMTKit::Sample> samples;
+  vector<nmtkit::Sample> samples;
 
   // Checks head samples.
   sampler.getSamples(&samples);

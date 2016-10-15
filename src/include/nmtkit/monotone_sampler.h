@@ -4,7 +4,7 @@
 #include <nmtkit/sampler.h>
 #include <nmtkit/vocabulary.h>
 
-namespace NMTKit {
+namespace nmtkit {
 
 class MonotoneSampler : public Sampler {
   MonotoneSampler() = delete;
@@ -35,7 +35,7 @@ private:
   unsigned current_;
 };
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 
 #endif  // NMTKIT_MONOTONE_SAMPLER_H_
 

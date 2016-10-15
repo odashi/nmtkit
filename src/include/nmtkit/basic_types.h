@@ -4,14 +4,14 @@
 #include <string>
 #include <vector>
 
-namespace NMTKit {
+namespace nmtkit {
 
 struct Sample {
   std::vector<unsigned> source;
   std::vector<unsigned> target;
 };
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 
 #endif  // NMTKIT_BASIC_TYPES_H_
 

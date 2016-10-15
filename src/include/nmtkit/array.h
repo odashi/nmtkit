@@ -5,7 +5,7 @@
 #include <utility>
 #include <nmtkit/random.h>
 
-namespace NMTKit {
+namespace nmtkit {
 
 // Array manipulators.
 class Array {
@@ -62,7 +62,7 @@ public:
   }
 };
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 
 #endif  // NMTKIT_ARRAY_H_
 

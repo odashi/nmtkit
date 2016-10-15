@@ -5,7 +5,7 @@
 #include <nmtkit/sampler.h>
 #include <nmtkit/vocabulary.h>
 
-namespace NMTKit {
+namespace nmtkit {
 
 class RandomSampler : public Sampler {
   RandomSampler() = delete;
@@ -40,7 +40,7 @@ private:
   std::vector<unsigned> ids_;
 };
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 
 #endif  // NMTKIT_RANDOM_SAMPLER_H_
 

@@ -5,7 +5,7 @@
 
 using namespace std;
 
-namespace NMTKit {
+namespace nmtkit {
 
 Random::Random() : gen_() {
   NMTKIT_CHECK_EQ(
@@ -34,5 +34,5 @@ int Random::uniform(int minval, int maxval) {
   return minval + static_cast<int>(sample / divisor);
 }
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 

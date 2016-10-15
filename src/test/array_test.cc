@@ -40,12 +40,12 @@ BOOST_AUTO_TEST_CASE(CheckSortingIntegers) {
 
   for (unsigned i = 0; i < test_data.size(); ++i) {
     vector<int> input = test_data[i];
-    NMTKit::Array::sort(&input, less<int>());
+    nmtkit::Array::sort(&input, less<int>());
     BOOST_CHECK_EQUAL_COLLECTIONS(
         expected_less[i].begin(), expected_less[i].end(),
         input.begin(), input.end());
     input = test_data[i];
-    NMTKit::Array::sort(&input, greater<int>());
+    nmtkit::Array::sort(&input, greater<int>());
     BOOST_CHECK_EQUAL_COLLECTIONS(
         expected_greater[i].begin(), expected_greater[i].end(),
         input.begin(), input.end());
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(CheckSortingVectors) {
   };
 
   vector<vector<string>> input = test_data;
-  NMTKit::Array::sort(
+  nmtkit::Array::sort(
       &input,
       [](const vector<string> & a, const vector<string> & b) {
           return a.size() < b.size();
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(CheckSortingVectors) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckShufflingPermutations) {
-  NMTKit::Random rnd;
+  nmtkit::Random rnd;
   const vector<unsigned> lengths {1, 2, 4, 8};
   const vector<unsigned> seeds {0, 1, 10, 100};
   const vector<vector<vector<unsigned>>> expected_list {
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(CheckShufflingPermutations) {
       vector<unsigned> samples(lengths[l]);
       iota(samples.begin(), samples.end(), 0);
       rnd.reset(seeds[s]);
-      NMTKit::Array::shuffle(&samples, &rnd);
+      nmtkit::Array::shuffle(&samples, &rnd);
       BOOST_CHECK_EQUAL_COLLECTIONS(
           expected_list[l][s].begin(), expected_list[l][s].end(),
           samples.begin(), samples.end());
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(CheckShufflingPermutations) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckShufflingDistributions) {
-  NMTKit::Random rnd;
+  nmtkit::Random rnd;
   const unsigned N = 100000;
   const vector<unsigned> lengths {1, 2, 4, 8};
   const vector<unsigned> seeds {0, 1, 10, 100};
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(CheckShufflingDistributions) {
       rnd.reset(s);
       for (unsigned i = 0; i < N; ++i) {
         for (unsigned j = 0; j < l; ++j) {
-          NMTKit::Array::shuffle(&samples, &rnd);
+          nmtkit::Array::shuffle(&samples, &rnd);
           for (unsigned k = 0; k < l; ++k) {
             ++freq[k][samples[k]];
           }

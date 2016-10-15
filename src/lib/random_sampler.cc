@@ -7,7 +7,7 @@
 
 using namespace std;
 
-namespace NMTKit {
+namespace nmtkit {
 
 RandomSampler::RandomSampler(
     const string & src_filepath,
@@ -51,5 +51,5 @@ bool RandomSampler::hasSamples() const {
   return current_ < src_samples_.size();
 }
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 

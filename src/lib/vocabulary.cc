@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace NMTKit {
+namespace nmtkit {
 
 Vocabulary::Vocabulary(const string & vocab_filename) {
   ifstream ifs(vocab_filename);
@@ -104,5 +104,5 @@ unsigned Vocabulary::size() const {
   return itos_.size();
 }
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 

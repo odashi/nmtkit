@@ -10,7 +10,7 @@ using namespace std;
 BOOST_AUTO_TEST_SUITE(RandomTest)
 
 BOOST_AUTO_TEST_CASE(CheckReset) {
-  NMTKit::Random rnd;
+  nmtkit::Random rnd;
   const int M = 1000000;
   const vector<unsigned> seeds {0, 1, 10, 100};
   const vector<vector<int>> expected_list {
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(CheckReset) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckUniformDistribution) {
-  NMTKit::Random rnd;
+  nmtkit::Random rnd;
   const unsigned N = 100000;
   const vector<unsigned> ranges {1, 2, 4, 8};
   const vector<unsigned> seeds {0, 1, 10, 100};

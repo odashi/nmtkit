@@ -5,7 +5,7 @@
 #include <vector>
 #include <nmtkit/vocabulary.h>
 
-namespace NMTKit {
+namespace nmtkit {
 
 class Corpus {
   Corpus() = delete;
@@ -48,7 +48,7 @@ public:
       std::vector<std::vector<unsigned>> * trg_result);
 };
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 
 #endif  // NMTKIT_CORPUS_H_
 

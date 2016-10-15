@@ -28,9 +28,9 @@ BOOST_AUTO_TEST_CASE(CheckLoadingSingle) {
     {0, 219, 228, 3},
   };
 
-  NMTKit::Vocabulary vocab(::src_vocab_filename);
+  nmtkit::Vocabulary vocab(::src_vocab_filename);
   vector<vector<unsigned>> result;
-  NMTKit::Corpus::loadSingleSentences(::src_tok_filename, vocab, &result);
+  nmtkit::Corpus::loadSingleSentences(::src_tok_filename, vocab, &result);
   
   BOOST_CHECK_EQUAL(expected_num_sents, result.size());
   
@@ -53,12 +53,12 @@ BOOST_AUTO_TEST_CASE(CheckLoadingParallel) {
   const vector<unsigned> expected_num_src_words {0, 4, 465, 3871};
   const vector<unsigned> expected_num_trg_words {0, 4, 552, 5626};
 
-  NMTKit::Vocabulary src_vocab(::src_vocab_filename);
-  NMTKit::Vocabulary trg_vocab(::trg_vocab_filename);
+  nmtkit::Vocabulary src_vocab(::src_vocab_filename);
+  nmtkit::Vocabulary trg_vocab(::trg_vocab_filename);
   vector<vector<unsigned>> src_result, trg_result;
 
   for (unsigned i = 0; i < max_lengths.size(); ++i) {
-    NMTKit::Corpus::loadParallelSentences(
+    nmtkit::Corpus::loadParallelSentences(
         ::src_tok_filename, ::trg_tok_filename,
         src_vocab, trg_vocab, max_lengths[i],
         &src_result, &trg_result);

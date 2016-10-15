@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace NMTKit {
+namespace nmtkit {
 
 class Vocabulary {
   Vocabulary() = delete;
@@ -30,7 +30,7 @@ private:
   std::vector<std::string> itos_;
 };
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 
 #endif  // NMTKIT_VOCABULARY_H_
 

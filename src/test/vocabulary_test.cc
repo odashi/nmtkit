@@ -10,7 +10,7 @@ using namespace std;
 BOOST_AUTO_TEST_SUITE(VocabularyTest)
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
-  NMTKit::Vocabulary vocab("data/small.en.vocab");
+  nmtkit::Vocabulary vocab("data/small.en.vocab");
   BOOST_CHECK_EQUAL(500, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
-  NMTKit::Vocabulary vocab("data/small.ja.vocab");
+  nmtkit::Vocabulary vocab("data/small.ja.vocab");
   BOOST_CHECK_EQUAL(500, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
-  NMTKit::Vocabulary vocab("data/small.en.tok", 100);
+  nmtkit::Vocabulary vocab("data/small.en.tok", 100);
   BOOST_CHECK_EQUAL(100, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
-  NMTKit::Vocabulary vocab("data/small.ja.tok", 100);
+  nmtkit::Vocabulary vocab("data/small.ja.tok", 100);
   BOOST_CHECK_EQUAL(100, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};

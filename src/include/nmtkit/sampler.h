@@ -5,7 +5,7 @@
 #include <vector>
 #include <nmtkit/basic_types.h>
 
-namespace NMTKit {
+namespace nmtkit {
 
 // Abstract class to define the interface of sample iteration.
 class Sampler {
@@ -33,7 +33,7 @@ public:
   virtual bool hasSamples() const = 0;
 };
 
-}  // namespace NMTKit
+}  // namespace nmtkit
 
 #endif  // NMTKIT_SAMPLER_H_
 
