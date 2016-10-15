@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <numeric>
+#include <string>
 #include <vector>
 #include <nmtkit/array.h>
 #include <nmtkit/random.h>
@@ -11,7 +12,7 @@ using namespace std;
 
 BOOST_AUTO_TEST_SUITE(ArrayTest)
 
-BOOST_AUTO_TEST_CASE(CheckSorting1) {
+BOOST_AUTO_TEST_CASE(CheckSortingIntegers) {
   const vector<vector<int>> test_data {
     {},
     {1},
@@ -36,6 +37,7 @@ BOOST_AUTO_TEST_CASE(CheckSorting1) {
     {5, 4, 3, 2, 1},
     {3, 2, 2, 1, 1, 1, 1},
   };
+
   for (unsigned i = 0; i < test_data.size(); ++i) {
     vector<int> input = test_data[i];
     NMTKit::Array::sort(&input, less<int>());
@@ -47,6 +49,35 @@ BOOST_AUTO_TEST_CASE(CheckSorting1) {
     BOOST_CHECK_EQUAL_COLLECTIONS(
         expected_greater[i].begin(), expected_greater[i].end(),
         input.begin(), input.end());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(CheckSortingVectors) {
+  const vector<vector<string>> test_data {
+    {"This", "is", "a", "test", "data", "."},
+    {"This", "is", "an", "additional", "test", "data", "."},
+    {"This", "is", "also", "a", "test", "data", "."},
+    {"There are some another inputs.", "For example, this."},
+    {"This is", "the last example."},
+  };
+  const vector<vector<string>> expected {
+    {"This is", "the last example."},
+    {"There are some another inputs.", "For example, this."},
+    {"This", "is", "a", "test", "data", "."},
+    {"This", "is", "also", "a", "test", "data", "."},
+    {"This", "is", "an", "additional", "test", "data", "."},
+  };
+
+  vector<vector<string>> input = test_data;
+  NMTKit::Array::sort(
+      &input,
+      [](const vector<string> & a, const vector<string> & b) {
+          return a.size() < b.size();
+      });
+  for (unsigned i = 0; i < test_data.size(); ++i) {
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected[i].begin(), expected[i].end(),
+        input[i].begin(), input[i].end());
   }
 }
 
