@@ -78,7 +78,7 @@ Vocabulary::Vocabulary(const string & corpus_filename, unsigned size) {
   }
 }
 
-void Vocabulary::save(const string & vocab_filename) {
+void Vocabulary::save(const string & vocab_filename) const {
   ofstream ofs(vocab_filename);
   NMTKIT_CHECK(
       ofs.is_open(),

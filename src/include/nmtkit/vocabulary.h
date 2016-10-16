@@ -18,7 +18,7 @@ public:
   explicit Vocabulary(const std::string & vocab_filename);
   Vocabulary(const std::string & corpus_filename, unsigned size);
 
-  void save(const std::string & vocab_filename);
+  void save(const std::string & vocab_filename) const;
 
   unsigned getID(const std::string & word) const;
   std::string getWord(unsigned id) const;
