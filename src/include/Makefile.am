@@ -1,5 +1,6 @@
 nobase_include_HEADERS = \
   nmtkit/array.h \
+  nmtkit/batch_converter.h \
 	nmtkit/basic_types.h \
   nmtkit/corpus.h \
   nmtkit/exception.h \

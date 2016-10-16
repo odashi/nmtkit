@@ -3,6 +3,7 @@ LDADD = -lstdc++ ../lib/libnmtkit.la $(BOOST_UNIT_TEST_FRAMEWORK_LIB)
 
 check_PROGRAMS = \
   array_test \
+  batch_converter_test \
   corpus_test \
   monotone_sampler_test \
   random_test \
@@ -11,6 +12,7 @@ check_PROGRAMS = \
 
 TESTS = \
   array_test \
+  batch_converter_test \
   corpus_test \
   monotone_sampler_test \
   random_test \
@@ -18,6 +20,7 @@ TESTS = \
 	vocabulary_test
 
 array_test_SOURCES = array_test.cc
+batch_converter_test_SOURCES = batch_converter_test.cc
 corpus_test_SOURCES = corpus_test.cc
 monotone_sampler_test_SOURCES = monotone_sampler_test.cc
 random_test_SOURCES = random_test.cc

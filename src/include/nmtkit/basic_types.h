@@ -7,8 +7,19 @@
 namespace nmtkit {
 
 struct Sample {
+  // Source sentence with word IDs
   std::vector<unsigned> source;
+
+  // Target sentence with word IDs.
   std::vector<unsigned> target;
+};
+
+struct Batch {
+  // Source word ID table with shape (max_source_length, batch_size).
+  std::vector<std::vector<unsigned>> source_id;
+  
+  // Target word iID table with shape (max_source_length, batch_size).
+  std::vector<std::vector<unsigned>> target_id;
 };
 
 }  // namespace nmtkit
