@@ -10,11 +10,11 @@ namespace nmtkit {
 BatchConverter::BatchConverter(
     const Vocabulary & src_vocab,
     const Vocabulary & trg_vocab)
-  : src_bos_id_(src_vocab.getID("<s>")),
-    src_eos_id_(src_vocab.getID("</s>")),
-    trg_bos_id_(trg_vocab.getID("<s>")),
-    trg_eos_id_(trg_vocab.getID("</s>"))
-{}
+: src_bos_id_(src_vocab.getID("<s>")),
+  src_eos_id_(src_vocab.getID("</s>")),
+  trg_bos_id_(trg_vocab.getID("<s>")),
+  trg_eos_id_(trg_vocab.getID("</s>")) {
+}
 
 void BatchConverter::convert(const vector<Sample> & samples, Batch * batch) {
   unsigned sl = 0, tl = 0, bs = samples.size();

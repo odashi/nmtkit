@@ -7,6 +7,14 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <dynet/dynet.h>
+#include <dynet/expr.h>
+#include <dynet/init.h>
+#include <dynet/model.h>
+#include <dynet/tensor.h>
+#include <dynet/training.h>
+#include <nmtkit/batch_converter.h>
+#include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
 #include <nmtkit/monotone_sampler.h>
 #include <nmtkit/random_sampler.h>
@@ -91,7 +99,7 @@ void run(int argc, char * argv[]) try {
   PT::ptree config;
   PT::read_ini(cfgfile.string(), config);
 
-  // create vocabulary.
+  // create vocabularies.
   nmtkit::Vocabulary src_vocab(
       config.get<string>("Corpus.train_source"),
       config.get<unsigned>("Model.source_vocabulary"));
@@ -101,7 +109,7 @@ void run(int argc, char * argv[]) try {
   src_vocab.save((outdir / "source.vocab").string());
   trg_vocab.save((outdir / "target.vocab").string());
 
-  // create samplers.
+  // create samplers and batch converter.
   nmtkit::RandomSampler train_sampler(
       config.get<string>("Corpus.train_source"),
       config.get<string>("Corpus.train_target"),
@@ -121,6 +129,49 @@ void run(int argc, char * argv[]) try {
       src_vocab, trg_vocab,
       config.get<unsigned>("Train.test_max_length"),
       1);
+  nmtkit::BatchConverter batch_converter(src_vocab, trg_vocab);
+
+  // create new trainer and EncoderDecoder model.
+  dynet::Model model;
+  dynet::AdamTrainer trainer(
+      &model,
+      config.get<float>("Train.adam_alpha"),
+      config.get<float>("Train.adam_beta1"),
+      config.get<float>("Train.adam_beta2"),
+      config.get<float>("Train.adam_eps"));
+  nmtkit::EncoderDecoder encdec(
+      config.get<unsigned>("Model.source_vocabulary"),
+      config.get<unsigned>("Model.target_vocabulary"),
+      config.get<unsigned>("Model.embedding"),
+      config.get<unsigned>("Model.rnn_hidden"),
+      &model);
+
+  vector<nmtkit::Sample> samples;
+  nmtkit::Batch batch;
+  unsigned long num_trained = 0;
+  for (unsigned epoch = 1; epoch <= 10; ++epoch) {
+    while (train_sampler.hasSamples()) {
+      train_sampler.getSamples(&samples);
+      batch_converter.convert(samples, &batch);
+      num_trained += samples.size();
+      cout << epoch << ' '
+           << samples.size() << ' '
+           << num_trained << "   "
+           << batch.source_id.size() << ' '
+           << batch.target_id.size() << ' '
+           << batch.source_id[0].size() << endl;
+      // Train
+      dynet::ComputationGraph cg;
+      dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
+          batch, &cg);
+      float loss_value = static_cast<float>(
+          dynet::as_scalar(cg.forward(total_loss_expr)));
+      cg.backward(total_loss_expr);
+      trainer.update();
+      cout << loss_value << endl;
+    }
+  }
+
 } catch (exception & ex) {
   cerr << ex.what() << endl;
   exit(1);
@@ -129,7 +180,9 @@ void run(int argc, char * argv[]) try {
 }  // namespace
 
 int main(int argc, char * argv[]) {
+  dynet::initialize(argc, argv);
   ::run(argc, argv);
+  dynet::cleanup();
   return 0;
 }
 

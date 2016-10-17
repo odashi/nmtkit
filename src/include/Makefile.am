@@ -3,6 +3,7 @@ nobase_include_HEADERS = \
   nmtkit/batch_converter.h \
 	nmtkit/basic_types.h \
   nmtkit/corpus.h \
+  nmtkit/encoder_decoder.h \
   nmtkit/exception.h \
 	nmtkit/monotone_sampler.h \
   nmtkit/random.h \
