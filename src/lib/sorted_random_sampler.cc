@@ -43,7 +43,9 @@ SortedRandomSampler::SortedRandomSampler(
     const Sample & sample = samples_[i];
     unsigned trg_length = max(
         prev_trg_length, static_cast<unsigned>(sample.target.size()));
-    if (trg_length * (i + 1 - prev_head) > num_words_in_batch) {
+    // NOTE: Each target outputs in actual batch data has at least one
+    //       additional "</s>" tag.
+    if ((trg_length + 1) * (i + 1 - prev_head) > num_words_in_batch) {
       positions_.emplace_back(Position {prev_head, i});
       prev_head = i;
     }
