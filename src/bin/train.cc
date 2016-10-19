@@ -4,6 +4,7 @@
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
+#include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -17,7 +18,7 @@
 #include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
 #include <nmtkit/monotone_sampler.h>
-#include <nmtkit/random_sampler.h>
+#include <nmtkit/sorted_random_sampler.h>
 #include <nmtkit/vocabulary.h>
 
 using namespace std;
@@ -110,12 +111,12 @@ void run(int argc, char * argv[]) try {
   trg_vocab.save((outdir / "target.vocab").string());
 
   // create samplers and batch converter.
-  nmtkit::RandomSampler train_sampler(
+  nmtkit::SortedRandomSampler train_sampler(
       config.get<string>("Corpus.train_source"),
       config.get<string>("Corpus.train_target"),
       src_vocab, trg_vocab,
       config.get<unsigned>("Train.train_max_length"),
-      config.get<unsigned>("Train.batch_size"),
+      config.get<unsigned>("Train.num_words_in_batch"),
       config.get<unsigned>("Train.random_seed"));
   nmtkit::MonotoneSampler dev_sampler(
       config.get<string>("Corpus.development_source"),
@@ -146,32 +147,90 @@ void run(int argc, char * argv[]) try {
       config.get<unsigned>("Model.rnn_hidden"),
       &model);
 
+  // Train/dev/test loop
+  const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
+  const unsigned eval_interval = config.get<unsigned>(
+      "Train.evaluation_interval");
   vector<nmtkit::Sample> samples;
   nmtkit::Batch batch;
-  unsigned long num_trained = 0;
-  for (unsigned epoch = 1; epoch <= 10; ++epoch) {
-    while (train_sampler.hasSamples()) {
+  unsigned long num_trained_batches = 0;
+  unsigned long num_trained_samples = 0;
+  for (unsigned iteration = 1; iteration <= max_iteration; ++iteration) {
+    // Training
+    {
+      vector<nmtkit::Sample> samples;
       train_sampler.getSamples(&samples);
+      nmtkit::Batch batch;
       batch_converter.convert(samples, &batch);
-      num_trained += samples.size();
-      cout << epoch << ' '
-           << samples.size() << ' '
-           << num_trained << "   "
-           << batch.source_id.size() << ' '
-           << batch.target_id.size() << ' '
-           << batch.source_id[0].size() << endl;
-      // Train
       dynet::ComputationGraph cg;
       dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
           batch, &cg);
-      float loss_value = static_cast<float>(
-          dynet::as_scalar(cg.forward(total_loss_expr)));
+      cg.forward(total_loss_expr);
       cg.backward(total_loss_expr);
       trainer.update();
-      cout << loss_value << endl;
+
+      ++num_trained_batches;
+      num_trained_samples += batch.source_id[0].size();
+
+      //const auto fmt = boost::format("iter=%8d, loss=%.6e") 
+      //    % iteration
+      //    % total_loss;
+      //cout << fmt.str() << endl;
+
+      if (!train_sampler.hasSamples()) {
+        train_sampler.rewind();
+      }
+    }
+
+    if (iteration % eval_interval == 0) {
+      // Devtest
+      {
+        unsigned num_outputs = 0;
+        float total_loss = 0.0f;
+        while (dev_sampler.hasSamples()) {
+          vector<nmtkit::Sample> samples;
+          dev_sampler.getSamples(&samples);
+          nmtkit::Batch batch;
+          batch_converter.convert(samples, &batch);
+          dynet::ComputationGraph cg;
+          dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
+              batch, &cg);
+          num_outputs += batch.target_id.size() - 1;
+          total_loss += static_cast<float>(
+              dynet::as_scalar(cg.forward(total_loss_expr)));
+        }
+        const float log_ppl = total_loss / num_outputs;
+        const auto fmt = boost::format("iter: %8d, dev-log-ppl: %.6e")
+            % iteration
+            % log_ppl;
+        cout << fmt.str() << endl;
+        dev_sampler.rewind();
+      }
+      // Test
+      {
+        unsigned num_outputs = 0;
+        float total_loss = 0.0f;
+        while (test_sampler.hasSamples()) {
+          vector<nmtkit::Sample> samples;
+          test_sampler.getSamples(&samples);
+          nmtkit::Batch batch;
+          batch_converter.convert(samples, &batch);
+          dynet::ComputationGraph cg;
+          dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
+              batch, &cg);
+          num_outputs += batch.target_id.size() - 1;
+          total_loss += static_cast<float>(
+              dynet::as_scalar(cg.forward(total_loss_expr)));
+        }
+        const float log_ppl = total_loss / num_outputs;
+        const auto fmt = boost::format("iter: %8d, test-log-ppl: %.6e")
+            % iteration
+            % log_ppl;
+        cout << fmt.str() << endl;
+        test_sampler.rewind();
+      }
     }
   }
-
 } catch (exception & ex) {
   cerr << ex.what() << endl;
   exit(1);
