@@ -1,5 +1,5 @@
 AM_CXXFLAGS = -I$(srcdir)/../include $(BOOST_CPPFLAGS)
-LDADD = -lstdc++ ../lib/libnmtkit.la $(BOOST_UNIT_TEST_FRAMEWORK_LIB)
+LDADD = -lstdc++ ../lib/libnmtkit.la $(BOOST_UNIT_TEST_FRAMEWORK_LIB) $(DYNET_LDFLAGS)
 
 check_PROGRAMS = \
   array_test \

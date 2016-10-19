@@ -78,5 +78,35 @@ BOOST_AUTO_TEST_CASE(CheckLoadingParallel) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(CheckLoadingParallel2) {
+  const vector<unsigned> max_lengths {2, 4, 8, 16};
+  const vector<unsigned> expected_num_sents {0, 1, 78, 500};
+  const vector<unsigned> expected_num_src_words {0, 4, 465, 3871};
+  const vector<unsigned> expected_num_trg_words {0, 4, 552, 5626};
+
+  nmtkit::Vocabulary src_vocab(::src_vocab_filename);
+  nmtkit::Vocabulary trg_vocab(::trg_vocab_filename);
+  vector<nmtkit::Sample> result;
+
+  for (unsigned i = 0; i < max_lengths.size(); ++i) {
+    nmtkit::Corpus::loadParallelSentences(
+        ::src_tok_filename, ::trg_tok_filename,
+        src_vocab, trg_vocab, max_lengths[i],
+        &result);
+
+    BOOST_CHECK_EQUAL(expected_num_sents[i], result.size());
+
+    unsigned num_src_words = 0, num_trg_words = 0;
+    for (unsigned j = 0; j < result.size(); ++j) {
+      BOOST_CHECK(result[j].source.size() <= max_lengths[i]);
+      BOOST_CHECK(result[j].target.size() <= max_lengths[i]);
+      num_src_words += result[j].source.size();
+      num_trg_words += result[j].target.size();
+    }
+    BOOST_CHECK_EQUAL(expected_num_src_words[i], num_src_words);
+    BOOST_CHECK_EQUAL(expected_num_trg_words[i], num_trg_words);
+  }
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 

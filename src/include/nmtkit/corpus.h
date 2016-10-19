@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <nmtkit/basic_types.h>
 #include <nmtkit/vocabulary.h>
 
 namespace nmtkit {
@@ -46,6 +47,24 @@ public:
       unsigned max_length,
       std::vector<std::vector<unsigned>> * src_result,
       std::vector<std::vector<unsigned>> * trg_result);
+
+  // Loads tokenized parallel corpus directly to Sample objects.
+  // Arguments:
+  //   src_filepath: Location of the source corpus file.
+  //   trg_filepath: Location of the target corpus file.
+  //   src_vocab: Vocabulary object for the source language.
+  //   trg_vocab: Vocabulary object for the target language.
+  //   max_length: Maximum number of words in a sentence. Samples which exceeds
+  //               this value will be skipped.
+  //   result: Placeholder to store new source samples. Old data will be deleted
+  //           automatically before storing new samples.
+  static void loadParallelSentences(
+      const std::string & src_filepath,
+      const std::string & trg_filepath,
+      const Vocabulary & src_vocab,
+      const Vocabulary & trg_vocab,
+      unsigned max_length,
+      std::vector<Sample> * result);
 };
 
 }  // namespace nmtkit

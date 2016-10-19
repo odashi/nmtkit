@@ -87,5 +87,38 @@ void Corpus::loadParallelSentences(
   }
 }
 
+void Corpus::loadParallelSentences(
+    const string & src_filepath,
+    const string & trg_filepath,
+    const Vocabulary & src_vocab,
+    const Vocabulary & trg_vocab,
+    unsigned max_length,
+    vector<Sample> * result) {
+  ifstream src_ifs(src_filepath), trg_ifs(trg_filepath);
+  NMTKIT_CHECK(
+      src_ifs.is_open(),
+      "Could not open the source corpus file to load: " + src_filepath);
+  NMTKIT_CHECK(
+      trg_ifs.is_open(),
+      "Could not open the target corpus file to load: " + trg_filepath);
+  NMTKIT_CHECK(max_length > 0, "max_length should be greater than 0.");
+
+  result->clear();
+  vector<string> src_words, trg_words;
+  while (
+      ::readTokens(&src_ifs, &src_words) &&
+      ::readTokens(&trg_ifs, &trg_words)) {
+
+    // Filters sentences.
+    if (src_words.size() > max_length || trg_words.size() > max_length) {
+      continue;
+    }
+
+    result->emplace_back(Sample());
+    ::convertToIDs(src_words, src_vocab, &result->back().source);
+    ::convertToIDs(trg_words, trg_vocab, &result->back().target);
+  }
+}
+
 }  // namespace nmtkit
 
