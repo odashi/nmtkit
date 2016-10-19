@@ -14,15 +14,19 @@ EncoderDecoder::EncoderDecoder(
     unsigned embed_size,
     unsigned hidden_size,
     dynet::Model * model)
-: rnn_bw_enc_(1, embed_size, hidden_size, model),
+: rnn_fw_enc_(1, embed_size, hidden_size, model),
+  rnn_bw_enc_(1, embed_size, hidden_size, model),
   rnn_dec_(1, embed_size, hidden_size, model) {
   // Note: Intermediate embedding between encoder/decoder has 1.5 times larger
-  //       layer.
+  //       layer:
+  //         Encoder ............. hidden_size (fw) + hidden_size (bw)
+  //           -> Intermediate ... 1.5 * hidden_size
+  //                -> Decoder ... hidden_size
   const unsigned ie_size = static_cast<unsigned>(hidden_size * 1.5);
 
   p_enc_lookup_ = model->add_lookup_parameters(src_vocab_size, {embed_size});
   p_dec_lookup_ = model->add_lookup_parameters(trg_vocab_size, {embed_size});
-  p_enc2ie_w_ = model->add_parameters({ie_size, hidden_size});
+  p_enc2ie_w_ = model->add_parameters({ie_size, 2 * hidden_size});
   p_enc2ie_b_ = model->add_parameters({ie_size});
   p_ie2dec_w_ = model->add_parameters({hidden_size, ie_size});
   p_ie2dec_b_ = model->add_parameters({hidden_size});
@@ -38,20 +42,33 @@ Expression EncoderDecoder::buildTrainGraph(
   const int sl = src.size();
   const int tl = trg.size();
 
+  // Embedding lookup
+  vector<Expression> embeds;
+  for (int i = 0; i < sl; ++i) {
+    embeds.emplace_back(DE::lookup(*cg, p_enc_lookup_, src[i]));
+  }
+
+  // Forward encoding
+  rnn_fw_enc_.new_graph(*cg);
+  rnn_fw_enc_.start_new_sequence();
+  for (int i = 0; i < sl; ++i) {
+    rnn_fw_enc_.add_input(embeds[i]);
+  }
+
   // Backward encoding
   rnn_bw_enc_.new_graph(*cg);
   rnn_bw_enc_.start_new_sequence();
-  
   for (int i = sl - 1; i >= 0; --i) {
-    Expression enc_embed = DE::lookup(*cg, p_enc_lookup_, src[i]);
-    rnn_bw_enc_.add_input(enc_embed);
+    rnn_bw_enc_.add_input(embeds[i]);
   }
 
   // Encoder to decoder transition
   Expression enc2ie_w = DE::parameter(*cg, p_enc2ie_w_);
   Expression enc2ie_b = DE::parameter(*cg, p_enc2ie_b_);
+  Expression fw_enc_final_h = rnn_fw_enc_.final_h()[0];
   Expression bw_enc_final_h = rnn_bw_enc_.final_h()[0];
-  Expression ie_u = enc2ie_w * bw_enc_final_h + enc2ie_b;
+  Expression enc_final_h = DE::concatenate({fw_enc_final_h, bw_enc_final_h});
+  Expression ie_u = enc2ie_w * enc_final_h + enc2ie_b;
   Expression ie_h = DE::rectify(ie_u);
   
   Expression ie2dec_w = DE::parameter(*cg, p_ie2dec_w_);

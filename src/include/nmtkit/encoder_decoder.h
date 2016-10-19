@@ -44,6 +44,7 @@ public:
       dynet::ComputationGraph * cg);
 
 private:
+  dynet::LSTMBuilder rnn_fw_enc_;
   dynet::LSTMBuilder rnn_bw_enc_;
   dynet::LSTMBuilder rnn_dec_;
   dynet::LookupParameter p_enc_lookup_;
