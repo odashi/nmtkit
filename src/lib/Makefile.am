@@ -9,5 +9,6 @@ libnmtkit_la_SOURCES = \
   monotone_sampler.cc \
   random.cc \
   random_sampler.cc \
+  sorted_random_sampler.cc \
   vocabulary.cc
 

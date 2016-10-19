@@ -9,4 +9,5 @@ nobase_include_HEADERS = \
   nmtkit/random.h \
   nmtkit/random_sampler.h \
   nmtkit/sampler.h \
+  nmtkit/sorted_random_sampler.h \
   nmtkit/vocabulary.h
