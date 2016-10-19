@@ -1,6 +1,8 @@
 #include <nmtkit/encoder_decoder.h>
 
 #include <iostream>
+#include <nmtkit/array.h>
+#include <nmtkit/exception.h>
 
 using namespace std;
 
@@ -34,16 +36,19 @@ EncoderDecoder::EncoderDecoder(
   p_dec2out_b_ = model->add_parameters({trg_vocab_size});
 };
 
-Expression EncoderDecoder::buildTrainGraph(
+void EncoderDecoder::buildEncoderGraph(
     const Batch & batch,
-    dynet::ComputationGraph * cg) {
+    dynet::ComputationGraph * cg,
+    vector<DE::Expression> * fw_enc_outputs,
+    vector<DE::Expression> * bw_enc_outputs) {
+  NMTKIT_CHECK(fw_enc_outputs->empty(), "fw_enc_outputs is not empty.");
+  NMTKIT_CHECK(bw_enc_outputs->empty(), "bw_enc_outputs is not empty.");
+
   const auto & src = batch.source_id;
-  const auto & trg = batch.target_id;
   const int sl = src.size();
-  const int tl = trg.size();
 
   // Embedding lookup
-  vector<Expression> embeds;
+  vector<DE::Expression> embeds;
   for (int i = 0; i < sl; ++i) {
     embeds.emplace_back(DE::lookup(*cg, p_enc_lookup_, src[i]));
   }
@@ -52,50 +57,76 @@ Expression EncoderDecoder::buildTrainGraph(
   rnn_fw_enc_.new_graph(*cg);
   rnn_fw_enc_.start_new_sequence();
   for (int i = 0; i < sl; ++i) {
-    rnn_fw_enc_.add_input(embeds[i]);
+    fw_enc_outputs->emplace_back(rnn_fw_enc_.add_input(embeds[i]));
   }
 
   // Backward encoding
   rnn_bw_enc_.new_graph(*cg);
   rnn_bw_enc_.start_new_sequence();
   for (int i = sl - 1; i >= 0; --i) {
-    rnn_bw_enc_.add_input(embeds[i]);
+    bw_enc_outputs->emplace_back(rnn_bw_enc_.add_input(embeds[i]));
   }
+  Array::reverse(bw_enc_outputs);
+}
 
-  // Encoder to decoder transition
-  Expression enc2ie_w = DE::parameter(*cg, p_enc2ie_w_);
-  Expression enc2ie_b = DE::parameter(*cg, p_enc2ie_b_);
-  Expression fw_enc_final_h = rnn_fw_enc_.final_h()[0];
-  Expression bw_enc_final_h = rnn_bw_enc_.final_h()[0];
-  Expression enc_final_h = DE::concatenate({fw_enc_final_h, bw_enc_final_h});
-  Expression ie_u = enc2ie_w * enc_final_h + enc2ie_b;
-  Expression ie_h = DE::rectify(ie_u);
-  
-  Expression ie2dec_w = DE::parameter(*cg, p_ie2dec_w_);
-  Expression ie2dec_b = DE::parameter(*cg, p_ie2dec_b_);
-  Expression dec_init_c = ie2dec_w * ie_h + ie2dec_b;
-  Expression dec_init_h = DE::tanh(dec_init_c);
+void EncoderDecoder::buildDecoderInitializerGraph(
+    const vector<DE::Expression> & fw_enc_outputs,
+    const vector<DE::Expression> & bw_enc_outputs,
+    dynet::ComputationGraph * cg,
+    vector<DE::Expression> * dec_init_states) {
+  NMTKIT_CHECK(dec_init_states->empty(), "dec_init_states is not empty.");
+
+  DE::Expression enc2ie_w = DE::parameter(*cg, p_enc2ie_w_);
+  DE::Expression enc2ie_b = DE::parameter(*cg, p_enc2ie_b_);
+  DE::Expression enc_final_h = DE::concatenate(
+      {fw_enc_outputs.back(), bw_enc_outputs.front()});
+  DE::Expression ie_u = enc2ie_w * enc_final_h + enc2ie_b;
+  DE::Expression ie_h = DE::rectify(ie_u);
+
+  DE::Expression ie2dec_w = DE::parameter(*cg, p_ie2dec_w_);
+  DE::Expression ie2dec_b = DE::parameter(*cg, p_ie2dec_b_);
+  DE::Expression dec_init_c = ie2dec_w * ie_h + ie2dec_b;
+  DE::Expression dec_init_h = DE::tanh(dec_init_c);
+
+  // NOTE: LSTMBuilder::start_new_sequence() takes initial states with below
+  //       layout:
+  //         {c1, c2, ..., cn, h1, h2, ..., hn}
+  //       where cx is the initial cell states and hx is the initial outputs.
+  dec_init_states->emplace_back(dec_init_c);
+  dec_init_states->emplace_back(dec_init_h);
+}
+
+DE::Expression EncoderDecoder::buildTrainGraph(
+    const Batch & batch,
+    dynet::ComputationGraph * cg) {
+  const auto & trg = batch.target_id;
+  const int tl = trg.size();
+
+  vector<DE::Expression> fw_enc_outputs, bw_enc_outputs;
+  buildEncoderGraph(batch, cg, &fw_enc_outputs, &bw_enc_outputs);
+
+  vector<DE::Expression> dec_init_states;
+  buildDecoderInitializerGraph(
+      fw_enc_outputs, bw_enc_outputs, cg, &dec_init_states);
 
   // Decoding
   rnn_dec_.new_graph(*cg);
-  // NOTE: start_new_sequence() takes initial states with below layout:
-  //       {c1, c2, ..., cn, h1, h2, ..., hn}
-  rnn_dec_.start_new_sequence({dec_init_c, dec_init_h});
-  Expression dec2out_w = DE::parameter(*cg, p_dec2out_w_);
-  Expression dec2out_b = DE::parameter(*cg, p_dec2out_b_);
-  vector<Expression> losses;
+  rnn_dec_.start_new_sequence(dec_init_states);
+  DE::Expression dec2out_w = DE::parameter(*cg, p_dec2out_w_);
+  DE::Expression dec2out_b = DE::parameter(*cg, p_dec2out_b_);
+  vector<DE::Expression> losses;
 
   // NOTE: First target words are used only the inputs, and final target words
   //       are used only the outputs.
   for (int i = 0; i < tl - 1; ++i) {
-    Expression dec_embed = DE::lookup(*cg, p_dec_lookup_, trg[i]);
-    Expression dec_h = rnn_dec_.add_input(dec_embed);
-    Expression dec_out = dec2out_w * dec_h + dec2out_b;
-    Expression loss = DE::pickneglogsoftmax(dec_out, trg[i + 1]);
+    DE::Expression dec_embed = DE::lookup(*cg, p_dec_lookup_, trg[i]);
+    DE::Expression dec_h = rnn_dec_.add_input(dec_embed);
+    DE::Expression dec_out = dec2out_w * dec_h + dec2out_b;
+    DE::Expression loss = DE::pickneglogsoftmax(dec_out, trg[i + 1]);
     losses.push_back(loss);
   }
-  
-  Expression total_loss = DE::sum_batches(DE::sum(losses));
+
+  DE::Expression total_loss = DE::sum_batches(DE::sum(losses));
   return total_loss;
 }
 

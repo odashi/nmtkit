@@ -10,6 +10,14 @@ namespace nmtkit {
 // Array manipulators.
 class Array {
 public:
+  // Reverse given vector.
+  // Arguments:
+  // arr: Target vector.
+  template <typename T>
+  static void reverse(std::vector<T> * arr) {
+    std::reverse(arr->begin(), arr->end());
+  }
+
   // Sort given vector.
   // Arguments:
   //   arr: Target vector.

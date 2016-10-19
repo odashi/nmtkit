@@ -44,6 +44,30 @@ public:
       dynet::ComputationGraph * cg);
 
 private:
+  // Constructs encoder graph.
+  // Arguments:
+  //   batch: Batch data.
+  //   cg: Target computation graph.
+  //   fw_enc_outputs: Placeholder of the forward encoder outputs.
+  //   bw_enc_outputs: Placeholder of the backward encoder outputs.
+  void buildEncoderGraph(
+      const Batch & batch,
+      dynet::ComputationGraph * cg,
+      std::vector<dynet::expr::Expression> * fw_enc_outputs,
+      std::vector<dynet::expr::Expression> * bw_enc_outputs);
+
+  // Constructs decoder initializer graph.
+  // Arguments:
+  //   fw_enc_outputs: Forward encoder states.
+  //   bw_enc_outputs: Backward encoder states.
+  //   cg: Target computation graph.
+  //   dec_init_states: Placeholder of the initial decoder states.
+  void buildDecoderInitializerGraph(
+      const std::vector<dynet::expr::Expression> & fw_enc_outputs,
+      const std::vector<dynet::expr::Expression> & bw_enc_outputs,
+      dynet::ComputationGraph * cg,
+      std::vector<dynet::expr::Expression> * dec_init_states);
+
   dynet::LSTMBuilder rnn_fw_enc_;
   dynet::LSTMBuilder rnn_bw_enc_;
   dynet::LSTMBuilder rnn_dec_;
