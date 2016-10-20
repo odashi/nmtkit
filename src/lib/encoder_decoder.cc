@@ -1,8 +1,16 @@
 #include <nmtkit/encoder_decoder.h>
 
+/* Input/output mapping for training/force decoding:
+ *
+ *  Encoder Inputs                      Decoder Inputs
+ * +-----------------------------+     +-----------------------------+
+ *  s[0], s[1], s[2], ..., s[n-1]  |||  t[0], t[1], t[2], ..., t[m-2], t[m-1]
+ *                                           +-------------------------------+
+ *                                            Decoder Outputs
+ */
+
 #include <iostream>
 #include <nmtkit/array.h>
-#include <nmtkit/exception.h>
 
 using namespace std;
 
@@ -41,8 +49,8 @@ void EncoderDecoder::buildEncoderGraph(
     dynet::ComputationGraph * cg,
     vector<DE::Expression> * fw_enc_outputs,
     vector<DE::Expression> * bw_enc_outputs) {
-  NMTKIT_CHECK(fw_enc_outputs->empty(), "fw_enc_outputs is not empty.");
-  NMTKIT_CHECK(bw_enc_outputs->empty(), "bw_enc_outputs is not empty.");
+  fw_enc_outputs->clear();
+  bw_enc_outputs->clear();
   const int sl = source_ids.size();
 
   // Embedding lookup
@@ -72,8 +80,9 @@ void EncoderDecoder::buildDecoderInitializerGraph(
     const vector<DE::Expression> & bw_enc_outputs,
     dynet::ComputationGraph * cg,
     vector<DE::Expression> * dec_init_states) {
-  NMTKIT_CHECK(dec_init_states->empty(), "dec_init_states is not empty.");
+  dec_init_states->clear();
 
+  // Encoder -> intermediate node
   DE::Expression enc2ie_w = DE::parameter(*cg, p_enc2ie_w_);
   DE::Expression enc2ie_b = DE::parameter(*cg, p_enc2ie_b_);
   DE::Expression enc_final_h = DE::concatenate(
@@ -81,6 +90,7 @@ void EncoderDecoder::buildDecoderInitializerGraph(
   DE::Expression ie_u = enc2ie_w * enc_final_h + enc2ie_b;
   DE::Expression ie_h = DE::rectify(ie_u);
 
+  // Intermediate node -> decoder
   DE::Expression ie2dec_w = DE::parameter(*cg, p_ie2dec_w_);
   DE::Expression ie2dec_b = DE::parameter(*cg, p_ie2dec_b_);
   DE::Expression dec_init_c = ie2dec_w * ie_h + ie2dec_b;
@@ -94,36 +104,60 @@ void EncoderDecoder::buildDecoderInitializerGraph(
   dec_init_states->emplace_back(dec_init_h);
 }
 
-DE::Expression EncoderDecoder::buildTrainGraph(
-    const Batch & batch,
-    dynet::ComputationGraph * cg) {
-  const auto & trg = batch.target_ids;
-  const int tl = trg.size();
+void EncoderDecoder::buildDecoderGraph(
+    const vector<DE::Expression> & dec_init_states,
+    const vector<vector<unsigned>> & target_ids,
+    dynet::ComputationGraph * cg,
+    vector<DE::Expression> * dec_outputs) {
+  dec_outputs->clear();
+  const unsigned tl = target_ids.size() - 1;
 
-  vector<DE::Expression> fw_enc_outputs, bw_enc_outputs;
-  buildEncoderGraph(batch.source_ids, cg, &fw_enc_outputs, &bw_enc_outputs);
-
-  vector<DE::Expression> dec_init_states;
-  buildDecoderInitializerGraph(
-      fw_enc_outputs, bw_enc_outputs, cg, &dec_init_states);
-
-  // Decoding
   rnn_dec_.new_graph(*cg);
   rnn_dec_.start_new_sequence(dec_init_states);
   DE::Expression dec2out_w = DE::parameter(*cg, p_dec2out_w_);
   DE::Expression dec2out_b = DE::parameter(*cg, p_dec2out_b_);
-  vector<DE::Expression> losses;
 
-  // NOTE: First target words are used only the inputs, and final target words
-  //       are used only the outputs.
-  for (int i = 0; i < tl - 1; ++i) {
-    DE::Expression dec_embed = DE::lookup(*cg, p_dec_lookup_, trg[i]);
-    DE::Expression dec_h = rnn_dec_.add_input(dec_embed);
+  for (unsigned i = 0; i < tl; ++i) {
+    DE::Expression embed = DE::lookup(*cg, p_dec_lookup_, target_ids[i]);
+    DE::Expression dec_h = rnn_dec_.add_input(embed);
     DE::Expression dec_out = dec2out_w * dec_h + dec2out_b;
-    DE::Expression loss = DE::pickneglogsoftmax(dec_out, trg[i + 1]);
-    losses.push_back(loss);
+    dec_outputs->emplace_back(dec_out);
   }
+}
 
+void EncoderDecoder::buildLossGraph(
+    const vector<vector<unsigned>> & target_ids,
+    const vector<DE::Expression> & dec_outputs,
+    vector<DE::Expression> * losses) {
+  losses->clear();
+  const unsigned tl = target_ids.size() - 1;
+
+  for (unsigned i = 0; i < tl; ++i) {
+    DE::Expression loss = DE::pickneglogsoftmax(
+        dec_outputs[i], target_ids[i + 1]);
+    losses->emplace_back(loss);
+  }
+}
+
+DE::Expression EncoderDecoder::buildTrainGraph(
+    const Batch & batch,
+    dynet::ComputationGraph * cg) {
+  // Encode
+  vector<DE::Expression> fw_enc_outputs, bw_enc_outputs;
+  buildEncoderGraph(batch.source_ids, cg, &fw_enc_outputs, &bw_enc_outputs);
+
+  // Initialize decoder
+  vector<DE::Expression> dec_init_states;
+  buildDecoderInitializerGraph(
+      fw_enc_outputs, bw_enc_outputs, cg, &dec_init_states);
+
+  // Decode
+  vector<DE::Expression> dec_outputs;
+  buildDecoderGraph(dec_init_states, batch.target_ids, cg, &dec_outputs);
+
+  // Calculate losses
+  vector<DE::Expression> losses;
+  buildLossGraph(batch.target_ids, dec_outputs, &losses);
   DE::Expression total_loss = DE::sum_batches(DE::sum(losses));
   return total_loss;
 }

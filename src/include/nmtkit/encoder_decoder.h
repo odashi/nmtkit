@@ -69,6 +69,28 @@ private:
       dynet::ComputationGraph * cg,
       std::vector<dynet::expr::Expression> * dec_init_states);
 
+  // Constructs decoder graph for training.
+  // Arguments:
+  //   dec_init_states: List of decoder initial states.
+  //   target_ids: Target word IDs for this step.
+  //   cg: Target computation graph.
+  //   dec_outputs: Placeholder of the decoder output distributions.
+  void buildDecoderGraph(
+      const std::vector<dynet::expr::Expression> & dec_init_states,
+      const std::vector<std::vector<unsigned>> & target_ids,
+      dynet::ComputationGraph * cg,
+      std::vector<dynet::expr::Expression> * dec_outputs);
+
+  // Constructs graph of the output loss function.
+  // Arguments:
+  //   target_ids: Target word IDs for this step.
+  //   dec_outputs: Decoder output distributions.
+  //   losses: Placeholder of the loss expressions.
+  void buildLossGraph(
+      const std::vector<std::vector<unsigned>> & target_ids,
+      const std::vector<dynet::expr::Expression> & dec_outputs,
+      std::vector<dynet::expr::Expression> * losses);
+
   dynet::LSTMBuilder rnn_fw_enc_;
   dynet::LSTMBuilder rnn_bw_enc_;
   dynet::LSTMBuilder rnn_dec_;
