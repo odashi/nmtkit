@@ -170,7 +170,7 @@ void run(int argc, char * argv[]) try {
       trainer.update();
 
       ++num_trained_batches;
-      num_trained_samples += batch.source_id[0].size();
+      num_trained_samples += batch.source_ids[0].size();
 
       //const auto fmt = boost::format("iter=%8d, loss=%.6e") 
       //    % iteration
@@ -195,7 +195,7 @@ void run(int argc, char * argv[]) try {
           dynet::ComputationGraph cg;
           dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
               batch, &cg);
-          num_outputs += batch.target_id.size() - 1;
+          num_outputs += batch.target_ids.size() - 1;
           total_loss += static_cast<float>(
               dynet::as_scalar(cg.forward(total_loss_expr)));
         }
@@ -218,7 +218,7 @@ void run(int argc, char * argv[]) try {
           dynet::ComputationGraph cg;
           dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
               batch, &cg);
-          num_outputs += batch.target_id.size() - 1;
+          num_outputs += batch.target_ids.size() - 1;
           total_loss += static_cast<float>(
               dynet::as_scalar(cg.forward(total_loss_expr)));
         }

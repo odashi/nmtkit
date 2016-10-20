@@ -2,6 +2,7 @@
 #define NMTKIT_ENCODER_DECODER_H_
 
 #include <string>
+#include <vector>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
 #include <dynet/lstm.h>
@@ -46,12 +47,12 @@ public:
 private:
   // Constructs encoder graph.
   // Arguments:
-  //   batch: Batch data.
+  //   source_ids: List of Source word IDs.
   //   cg: Target computation graph.
   //   fw_enc_outputs: Placeholder of the forward encoder outputs.
   //   bw_enc_outputs: Placeholder of the backward encoder outputs.
   void buildEncoderGraph(
-      const Batch & batch,
+      const std::vector<std::vector<unsigned>> & source_ids,
       dynet::ComputationGraph * cg,
       std::vector<dynet::expr::Expression> * fw_enc_outputs,
       std::vector<dynet::expr::Expression> * bw_enc_outputs);

@@ -37,15 +37,15 @@ BOOST_AUTO_TEST_CASE(CheckConvertion) {
   nmtkit::Batch observed;
   conv.convert(input, &observed);
   return;
-  for (unsigned i = 0; i < expected.source_id.size(); ++i) {
+  for (unsigned i = 0; i < expected.source_ids.size(); ++i) {
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        expected.source_id[i].begin(), expected.source_id[i].end(),
-        observed.source_id[i].begin(), observed.source_id[i].end());
+        expected.source_ids[i].begin(), expected.source_ids[i].end(),
+        observed.source_ids[i].begin(), observed.source_ids[i].end());
   }
-  for (unsigned i = 0; i < expected.target_id.size(); ++i) {
+  for (unsigned i = 0; i < expected.target_ids.size(); ++i) {
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        expected.target_id[i].begin(), expected.target_id[i].end(),
-        observed.target_id[i].begin(), observed.target_id[i].end());
+        expected.target_ids[i].begin(), expected.target_ids[i].end(),
+        observed.target_ids[i].begin(), observed.target_ids[i].end());
   }
 }
 

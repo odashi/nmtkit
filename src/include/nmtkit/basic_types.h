@@ -16,10 +16,10 @@ struct Sample {
 
 struct Batch {
   // Source word ID table with shape (max_source_length, batch_size).
-  std::vector<std::vector<unsigned>> source_id;
+  std::vector<std::vector<unsigned>> source_ids;
   
   // Target word iID table with shape (max_source_length, batch_size).
-  std::vector<std::vector<unsigned>> target_id;
+  std::vector<std::vector<unsigned>> target_ids;
 };
 
 }  // namespace nmtkit

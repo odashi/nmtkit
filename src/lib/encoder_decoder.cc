@@ -37,20 +37,18 @@ EncoderDecoder::EncoderDecoder(
 };
 
 void EncoderDecoder::buildEncoderGraph(
-    const Batch & batch,
+    const vector<vector<unsigned>> & source_ids,
     dynet::ComputationGraph * cg,
     vector<DE::Expression> * fw_enc_outputs,
     vector<DE::Expression> * bw_enc_outputs) {
   NMTKIT_CHECK(fw_enc_outputs->empty(), "fw_enc_outputs is not empty.");
   NMTKIT_CHECK(bw_enc_outputs->empty(), "bw_enc_outputs is not empty.");
-
-  const auto & src = batch.source_id;
-  const int sl = src.size();
+  const int sl = source_ids.size();
 
   // Embedding lookup
   vector<DE::Expression> embeds;
   for (int i = 0; i < sl; ++i) {
-    embeds.emplace_back(DE::lookup(*cg, p_enc_lookup_, src[i]));
+    embeds.emplace_back(DE::lookup(*cg, p_enc_lookup_, source_ids[i]));
   }
 
   // Forward encoding
@@ -99,11 +97,11 @@ void EncoderDecoder::buildDecoderInitializerGraph(
 DE::Expression EncoderDecoder::buildTrainGraph(
     const Batch & batch,
     dynet::ComputationGraph * cg) {
-  const auto & trg = batch.target_id;
+  const auto & trg = batch.target_ids;
   const int tl = trg.size();
 
   vector<DE::Expression> fw_enc_outputs, bw_enc_outputs;
-  buildEncoderGraph(batch, cg, &fw_enc_outputs, &bw_enc_outputs);
+  buildEncoderGraph(batch.source_ids, cg, &fw_enc_outputs, &bw_enc_outputs);
 
   vector<DE::Expression> dec_init_states;
   buildDecoderInitializerGraph(

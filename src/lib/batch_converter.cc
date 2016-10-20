@@ -42,8 +42,8 @@ void BatchConverter::convert(const vector<Sample> & samples, Batch * batch) {
     }
   }
 
-  batch->source_id = std::move(src);
-  batch->target_id = std::move(trg);
+  batch->source_ids = std::move(src);
+  batch->target_ids = std::move(trg);
 }
 
 }  // namespace nmtkit
