@@ -32,13 +32,13 @@ void BatchConverter::convert(const vector<Sample> & samples, Batch * batch) {
     src[0][i] = src_bos_id_;
     src[sl + 1][i] = src_eos_id_;
     for (unsigned j = 0; j < sl; ++j) {
-      src[j][i] = j < s.source.size() ? s.source[j] : 0;
+      src[j + 1][i] = j < s.source.size() ? s.source[j] : src_eos_id_;
     }
 
     trg[0][i] = trg_bos_id_;
     trg[tl + 1][i] = trg_eos_id_;
     for (unsigned j = 0; j < tl; ++j) {
-      trg[j][i] = j < s.target.size() ? s.target[j] : 0;
+      trg[j + 1][i] = j < s.target.size() ? s.target[j] : trg_eos_id_;
     }
   }
 
