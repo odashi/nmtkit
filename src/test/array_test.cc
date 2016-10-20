@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(CheckSortingIntegers) {
 
   for (unsigned i = 0; i < test_data.size(); ++i) {
     vector<int> input = test_data[i];
-    nmtkit::Array::sort(&input, less<int>());
+    nmtkit::Array::sort(&input);  // less<int>()
     BOOST_CHECK_EQUAL_COLLECTIONS(
         expected_less[i].begin(), expected_less[i].end(),
         input.begin(), input.end());
@@ -133,6 +133,16 @@ BOOST_AUTO_TEST_CASE(CheckShufflingDistributions) {
       }
     }
   }
+}
+
+BOOST_AUTO_TEST_CASE(CheckArgmax) {
+  const vector<int> values {-2, -1, 0, 1, 2, 3};
+  BOOST_CHECK_EQUAL(5, nmtkit::Array::argmax(values));  // greater<int>()
+  BOOST_CHECK_EQUAL(0, nmtkit::Array::argmax(values, less<int>()));
+  BOOST_CHECK_EQUAL(
+      2,
+      nmtkit::Array::argmax(values, [](int a, int b) { return -a*a > -b*b; }));
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()

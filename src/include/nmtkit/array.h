@@ -2,6 +2,7 @@
 #define NMTKIT_ARRAY_H_
 
 #include <algorithm>
+#include <functional>
 #include <utility>
 #include <nmtkit/random.h>
 
@@ -16,6 +17,14 @@ public:
   template <typename T>
   static void reverse(std::vector<T> * arr) {
     std::reverse(arr->begin(), arr->end());
+  }
+
+  // Sort given vector using less (<) function.
+  // Arguments:
+  //   arr: Target vector.
+  template <typename T>
+  static void sort(std::vector<T> * arr) {
+    sort(arr, std::less<T>());
   }
 
   // Sort given vector.
@@ -67,6 +76,35 @@ public:
         std::swap((*arr)[i], (*arr)[j]);
       }
     }
+  }
+
+  // Retrieves argmax value of given vector using greater(>) function.
+  // Arguments:
+  //   arr: Target vector.
+  //
+  // Returns:
+  //   Argmax index value.
+  template <typename T>
+  static unsigned argmax(const std::vector<T> & arr) {
+    return argmax(arr, std::greater<T>());
+  }
+
+  // Retrieves argmax value of given vector.
+  // Arguments:
+  //   arr: Target vector.
+  //   greater: Predicate indicating first arg > second arg.
+  //
+  // Returns:
+  //   Argmax index value.
+  template <typename T, typename P>
+  static unsigned argmax(const std::vector<T> & arr, P greater) {
+    unsigned ret = 0;
+    for (unsigned i = 1; i < arr.size(); ++i) {
+      if (greater(arr[i], arr[ret])) {
+        ret = i;
+      }
+    }
+    return ret;
   }
 };
 
