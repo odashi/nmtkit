@@ -9,7 +9,6 @@
  *                                            Decoder Outputs
  */
 
-#include <iostream>
 #include <nmtkit/array.h>
 
 using namespace std;
@@ -125,6 +124,41 @@ void EncoderDecoder::buildDecoderGraph(
   }
 }
 
+void EncoderDecoder::decodeForInference(
+    const vector<DE::Expression> & dec_init_states,
+    const unsigned bos_id,
+    const unsigned eos_id,
+    const unsigned max_length,
+    dynet::ComputationGraph * cg,
+    vector<InferenceGraph::Node> * outputs) {
+  outputs->clear();
+
+  rnn_dec_.new_graph(*cg);
+  rnn_dec_.start_new_sequence(dec_init_states);
+  DE::Expression dec2out_w = DE::parameter(*cg, p_dec2out_w_);
+  DE::Expression dec2out_b = DE::parameter(*cg, p_dec2out_b_);
+
+  outputs->emplace_back(InferenceGraph::Node {bos_id, 0.0f});
+
+  while (outputs->back().word_id != eos_id && outputs->size() <= max_length) {
+    vector<unsigned> inputs {outputs->back().word_id};
+    DE::Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
+    DE::Expression dec_h = rnn_dec_.add_input(embed);
+    DE::Expression dec_out = dec2out_w * dec_h + dec2out_b;
+    DE::Expression log_probs_expr = DE::log_softmax(dec_out);
+    vector<dynet::real> log_probs = dynet::as_vector(
+        cg->incremental_forward(log_probs_expr));
+
+    unsigned output_id = eos_id;
+    if (outputs->size() < max_length) {
+      output_id = Array::argmax(log_probs);
+    }
+    outputs->emplace_back(InferenceGraph::Node {
+        output_id,
+        static_cast<float>(log_probs[output_id])});
+  }
+}
+
 void EncoderDecoder::buildLossGraph(
     const vector<vector<unsigned>> & target_ids,
     const vector<DE::Expression> & dec_outputs,
@@ -160,6 +194,35 @@ DE::Expression EncoderDecoder::buildTrainGraph(
   buildLossGraph(batch.target_ids, dec_outputs, &losses);
   DE::Expression total_loss = DE::sum_batches(DE::sum(losses));
   return total_loss;
+}
+
+void EncoderDecoder::infer(
+    const vector<unsigned> & source_ids,
+    const unsigned bos_id,
+    const unsigned eos_id,
+    const unsigned max_length,
+    dynet::ComputationGraph * cg,
+    vector<InferenceGraph::Node> * outputs) {
+
+  // Make batch data.
+  vector<vector<unsigned>> source_ids_inner;
+  source_ids_inner.emplace_back(vector<unsigned> {bos_id});
+  for (const unsigned s : source_ids) {
+    source_ids_inner.emplace_back(vector<unsigned> {s});
+  }
+  source_ids_inner.emplace_back(vector<unsigned> {eos_id});
+
+  // Encode
+  vector<DE::Expression> fw_enc_outputs, bw_enc_outputs;
+  buildEncoderGraph(source_ids_inner, cg, &fw_enc_outputs, &bw_enc_outputs);
+
+  // Initialize decoder
+  vector<DE::Expression> dec_init_states;
+  buildDecoderInitializerGraph(
+      fw_enc_outputs, bw_enc_outputs, cg, &dec_init_states);
+
+  // Infer output words
+  decodeForInference(dec_init_states, bos_id, eos_id, max_length, cg, outputs);
 }
 
 }  // namespace nmtkit

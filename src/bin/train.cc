@@ -1,6 +1,8 @@
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <boost/archive/text_oarchive.hpp>
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
@@ -86,6 +88,15 @@ void makeDirectory(const FS::path & dirpath) {
       "Could not create directory: " + dirpath.string());
 }
 
+template <class T>
+void saveParameters(const FS::path & filepath, const T & obj) {
+  std::ofstream ofs(filepath.string());
+  NMTKIT_CHECK(
+      ofs.is_open(), "Could not open file to write: " + filepath.string());
+  boost::archive::text_oarchive oar(ofs);
+  oar << obj;
+}
+
 void run(int argc, char * argv[]) try {
   // parse commandline args and config file.
   const auto args = ::parseArgs(argc, argv);
@@ -110,26 +121,28 @@ void run(int argc, char * argv[]) try {
   src_vocab.save((outdir / "source.vocab").string());
   trg_vocab.save((outdir / "target.vocab").string());
 
+  // "<s>" and "</s>" IDs
+  const unsigned bos_id = trg_vocab.getID("<s>");
+  const unsigned eos_id = trg_vocab.getID("</s>");
+
+  // maximum lengths
+  const unsigned max_length = config.get<unsigned>("Train.max_length");
+
   // create samplers and batch converter.
   nmtkit::SortedRandomSampler train_sampler(
       config.get<string>("Corpus.train_source"),
       config.get<string>("Corpus.train_target"),
-      src_vocab, trg_vocab,
-      config.get<unsigned>("Train.train_max_length"),
+      src_vocab, trg_vocab, max_length,
       config.get<unsigned>("Train.num_words_in_batch"),
       config.get<unsigned>("Train.random_seed"));
   nmtkit::MonotoneSampler dev_sampler(
-      config.get<string>("Corpus.development_source"),
-      config.get<string>("Corpus.development_target"),
-      src_vocab, trg_vocab,
-      config.get<unsigned>("Train.development_max_length"),
-      1);
+      config.get<string>("Corpus.dev_source"),
+      config.get<string>("Corpus.dev_target"),
+      src_vocab, trg_vocab, max_length, 1);
   nmtkit::MonotoneSampler test_sampler(
       config.get<string>("Corpus.test_source"),
       config.get<string>("Corpus.test_target"),
-      src_vocab, trg_vocab,
-      config.get<unsigned>("Train.test_max_length"),
-      1);
+      src_vocab, trg_vocab, max_length, 1);
   nmtkit::BatchConverter batch_converter(src_vocab, trg_vocab);
 
   // create new trainer and EncoderDecoder model.
@@ -151,8 +164,6 @@ void run(int argc, char * argv[]) try {
   const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
   const unsigned eval_interval = config.get<unsigned>(
       "Train.evaluation_interval");
-  vector<nmtkit::Sample> samples;
-  nmtkit::Batch batch;
   unsigned long num_trained_batches = 0;
   unsigned long num_trained_samples = 0;
   for (unsigned iteration = 1; iteration <= max_iteration; ++iteration) {
@@ -171,12 +182,6 @@ void run(int argc, char * argv[]) try {
 
       ++num_trained_batches;
       num_trained_samples += batch.source_ids[0].size();
-
-      //const auto fmt = boost::format("iter=%8d, loss=%.6e") 
-      //    % iteration
-      //    % total_loss;
-      //cout << fmt.str() << endl;
-
       if (!train_sampler.hasSamples()) {
         train_sampler.rewind();
       }
@@ -199,6 +204,28 @@ void run(int argc, char * argv[]) try {
           total_loss += static_cast<float>(
               dynet::as_scalar(cg.forward(total_loss_expr)));
         }
+        dev_sampler.rewind();
+
+        while (dev_sampler.hasSamples()) {
+          vector<nmtkit::Sample> samples;
+          dev_sampler.getSamples(&samples);
+          dynet::ComputationGraph cg;
+          vector<nmtkit::InferenceGraph::Node> outputs;
+          encdec.infer(
+              samples[0].source, bos_id, eos_id, max_length, &cg, &outputs);
+          cout << "Output words:";
+          for (const auto & output : outputs) {
+            cout << ' ' << trg_vocab.getWord(output.word_id);
+          }
+          cout << endl;
+          cout << "Output logprobs:";
+          for (const auto & output : outputs) {
+            cout << ' ' << output.log_prob;
+          }
+          cout << endl;
+          break;
+        }
+
         const float log_ppl = total_loss / num_outputs;
         const auto fmt = boost::format("iter: %8d, dev-log-ppl: %.6e")
             % iteration
@@ -222,6 +249,7 @@ void run(int argc, char * argv[]) try {
           total_loss += static_cast<float>(
               dynet::as_scalar(cg.forward(total_loss_expr)));
         }
+
         const float log_ppl = total_loss / num_outputs;
         const auto fmt = boost::format("iter: %8d, test-log-ppl: %.6e")
             % iteration
@@ -229,6 +257,11 @@ void run(int argc, char * argv[]) try {
         cout << fmt.str() << endl;
         test_sampler.rewind();
       }
+
+      ::saveParameters(outdir / "latest.trainer", trainer);
+      ::saveParameters(outdir / "latest.model", encdec);
+
+      cout << endl;
     }
   }
 } catch (exception & ex) {

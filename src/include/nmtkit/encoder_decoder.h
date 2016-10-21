@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <boost/serialization/serialization.hpp>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
 #include <dynet/lstm.h>
@@ -10,6 +11,14 @@
 #include <nmtkit/basic_types.h>
 
 namespace nmtkit {
+
+class InferenceGraph {
+public:
+  struct Node {
+    unsigned word_id;
+    float log_prob;
+  };
+};
 
 class EncoderDecoder {
   EncoderDecoder() = delete;
@@ -44,10 +53,26 @@ public:
       const Batch & batch,
       dynet::ComputationGraph * cg);
 
+  // Generates output sentence using given input sentence.
+  // Arguments:
+  //   source_ids: List of source word IDs.
+  //   bos_id: "<s>" ID in the target language.
+  //   eos_id: "</s>" ID in the target language.
+  //   max_length: Maximum number of words (except "<s>") to be generated.
+  //   cg: Target computation graph.
+  //   outputs: Placeholder of the output information.
+  void infer(
+      const std::vector<unsigned> & source_ids,
+      const unsigned bos_id,
+      const unsigned eos_id,
+      const unsigned max_length,
+      dynet::ComputationGraph * cg,
+      std::vector<InferenceGraph::Node> * outputs);
+
 private:
   // Constructs encoder graph.
   // Arguments:
-  //   source_ids: List of Source word IDs.
+  //   source_ids: List of source word IDs.
   //   cg: Target computation graph.
   //   fw_enc_outputs: Placeholder of the forward encoder outputs.
   //   bw_enc_outputs: Placeholder of the backward encoder outputs.
@@ -90,6 +115,33 @@ private:
       const std::vector<std::vector<unsigned>> & target_ids,
       const std::vector<dynet::expr::Expression> & dec_outputs,
       std::vector<dynet::expr::Expression> * losses);
+
+  // Generates output sequence using encoder results.
+  // Arguments:
+  //   dec_init_states: List of decoder initial states.
+  //   bos_id: "<s>" ID in the target language.
+  //   eos_id: "</s>" ID in the target language.
+  //   max_length: Maximum number of words (except "<s>") to be generated.
+  //   cg: Target computation graph.
+  //   outputs: Placeholder of the output information.
+  void decodeForInference(
+      const std::vector<dynet::expr::Expression> & dec_init_states,
+      const unsigned bos_id,
+      const unsigned eos_id,
+      const unsigned max_length,
+      dynet::ComputationGraph * cg,
+      std::vector<InferenceGraph::Node> * outputs);
+
+  // Boost serialization interface.
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive & ar, const unsigned int) {
+    ar & rnn_fw_enc_ & rnn_bw_enc_ & rnn_dec_;
+    ar & p_enc_lookup_ & p_dec_lookup_;
+    ar & p_enc2ie_w_ & p_enc2ie_b_;
+    ar & p_ie2dec_w_ & p_ie2dec_b_;
+    ar & p_dec2out_w_ & p_dec2out_b_;
+  }
 
   dynet::LSTMBuilder rnn_fw_enc_;
   dynet::LSTMBuilder rnn_bw_enc_;
