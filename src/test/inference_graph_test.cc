@@ -61,11 +61,25 @@ BOOST_AUTO_TEST_CASE(CheckConnecting) {
   graph.connect(nodes[0], nodes[2]);
   graph.connect(nodes[1], nodes[2]);
   graph.connect(nodes[2], nodes[3]);
-  vector<unsigned> expected_num_prev1 {0, 1, 2, 1};
-  vector<unsigned> expected_num_next1 {2, 1, 1, 0};
+  vector<vector<const nmtkit::InferenceGraph::Node *>> expected_prev1 {
+    {},
+    {nodes[0]},
+    {nodes[0], nodes[1]},
+    {nodes[2]},
+  };
+  vector<vector<const nmtkit::InferenceGraph::Node *>> expected_next1 {
+    {nodes[1], nodes[2]},
+    {nodes[2]},
+    {nodes[3]},
+    {},
+  };
   for (unsigned i = 0; i < nodes.size(); ++i) {
-    BOOST_CHECK_EQUAL(expected_num_prev1[i], nodes[i]->prev().size());
-    BOOST_CHECK_EQUAL(expected_num_next1[i], nodes[i]->next().size());
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected_prev1[i].begin(), expected_prev1[i].end(),
+        nodes[i]->prev().begin(), nodes[i]->prev().end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected_next1[i].begin(), expected_next1[i].end(),
+        nodes[i]->next().begin(), nodes[i]->next().end());
   }
 
   graph.connect(nodes[3], nodes[0]);
@@ -73,11 +87,25 @@ BOOST_AUTO_TEST_CASE(CheckConnecting) {
   graph.connect(nodes[3], nodes[2]);
   graph.connect(nodes[3], nodes[3]);  // self loop
   graph.connect(nodes[0], nodes[1]);  // duplicated connection
-  vector<unsigned> expected_num_prev2 {1, 2, 3, 2};
-  vector<unsigned> expected_num_next2 {2, 1, 1, 4};
+  vector<vector<const nmtkit::InferenceGraph::Node *>> expected_prev2 {
+    {nodes[3]},
+    {nodes[0], nodes[3]},
+    {nodes[0], nodes[1], nodes[3]},
+    {nodes[2], nodes[3]},
+  };
+  vector<vector<const nmtkit::InferenceGraph::Node *>> expected_next2 {
+    {nodes[1], nodes[2]},
+    {nodes[2]},
+    {nodes[3]},
+    {nodes[0], nodes[1], nodes[2], nodes[3]},
+  };
   for (unsigned i = 0; i < nodes.size(); ++i) {
-    BOOST_CHECK_EQUAL(expected_num_prev2[i], nodes[i]->prev().size());
-    BOOST_CHECK_EQUAL(expected_num_next2[i], nodes[i]->next().size());
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected_prev2[i].begin(), expected_prev2[i].end(),
+        nodes[i]->prev().begin(), nodes[i]->prev().end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected_next2[i].begin(), expected_next2[i].end(),
+        nodes[i]->next().begin(), nodes[i]->next().end());
   }
 }
 
