@@ -1,0 +1,3 @@
+[submodule "submodules/mteval"]
+	path = submodules/mteval
+	url = git@github.com:odashi/mteval

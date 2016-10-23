@@ -36,6 +36,7 @@ AC_CONFIG_FILES([Makefile
                  src/include/Makefile
                  src/lib/Makefile
                  src/test/Makefile
+                 submodules/Makefile
 ])
 
 AC_CONFIG_MACRO_DIR([m4])
@@ -48,5 +49,7 @@ AX_BOOST_SYSTEM
 
 AX_EIGEN
 AX_DYNET
+
+AC_CONFIG_SUBDIRS([submodules/mteval])
 
 AC_OUTPUT

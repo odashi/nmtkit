@@ -1,6 +1,10 @@
 lib_LTLIBRARIES = libnmtkit.la
 
-AM_CXXFLAGS = -I$(srcdir)/../include $(BOOST_CPPFLAGS) $(EIGEN_CPPFLAGS) $(DYNET_CPPFLAGS)
+AM_CXXFLAGS = \
+  -I$(top_builddir)/src/include \
+  $(BOOST_CPPFLAGS) \
+  $(EIGEN_CPPFLAGS) \
+  $(DYNET_CPPFLAGS)
 
 libnmtkit_la_SOURCES = \
   corpus.cc \
