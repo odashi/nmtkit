@@ -12,6 +12,7 @@ check_PROGRAMS = \
   array_test \
   batch_converter_test \
   corpus_test \
+  inference_graph_test \
   monotone_sampler_test \
   random_test \
   random_sampler_test \
@@ -22,6 +23,7 @@ TESTS = \
   array_test \
   batch_converter_test \
   corpus_test \
+  inference_graph_test \
   monotone_sampler_test \
   random_test \
   random_sampler_test \
@@ -31,6 +33,7 @@ TESTS = \
 array_test_SOURCES = array_test.cc
 batch_converter_test_SOURCES = batch_converter_test.cc
 corpus_test_SOURCES = corpus_test.cc
+inference_graph_test_SOURCES = inference_graph_test.cc
 monotone_sampler_test_SOURCES = monotone_sampler_test.cc
 random_test_SOURCES = random_test.cc
 random_sampler_test_SOURCES = random_sampler_test.cc

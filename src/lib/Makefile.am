@@ -10,6 +10,7 @@ libnmtkit_la_SOURCES = \
   corpus.cc \
   batch_converter.cc \
   encoder_decoder.cc \
+  inference_graph.cc \
   monotone_sampler.cc \
   random.cc \
   random_sampler.cc \

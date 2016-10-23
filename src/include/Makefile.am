@@ -5,6 +5,7 @@ nobase_include_HEADERS = \
   nmtkit/corpus.h \
   nmtkit/encoder_decoder.h \
   nmtkit/exception.h \
+  nmtkit/inference_graph.h \
 	nmtkit/monotone_sampler.h \
   nmtkit/random.h \
   nmtkit/random_sampler.h \
