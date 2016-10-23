@@ -1,6 +1,7 @@
 #ifndef NMTKIT_CORPUS_H_
 #define NMTKIT_CORPUS_H_
 
+#include <istream>
 #include <string>
 #include <vector>
 #include <nmtkit/basic_types.h>
@@ -16,6 +17,27 @@ class Corpus {
   Corpus & operator=(Corpus &&) = delete;
 
 public:
+  // Reads one line from input stream.
+  // Arguments:
+  //   is: Target input stream.
+  //   words: Placeholder to store new words. Old data will be deleted
+  //          automatically before storing new samples.
+  //
+  // Returns:
+  //   true if reading completed successfully, false otherwise (e.g. EOF).
+  static bool readTokens(std::istream * is, std::vector<std::string> * words);
+
+  // Converts words into word-IDs.
+  // Arguments:
+  //   words: List of words.
+  //   vocab: Vocabulary object to be used in conversion process.
+  //   ids: Placeholder to store new word IDs. Old data will be deleted
+  //        automatically before storing new samples.
+  static void wordsToWordIDs(
+      const std::vector<std::string> & words,
+      const nmtkit::Vocabulary & vocab,
+      std::vector<unsigned> * ids);
+
   // Loads all samples in the tokenized corpus.
   // Arguments:
   //   filepath: Location of the corpus file.

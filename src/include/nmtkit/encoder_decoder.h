@@ -14,13 +14,15 @@
 namespace nmtkit {
 
 class EncoderDecoder {
-  EncoderDecoder() = delete;
   EncoderDecoder(const EncoderDecoder &) = delete;
   EncoderDecoder(EncoderDecoder &&) = delete;
   EncoderDecoder & operator=(const EncoderDecoder &) = delete;
   EncoderDecoder & operator=(EncoderDecoder &&) = delete;
 
 public:
+  // Constructs an empty encoder-decoder model.
+  EncoderDecoder() {}
+  
   // Constructs a new encoder-decoder model.
   // Arguments:
   //   src_vocab_size: Source vocabulary size.

@@ -16,8 +16,11 @@ LDADD = \
   $(DYNET_LDFLAGS) \
   $(top_builddir)/submodules/mteval/src/lib/libmteval.la
 
-bin_PROGRAMS = train
+bin_PROGRAMS = train decode
 
 train_SOURCES = train.cc
 train_LDADD = $(LDADD)
+
+decode_SOURCES = decode.cc
+decode_LDADD = $(LDADD)
 

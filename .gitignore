@@ -25,6 +25,7 @@ mydata
 stamp-h1
 test-driver
 
+src/bin/decode
 src/bin/train
 src/test/*_test
 

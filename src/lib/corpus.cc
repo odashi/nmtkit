@@ -6,12 +6,11 @@
 
 using namespace std;
 
-namespace {
+namespace nmtkit {
 
-// Reads one line from the input stream and split into words.
-bool readTokens(ifstream * ifs, vector<string> * words) {
+bool Corpus::readTokens(istream * is, vector<string> * words) {
   string line;
-  if (!getline(*ifs, line)) {
+  if (!getline(*is, line)) {
     return false;
   }
   boost::trim(line);
@@ -20,8 +19,7 @@ bool readTokens(ifstream * ifs, vector<string> * words) {
   return true;
 }
 
-// Converts words into word-IDs.
-void convertToIDs(
+void Corpus::wordsToWordIDs(
     const vector<string> & words,
     const nmtkit::Vocabulary & vocab,
     vector<unsigned> * ids) {
@@ -30,10 +28,6 @@ void convertToIDs(
     (*ids)[i] = vocab.getID(words[i]);
   }
 }
-
-}  // namespace
-
-namespace nmtkit {
 
 void Corpus::loadSingleSentences(
     const string & filepath,
@@ -45,9 +39,9 @@ void Corpus::loadSingleSentences(
 
   result->clear();
   vector<string> words;
-  while (::readTokens(&ifs, &words)) {
+  while (readTokens(&ifs, &words)) {
     result->emplace_back(vector<unsigned>());
-    ::convertToIDs(words, vocab, &result->back());
+    wordsToWordIDs(words, vocab, &result->back());
   }
 }
 
@@ -72,8 +66,8 @@ void Corpus::loadParallelSentences(
   trg_result->clear();
   vector<string> src_words, trg_words;
   while (
-      ::readTokens(&src_ifs, &src_words) &&
-      ::readTokens(&trg_ifs, &trg_words)) {
+      readTokens(&src_ifs, &src_words) &&
+      readTokens(&trg_ifs, &trg_words)) {
 
     // Filters sentences.
     if (src_words.size() > max_length || trg_words.size() > max_length) {
@@ -82,8 +76,8 @@ void Corpus::loadParallelSentences(
 
     src_result->emplace_back(vector<unsigned>());
     trg_result->emplace_back(vector<unsigned>());
-    ::convertToIDs(src_words, src_vocab, &src_result->back());
-    ::convertToIDs(trg_words, trg_vocab, &trg_result->back());
+    wordsToWordIDs(src_words, src_vocab, &src_result->back());
+    wordsToWordIDs(trg_words, trg_vocab, &trg_result->back());
   }
 }
 
@@ -106,8 +100,8 @@ void Corpus::loadParallelSentences(
   result->clear();
   vector<string> src_words, trg_words;
   while (
-      ::readTokens(&src_ifs, &src_words) &&
-      ::readTokens(&trg_ifs, &trg_words)) {
+      readTokens(&src_ifs, &src_words) &&
+      readTokens(&trg_ifs, &trg_words)) {
 
     // Filters sentences.
     if (src_words.size() > max_length || trg_words.size() > max_length) {
@@ -115,8 +109,8 @@ void Corpus::loadParallelSentences(
     }
 
     result->emplace_back(Sample());
-    ::convertToIDs(src_words, src_vocab, &result->back().source);
-    ::convertToIDs(trg_words, trg_vocab, &result->back().target);
+    wordsToWordIDs(src_words, src_vocab, &result->back().source);
+    wordsToWordIDs(trg_words, trg_vocab, &result->back().target);
   }
 }
 

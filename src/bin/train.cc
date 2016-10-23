@@ -39,9 +39,9 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     ("config",
      PO::value<string>(),
      "(required) Location of the training configuration file.")
-    ("output",
+    ("model",
      PO::value<string>(),
-     "(required) Location of the output directory.")
+     "(required) Location of the model directory.")
     ;
 
   PO::options_description opt;
@@ -57,14 +57,14 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     cerr << "NMTKit trainer." << endl;
     cerr << "Author: Yusuke Oda (http://github.com/odashi/)" << endl;
     cerr << "Usage:" << endl;
-    cerr << "  train --config CONFIG_FILE --output OUTPUT_DIRECTORY" << endl;
+    cerr << "  train --config CONFIG_FILE --model MODEL_DIRECTORY" << endl;
     cerr << "  train --help" << endl;
     cerr << opt << endl;
     exit(1);
   }
 
   // check required arguments
-  const vector<string> required_args = {"config", "output"};
+  const vector<string> required_args = {"config", "model"};
   bool ok = true;
   for (const string & arg : required_args) {
     if (!args.count(arg)) {
@@ -102,15 +102,15 @@ void run(int argc, char * argv[]) try {
   // parse commandline args and config file.
   const auto args = ::parseArgs(argc, argv);
 
-  // create output directory.
-  FS::path outdir(args["output"].as<string>());
-  ::makeDirectory(outdir);
+  // create model directory.
+  FS::path model_dir(args["model"].as<string>());
+  ::makeDirectory(model_dir);
 
   // copy and parse config file.
-  FS::path cfgfile = outdir / "config.ini";
-  FS::copy_file(args["config"].as<string>(), cfgfile);
+  FS::path cfg_filepath = model_dir / "config.ini";
+  FS::copy_file(args["config"].as<string>(), cfg_filepath);
   PT::ptree config;
-  PT::read_ini(cfgfile.string(), config);
+  PT::read_ini(cfg_filepath.string(), config);
 
   // create vocabularies.
   nmtkit::Vocabulary src_vocab(
@@ -119,8 +119,8 @@ void run(int argc, char * argv[]) try {
   nmtkit::Vocabulary trg_vocab(
       config.get<string>("Corpus.train_target"),
       config.get<unsigned>("Model.target_vocabulary"));
-  src_vocab.save((outdir / "source.vocab").string());
-  trg_vocab.save((outdir / "target.vocab").string());
+  src_vocab.save((model_dir / "source.vocab").string());
+  trg_vocab.save((model_dir / "target.vocab").string());
 
   // "<s>" and "</s>" IDs
   const unsigned bos_id = trg_vocab.getID("<s>");
@@ -263,8 +263,8 @@ void run(int argc, char * argv[]) try {
         test_sampler.rewind();
       }
 
-      ::saveParameters(outdir / "latest.trainer", trainer);
-      ::saveParameters(outdir / "latest.model", encdec);
+      ::saveParameters(model_dir / "latest.trainer.params", trainer);
+      ::saveParameters(model_dir / "latest.model.params", encdec);
 
       cout << endl;
     }
