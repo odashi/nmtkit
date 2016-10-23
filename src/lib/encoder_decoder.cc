@@ -130,18 +130,19 @@ void EncoderDecoder::decodeForInference(
     const unsigned eos_id,
     const unsigned max_length,
     dynet::ComputationGraph * cg,
-    vector<InferenceGraph::Node> * outputs) {
-  outputs->clear();
+    InferenceGraph * ig) {
+  ig->clear();
 
   rnn_dec_.new_graph(*cg);
   rnn_dec_.start_new_sequence(dec_init_states);
   DE::Expression dec2out_w = DE::parameter(*cg, p_dec2out_w_);
   DE::Expression dec2out_b = DE::parameter(*cg, p_dec2out_b_);
 
-  outputs->emplace_back(InferenceGraph::Node {bos_id, 0.0f});
+  InferenceGraph::Node * prev_node = ig->addNode(
+      InferenceGraph::Label {bos_id, 0.0f});
 
-  while (outputs->back().word_id != eos_id && outputs->size() <= max_length) {
-    vector<unsigned> inputs {outputs->back().word_id};
+  for (unsigned generated = 0; ; ++generated) {
+    vector<unsigned> inputs {prev_node->label().word_id};
     DE::Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
     DE::Expression dec_h = rnn_dec_.add_input(embed);
     DE::Expression dec_out = dec2out_w * dec_h + dec2out_b;
@@ -150,12 +151,17 @@ void EncoderDecoder::decodeForInference(
         cg->incremental_forward(log_probs_expr));
 
     unsigned output_id = eos_id;
-    if (outputs->size() < max_length) {
+    if (generated < max_length - 1) {
       output_id = Array::argmax(log_probs);
     }
-    outputs->emplace_back(InferenceGraph::Node {
-        output_id,
-        static_cast<float>(log_probs[output_id])});
+    InferenceGraph::Node * next_node = ig->addNode(
+        InferenceGraph::Label {
+            output_id, static_cast<float>(log_probs[output_id])});
+    ig->connect(prev_node, next_node);
+    prev_node = next_node;
+    if (output_id == eos_id) {
+      break;
+    }
   }
 }
 
@@ -202,7 +208,7 @@ void EncoderDecoder::infer(
     const unsigned eos_id,
     const unsigned max_length,
     dynet::ComputationGraph * cg,
-    vector<InferenceGraph::Node> * outputs) {
+    InferenceGraph * ig) {
 
   // Make batch data.
   vector<vector<unsigned>> source_ids_inner;
@@ -222,7 +228,7 @@ void EncoderDecoder::infer(
       fw_enc_outputs, bw_enc_outputs, cg, &dec_init_states);
 
   // Infer output words
-  decodeForInference(dec_init_states, bos_id, eos_id, max_length, cg, outputs);
+  decodeForInference(dec_init_states, bos_id, eos_id, max_length, cg, ig);
 }
 
 }  // namespace nmtkit

@@ -19,6 +19,7 @@
 #include <nmtkit/batch_converter.h>
 #include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
+#include <nmtkit/inference_graph.h>
 #include <nmtkit/monotone_sampler.h>
 #include <nmtkit/sorted_random_sampler.h>
 #include <nmtkit/vocabulary.h>
@@ -210,19 +211,23 @@ void run(int argc, char * argv[]) try {
           vector<nmtkit::Sample> samples;
           dev_sampler.getSamples(&samples);
           dynet::ComputationGraph cg;
-          vector<nmtkit::InferenceGraph::Node> outputs;
+          nmtkit::InferenceGraph ig;
           encdec.infer(
-              samples[0].source, bos_id, eos_id, max_length, &cg, &outputs);
-          cout << "Output words:";
-          for (const auto & output : outputs) {
-            cout << ' ' << trg_vocab.getWord(output.word_id);
+              samples[0].source, bos_id, eos_id, max_length, &cg, &ig);
+          cout << "Output[0]:" << endl;
+          vector<const nmtkit::InferenceGraph::Node *> heads;
+          ig.findNodes(&heads, [&](const nmtkit::InferenceGraph::Node & node) {
+              return node.label().word_id == bos_id;
+          });
+          const nmtkit::InferenceGraph::Node * cur_node = heads[0];
+          while (true) {
+            cout << trg_vocab.getWord(cur_node->label().word_id) << ' '
+                 << cur_node->label().log_prob << endl;
+            if (cur_node->next().size() == 0) {
+              break;
+            }
+            cur_node = cur_node->next()[0];
           }
-          cout << endl;
-          cout << "Output logprobs:";
-          for (const auto & output : outputs) {
-            cout << ' ' << output.log_prob;
-          }
-          cout << endl;
           break;
         }
 

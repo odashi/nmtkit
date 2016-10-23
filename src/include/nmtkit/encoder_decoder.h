@@ -9,16 +9,9 @@
 #include <dynet/lstm.h>
 #include <dynet/model.h>
 #include <nmtkit/basic_types.h>
+#include <nmtkit/inference_graph.h>
 
 namespace nmtkit {
-
-class InferenceGraph {
-public:
-  struct Node {
-    unsigned word_id;
-    float log_prob;
-  };
-};
 
 class EncoderDecoder {
   EncoderDecoder() = delete;
@@ -60,14 +53,14 @@ public:
   //   eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
   //   cg: Target computation graph.
-  //   outputs: Placeholder of the output information.
+  //   ig: Placeholder of the output inference graph.
   void infer(
       const std::vector<unsigned> & source_ids,
       const unsigned bos_id,
       const unsigned eos_id,
       const unsigned max_length,
       dynet::ComputationGraph * cg,
-      std::vector<InferenceGraph::Node> * outputs);
+      InferenceGraph * ig);
 
 private:
   // Constructs encoder graph.
@@ -123,14 +116,14 @@ private:
   //   eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
   //   cg: Target computation graph.
-  //   outputs: Placeholder of the output information.
+  //   ig: Placeholder of the output inference graph.
   void decodeForInference(
       const std::vector<dynet::expr::Expression> & dec_init_states,
       const unsigned bos_id,
       const unsigned eos_id,
       const unsigned max_length,
       dynet::ComputationGraph * cg,
-      std::vector<InferenceGraph::Node> * outputs);
+      InferenceGraph * ig);
 
   // Boost serialization interface.
   friend class boost::serialization::access;
