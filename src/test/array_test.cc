@@ -142,7 +142,51 @@ BOOST_AUTO_TEST_CASE(CheckArgmax) {
   BOOST_CHECK_EQUAL(
       2,
       nmtkit::Array::argmax(values, [](int a, int b) { return -a*a > -b*b; }));
+}
 
+BOOST_AUTO_TEST_CASE(CheckKBest) {
+  const vector<vector<int>> values {
+    {0},
+    {-1, 1},
+    {0, -1, 2, 1, -2},
+  };
+  const vector<vector<vector<unsigned>>> expected_greater {
+    { {0} },
+    { {1}, {1, 0} },
+    { {2}, {2, 3}, {2, 3, 0}, {2, 3, 0, 1}, {2, 3, 0, 1, 4} },
+  };
+  const vector<vector<vector<unsigned>>> expected_less {
+    { {0} },
+    { {0}, {0, 1} },
+    { {4}, {4, 1}, {4, 1, 0}, {4, 1, 0, 3}, {4, 1, 0, 3, 2} },
+  };
+  const vector<vector<vector<unsigned>>> expected_sq {
+    { {0} },
+    { {1}, {1, 0} },
+    { {4}, {4, 2}, {4, 2, 3}, {4, 2, 3, 1}, {4, 2, 3, 1, 0} },
+  };
+
+  for (unsigned i = 0; i < values.size(); ++i) {
+    for (unsigned j = 0; j < values[i].size(); ++j) {
+      vector<unsigned> results;
+      nmtkit::Array::kbest(values[i], j + 1, &results);
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          expected_greater[i][j].begin(), expected_greater[i][j].end(),
+          results.begin(), results.end());
+
+      nmtkit::Array::kbest(values[i], j + 1, &results, less<int>());
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          expected_less[i][j].begin(), expected_less[i][j].end(),
+          results.begin(), results.end());
+
+      nmtkit::Array::kbest(values[i], j + 1, &results, [](int a, int b) {
+          return a*a > b*b;
+      });
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          expected_sq[i][j].begin(), expected_sq[i][j].end(),
+          results.begin(), results.end());
+    }
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

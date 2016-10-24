@@ -3,7 +3,9 @@
 
 #include <algorithm>
 #include <functional>
+#include <numeric>
 #include <utility>
+#include <nmtkit/exception.h>
 #include <nmtkit/random.h>
 
 namespace nmtkit {
@@ -37,17 +39,9 @@ public:
     auto downheap = [&](int k, int r) {
       while (true) {
         int j = (k << 1) + 1;
-        if (j > r) {
-          break;
-        }
-        if (j != r) {
-          if (less((*arr)[j], (*arr)[j + 1])) {
-            ++j;
-          }
-        }
-        if (less((*arr)[j], (*arr)[k])) {
-          break;
-        }
+        if (j > r) break;
+        if (j != r && less((*arr)[j], (*arr)[j + 1])) ++j;
+        if (less((*arr)[j], (*arr)[k])) break;
         std::swap((*arr)[k], (*arr)[j]);
         k = j;
       }
@@ -92,12 +86,13 @@ public:
   // Retrieves argmax value of given vector.
   // Arguments:
   //   arr: Target vector.
-  //   greater: Predicate indicating first arg > second arg.
+  //   greater: Predicate indicating first-arg > second-arg.
   //
   // Returns:
   //   Argmax index value.
   template <typename T, typename P>
   static unsigned argmax(const std::vector<T> & arr, P greater) {
+    NMTKIT_CHECK(arr.size() >= 1, "Given array is empty.");
     unsigned ret = 0;
     for (unsigned i = 1; i < arr.size(); ++i) {
       if (greater(arr[i], arr[ret])) {
@@ -105,6 +100,64 @@ public:
       }
     }
     return ret;
+  }
+
+  // Retrieves k-best indices of given vector using greater(>) function.
+  // Arguments:
+  //   arr: Target vector.
+  //   num_results: Number of results to be obtained.
+  //   results: Placeholder of the k-best indices. Old values will be deleted
+  //            automatically before string new results.
+  template <typename T>
+  static void kbest(
+      const std::vector<T> & arr,
+      const unsigned num_results,
+      std::vector<unsigned> * results) {
+    return kbest(arr, num_results, results, std::greater<T>());
+  }
+
+  // Retrieves k-best indices of given vector.
+  // Arguments:
+  //   arr: Target vector.
+  //   num_results: Number of results to be obtained.
+  //   results: Placeholder of the k-best indices. Old values will be deleted
+  //            automatically before string new results.
+  //   greater: Predicate indicating first-arg > second-arg.
+  template <typename T, typename P>
+  static void kbest(
+      const std::vector<T> & arr,
+      const unsigned num_results,
+      std::vector<unsigned> * results,
+      P greater) {
+    // Implementing based on heap sort
+    const int n = arr.size();
+    NMTKIT_CHECK(
+        n >= static_cast<int>(num_results),
+        "Given array size should be greater than or equal to num_results.");
+    std::vector<unsigned> ids(n);
+    std::iota(ids.begin(), ids.end(), 0);
+    auto downheap = [&](int k, int r) {
+      while (true) {
+        int j = (k << 1) + 1;
+        if (j > r) break;
+        if (j != r && greater(arr[ids[j + 1]], arr[ids[j]])) ++j;
+        if (greater(arr[ids[k]], arr[ids[j]])) break;
+        std::swap(ids[k], ids[j]);
+        k = j;
+      }
+    };
+    for (int i = (n - 2) >> 1; i >= 0; --i) {
+      downheap(i, n - 1);
+    }
+    const int border = n - num_results;
+    for (int i = n - 1; i > 0 && i >= border; --i) {
+      std::swap(ids[0], ids[i]);
+      downheap(0, i - 1);
+    }
+    results->clear();
+    for (int i = n - 1; i >= border; --i) {
+      results->emplace_back(ids[i]);
+    }
   }
 };
 
