@@ -1,5 +1,8 @@
 #include <nmtkit/encoder_decoder.h>
 
+#include <nmtkit/array.h>
+#include <nmtkit/bidirectional_encoder.h>
+
 /* Input/output mapping for training/force decoding:
  *
  *  Encoder Inputs                      Decoder Inputs
@@ -8,8 +11,6 @@
  *                                           +-------------------------------+
  *                                            Decoder Outputs
  */
-
-#include <nmtkit/array.h>
 
 using namespace std;
 
@@ -23,60 +24,27 @@ EncoderDecoder::EncoderDecoder(
     unsigned embed_size,
     unsigned hidden_size,
     dynet::Model * model)
-: rnn_fw_enc_(1, embed_size, hidden_size, model),
-  rnn_bw_enc_(1, embed_size, hidden_size, model),
-  rnn_dec_(1, embed_size, hidden_size, model) {
-  // Note: Intermediate embedding between encoder/decoder has 1.5 times larger
-  //       layer:
-  //         Encoder ............. hidden_size (fw) + hidden_size (bw)
-  //           -> Intermediate ... 1.5 * hidden_size
-  //                -> Decoder ... hidden_size
-  const unsigned ie_size = static_cast<unsigned>(hidden_size * 1.5);
+: encoder_(
+    new BidirectionalEncoder(1, src_vocab_size, embed_size, hidden_size, model))
+, rnn_dec_(1, embed_size, hidden_size, model) {
+  // Note: In this implementation, encoder and decoder are connected through one
+  //       nonlinear intermediate embedding layer. The size of this layer is
+  //       determined using the average of both modules.
+  const unsigned enc_size = encoder_->getFinalStateSize();
+  const unsigned dec_size = hidden_size;
+  const unsigned ie_size = (enc_size + dec_size) / 2;
 
-  p_enc_lookup_ = model->add_lookup_parameters(src_vocab_size, {embed_size});
   p_dec_lookup_ = model->add_lookup_parameters(trg_vocab_size, {embed_size});
-  p_enc2ie_w_ = model->add_parameters({ie_size, 2 * hidden_size});
+  p_enc2ie_w_ = model->add_parameters({ie_size, enc_size});
   p_enc2ie_b_ = model->add_parameters({ie_size});
-  p_ie2dec_w_ = model->add_parameters({hidden_size, ie_size});
-  p_ie2dec_b_ = model->add_parameters({hidden_size});
-  p_dec2out_w_ = model->add_parameters({trg_vocab_size, hidden_size});
+  p_ie2dec_w_ = model->add_parameters({dec_size, ie_size});
+  p_ie2dec_b_ = model->add_parameters({dec_size});
+  p_dec2out_w_ = model->add_parameters({trg_vocab_size, dec_size});
   p_dec2out_b_ = model->add_parameters({trg_vocab_size});
 };
 
-void EncoderDecoder::buildEncoderGraph(
-    const vector<vector<unsigned>> & source_ids,
-    dynet::ComputationGraph * cg,
-    vector<DE::Expression> * fw_enc_outputs,
-    vector<DE::Expression> * bw_enc_outputs) {
-  fw_enc_outputs->clear();
-  bw_enc_outputs->clear();
-  const int sl = source_ids.size();
-
-  // Embedding lookup
-  vector<DE::Expression> embeds;
-  for (int i = 0; i < sl; ++i) {
-    embeds.emplace_back(DE::lookup(*cg, p_enc_lookup_, source_ids[i]));
-  }
-
-  // Forward encoding
-  rnn_fw_enc_.new_graph(*cg);
-  rnn_fw_enc_.start_new_sequence();
-  for (int i = 0; i < sl; ++i) {
-    fw_enc_outputs->emplace_back(rnn_fw_enc_.add_input(embeds[i]));
-  }
-
-  // Backward encoding
-  rnn_bw_enc_.new_graph(*cg);
-  rnn_bw_enc_.start_new_sequence();
-  for (int i = sl - 1; i >= 0; --i) {
-    bw_enc_outputs->emplace_back(rnn_bw_enc_.add_input(embeds[i]));
-  }
-  Array::reverse(bw_enc_outputs);
-}
-
 void EncoderDecoder::buildDecoderInitializerGraph(
-    const vector<DE::Expression> & fw_enc_outputs,
-    const vector<DE::Expression> & bw_enc_outputs,
+    const DE::Expression & enc_final_state,
     dynet::ComputationGraph * cg,
     vector<DE::Expression> * dec_init_states) {
   dec_init_states->clear();
@@ -84,9 +52,7 @@ void EncoderDecoder::buildDecoderInitializerGraph(
   // Encoder -> intermediate node
   DE::Expression enc2ie_w = DE::parameter(*cg, p_enc2ie_w_);
   DE::Expression enc2ie_b = DE::parameter(*cg, p_enc2ie_b_);
-  DE::Expression enc_final_h = DE::concatenate(
-      {fw_enc_outputs.back(), bw_enc_outputs.front()});
-  DE::Expression ie_u = enc2ie_w * enc_final_h + enc2ie_b;
+  DE::Expression ie_u = enc2ie_w * enc_final_state + enc2ie_b;
   DE::Expression ie_h = DE::rectify(ie_u);
 
   // Intermediate node -> decoder
@@ -183,13 +149,14 @@ DE::Expression EncoderDecoder::buildTrainGraph(
     const Batch & batch,
     dynet::ComputationGraph * cg) {
   // Encode
-  vector<DE::Expression> fw_enc_outputs, bw_enc_outputs;
-  buildEncoderGraph(batch.source_ids, cg, &fw_enc_outputs, &bw_enc_outputs);
+  //vector<DE::Expression> enc_output_states;
+  DE::Expression enc_final_state;
+  //encoder_->build(batch.source_ids, cg, &enc_output_states, &enc_final_state);
+  encoder_->build(batch.source_ids, cg, nullptr, &enc_final_state);
 
   // Initialize decoder
   vector<DE::Expression> dec_init_states;
-  buildDecoderInitializerGraph(
-      fw_enc_outputs, bw_enc_outputs, cg, &dec_init_states);
+  buildDecoderInitializerGraph(enc_final_state, cg, &dec_init_states);
 
   // Decode
   vector<DE::Expression> dec_outputs;
@@ -219,17 +186,20 @@ void EncoderDecoder::infer(
   source_ids_inner.emplace_back(vector<unsigned> {eos_id});
 
   // Encode
-  vector<DE::Expression> fw_enc_outputs, bw_enc_outputs;
-  buildEncoderGraph(source_ids_inner, cg, &fw_enc_outputs, &bw_enc_outputs);
+  //vector<DE::Expression> enc_output_states;
+  DE::Expression enc_final_state;
+  //encoder_->build(batch.source_ids, cg, &enc_output_states, &enc_final_state);
+  encoder_->build(source_ids_inner, cg, nullptr, &enc_final_state);
 
   // Initialize decoder
   vector<DE::Expression> dec_init_states;
-  buildDecoderInitializerGraph(
-      fw_enc_outputs, bw_enc_outputs, cg, &dec_init_states);
+  buildDecoderInitializerGraph(enc_final_state, cg, &dec_init_states);
 
   // Infer output words
   decodeForInference(dec_init_states, bos_id, eos_id, max_length, cg, ig);
 }
 
 }  // namespace nmtkit
+
+NMTKIT_SERIALIZATION_IMPL(nmtkit::EncoderDecoder);
 

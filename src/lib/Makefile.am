@@ -9,6 +9,8 @@ AM_CXXFLAGS = \
 libnmtkit_la_SOURCES = \
   corpus.cc \
   batch_converter.cc \
+  bidirectional_encoder.cc \
+  encoder.cc \
   encoder_decoder.cc \
   inference_graph.cc \
   monotone_sampler.cc \

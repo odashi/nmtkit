@@ -3,13 +3,17 @@
 
 #include <string>
 #include <vector>
-#include <boost/serialization/serialization.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/scoped_ptr.hpp>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
 #include <dynet/lstm.h>
 #include <dynet/model.h>
 #include <nmtkit/basic_types.h>
+#include <nmtkit/encoder.h>
 #include <nmtkit/inference_graph.h>
+#include <nmtkit/serialization_utils.h>
 
 namespace nmtkit {
 
@@ -30,6 +34,7 @@ public:
   //   embed_size: Embedding layer size.
   //   hidden_size: RNN hidden layer size.
   //   atten_size: Attention MLP hidden layer size.
+  //   model: Model object for training.
   EncoderDecoder(
       unsigned src_vocab_size,
       unsigned trg_vocab_size,
@@ -65,27 +70,13 @@ public:
       InferenceGraph * ig);
 
 private:
-  // Constructs encoder graph.
-  // Arguments:
-  //   source_ids: List of source word IDs.
-  //   cg: Target computation graph.
-  //   fw_enc_outputs: Placeholder of the forward encoder outputs.
-  //   bw_enc_outputs: Placeholder of the backward encoder outputs.
-  void buildEncoderGraph(
-      const std::vector<std::vector<unsigned>> & source_ids,
-      dynet::ComputationGraph * cg,
-      std::vector<dynet::expr::Expression> * fw_enc_outputs,
-      std::vector<dynet::expr::Expression> * bw_enc_outputs);
-
   // Constructs decoder initializer graph.
   // Arguments:
-  //   fw_enc_outputs: Forward encoder states.
-  //   bw_enc_outputs: Backward encoder states.
+  //   enc_final_state: Final state of the encoder.
   //   cg: Target computation graph.
   //   dec_init_states: Placeholder of the initial decoder states.
   void buildDecoderInitializerGraph(
-      const std::vector<dynet::expr::Expression> & fw_enc_outputs,
-      const std::vector<dynet::expr::Expression> & bw_enc_outputs,
+      const dynet::expr::Expression & enc_final_state,
       dynet::ComputationGraph * cg,
       std::vector<dynet::expr::Expression> * dec_init_states);
 
@@ -130,18 +121,17 @@ private:
   // Boost serialization interface.
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive & ar, const unsigned int) {
-    ar & rnn_fw_enc_ & rnn_bw_enc_ & rnn_dec_;
-    ar & p_enc_lookup_ & p_dec_lookup_;
+  void serialize(Archive & ar, const unsigned) {
+    ar & encoder_;
+    ar & rnn_dec_;
+    ar & p_dec_lookup_;
     ar & p_enc2ie_w_ & p_enc2ie_b_;
     ar & p_ie2dec_w_ & p_ie2dec_b_;
     ar & p_dec2out_w_ & p_dec2out_b_;
   }
 
-  dynet::LSTMBuilder rnn_fw_enc_;
-  dynet::LSTMBuilder rnn_bw_enc_;
+  boost::scoped_ptr<nmtkit::Encoder> encoder_;
   dynet::LSTMBuilder rnn_dec_;
-  dynet::LookupParameter p_enc_lookup_;
   dynet::LookupParameter p_dec_lookup_;
   dynet::Parameter p_enc2ie_w_;
   dynet::Parameter p_enc2ie_b_;
@@ -152,6 +142,8 @@ private:
 };
 
 }  // namespace nmtkit
+
+NMTKIT_SERIALIZATION_DECL(nmtkit::EncoderDecoder);
 
 #endif  // NMTKIT_ENCODER_DECODER_H_
 
