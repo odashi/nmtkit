@@ -2,6 +2,14 @@ How to Install NMTKit
 =====================
 
 
+Prerequisites for installing
+----------------------------
+
+NMTKit needs the latest version of **Boost C++ Library**, **Eigen**, **DyNet**.
+
+The installation process requires **Git**, **Marcurial**, and **autotools**.
+
+
 Install Eigen
 -------------
 
@@ -21,6 +29,14 @@ DyNet is a C++/Python neural network toolkit.
     cd build
     cmake .. -DEIGEN3_INCLUDE_DIR=/path/to/eigen
     make -j <threads>
+    
+
+Configuring library paths
+-------------------------
+
+Add a configuration to locate DyNet shared library in your shell-rc file like:
+
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/dynet/build/dynet
 
 
 Install NMTKit
