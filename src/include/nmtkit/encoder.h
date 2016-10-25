@@ -58,4 +58,3 @@ private:
 NMTKIT_SERIALIZATION_DECL(nmtkit::Encoder);
 
 #endif // NMTKIT_ENCODER_H_
-

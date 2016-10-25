@@ -33,4 +33,3 @@ private:
 }  // namespace nmtkit
 
 #endif  // NMTKIT_VOCABULARY_H_
-

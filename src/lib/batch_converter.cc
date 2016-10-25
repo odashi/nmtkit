@@ -47,4 +47,3 @@ void BatchConverter::convert(const vector<Sample> & samples, Batch * batch) {
 }
 
 }  // namespace nmtkit
-

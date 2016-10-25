@@ -92,4 +92,3 @@ public:
 }  // namespace nmtkit
 
 #endif  // NMTKIT_CORPUS_H_
-

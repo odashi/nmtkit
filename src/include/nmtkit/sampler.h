@@ -36,4 +36,3 @@ public:
 }  // namespace nmtkit
 
 #endif  // NMTKIT_SAMPLER_H_
-

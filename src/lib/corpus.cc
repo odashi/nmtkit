@@ -115,4 +115,3 @@ void Corpus::loadParallelSentences(
 }
 
 }  // namespace nmtkit
-

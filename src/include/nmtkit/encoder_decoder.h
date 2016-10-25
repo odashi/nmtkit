@@ -142,4 +142,3 @@ private:
 NMTKIT_SERIALIZATION_DECL(nmtkit::EncoderDecoder);
 
 #endif  // NMTKIT_ENCODER_DECODER_H_
-

@@ -46,4 +46,3 @@ DE::Expression MultilayerPerceptron::build(
 }  // namespace nmtkit
 
 NMTKIT_SERIALIZATION_IMPL(nmtkit::MultilayerPerceptron);
-

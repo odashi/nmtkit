@@ -43,4 +43,3 @@ private:
 }  // namespace nmtkit
 
 #endif  // NMTKIT_RANDOM_SAMPLER_H_
-

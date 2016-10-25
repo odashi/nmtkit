@@ -45,4 +45,3 @@ bool MonotoneSampler::hasSamples() const {
 }
 
 }  // namespace nmtkit
-

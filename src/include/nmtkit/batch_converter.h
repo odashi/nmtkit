@@ -39,4 +39,3 @@ private:
 }  // namespace nmtkit
 
 #endif  // NMTKIT_BATCH_CONVERTER_H_
-

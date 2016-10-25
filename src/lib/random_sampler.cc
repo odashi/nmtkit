@@ -52,4 +52,3 @@ bool RandomSampler::hasSamples() const {
 }
 
 }  // namespace nmtkit
-

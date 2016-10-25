@@ -14,4 +14,3 @@
       boost::archive::text_oarchive &, const unsigned);
 
 #endif  // NMTKIT_SERIALIZATION_UTILS_H_
-

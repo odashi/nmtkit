@@ -82,4 +82,3 @@ private:
 }  // namespace nmtkit
 
 #endif  // NMTKIT_INFERENCE_GRAPH_H_
-

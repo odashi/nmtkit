@@ -282,4 +282,3 @@ int main(int argc, char * argv[]) {
   dynet::cleanup();
   return 0;
 }
-

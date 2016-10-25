@@ -164,4 +164,3 @@ public:
 }  // namespace nmtkit
 
 #endif  // NMTKIT_ARRAY_H_
-

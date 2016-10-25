@@ -104,8 +104,7 @@ void EncoderDecoder::decodeForInference(
       output_id = Array::argmax(log_probs);
     }
     InferenceGraph::Node * next_node = ig->addNode(
-        InferenceGraph::Label {
-            output_id, static_cast<float>(log_probs[output_id])});
+        {output_id, static_cast<float>(log_probs[output_id])});
     ig->connect(prev_node, next_node);
     prev_node = next_node;
     if (output_id == eos_id) {
@@ -185,4 +184,3 @@ void EncoderDecoder::infer(
 }  // namespace nmtkit
 
 NMTKIT_SERIALIZATION_IMPL(nmtkit::EncoderDecoder);
-

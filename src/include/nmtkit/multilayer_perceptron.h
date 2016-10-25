@@ -67,4 +67,3 @@ private:
 NMTKIT_SERIALIZATION_DECL(nmtkit::MultilayerPerceptron);
 
 #endif  // NMTKIT_MULTILAYER_PERCEPTRON_H_
-

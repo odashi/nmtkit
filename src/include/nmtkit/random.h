@@ -39,4 +39,3 @@ private:
 }  // namespace nmtkit
 
 #endif  // NMTKIT_RANDOM_H_
-

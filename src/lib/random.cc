@@ -35,4 +35,3 @@ int Random::uniform(int minval, int maxval) {
 }
 
 }  // namespace nmtkit
-

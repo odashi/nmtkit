@@ -16,4 +16,3 @@
 #define NMTKIT_CHECK_NE(a, b, message) NMTKIT_CHECK((a) != (b), message)
 
 #endif  // NMTKIT_EXCEPTION_H_
-

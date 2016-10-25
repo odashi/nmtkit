@@ -66,4 +66,3 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

@@ -71,4 +71,3 @@ void BidirectionalEncoder::build(
 }  // namespace nmtkit
 
 NMTKIT_SERIALIZATION_IMPL(nmtkit::BidirectionalEncoder);
-

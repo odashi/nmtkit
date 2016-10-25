@@ -57,4 +57,3 @@ BOOST_AUTO_TEST_CASE(CheckUniformDistribution) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

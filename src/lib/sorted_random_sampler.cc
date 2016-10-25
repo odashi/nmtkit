@@ -78,4 +78,3 @@ bool SortedRandomSampler::hasSamples() const {
 }
 
 }  // namespace nmtkit
-

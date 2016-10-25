@@ -38,4 +38,3 @@ private:
 }  // namespace nmtkit
 
 #endif  // NMTKIT_MONOTONE_SAMPLER_H_
-

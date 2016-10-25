@@ -25,4 +25,3 @@ struct Batch {
 }  // namespace nmtkit
 
 #endif  // NMTKIT_BASIC_TYPES_H_
-

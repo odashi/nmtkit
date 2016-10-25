@@ -105,4 +105,3 @@ unsigned Vocabulary::size() const {
 }
 
 }  // namespace nmtkit
-
