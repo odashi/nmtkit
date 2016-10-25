@@ -9,6 +9,7 @@ nobase_include_HEADERS = \
   nmtkit/exception.h \
   nmtkit/inference_graph.h \
 	nmtkit/monotone_sampler.h \
+  nmtkit/multilayer_perceptron.h \
   nmtkit/random.h \
   nmtkit/random_sampler.h \
   nmtkit/sampler.h \

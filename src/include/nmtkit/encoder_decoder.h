@@ -13,6 +13,7 @@
 #include <nmtkit/basic_types.h>
 #include <nmtkit/encoder.h>
 #include <nmtkit/inference_graph.h>
+#include <nmtkit/multilayer_perceptron.h>
 #include <nmtkit/serialization_utils.h>
 
 namespace nmtkit {
@@ -123,22 +124,17 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & encoder_;
+    ar & enc2dec_;
+    ar & dec2out_;
     ar & rnn_dec_;
     ar & p_dec_lookup_;
-    ar & p_enc2ie_w_ & p_enc2ie_b_;
-    ar & p_ie2dec_w_ & p_ie2dec_b_;
-    ar & p_dec2out_w_ & p_dec2out_b_;
   }
 
   boost::scoped_ptr<nmtkit::Encoder> encoder_;
+  boost::scoped_ptr<nmtkit::MultilayerPerceptron> enc2dec_;
+  boost::scoped_ptr<nmtkit::MultilayerPerceptron> dec2out_;
   dynet::LSTMBuilder rnn_dec_;
   dynet::LookupParameter p_dec_lookup_;
-  dynet::Parameter p_enc2ie_w_;
-  dynet::Parameter p_enc2ie_b_;
-  dynet::Parameter p_ie2dec_w_;
-  dynet::Parameter p_ie2dec_b_;
-  dynet::Parameter p_dec2out_w_;
-  dynet::Parameter p_dec2out_b_;
 };
 
 }  // namespace nmtkit

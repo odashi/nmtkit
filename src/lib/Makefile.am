@@ -14,6 +14,7 @@ libnmtkit_la_SOURCES = \
   encoder_decoder.cc \
   inference_graph.cc \
   monotone_sampler.cc \
+  multilayer_perceptron.cc \
   random.cc \
   random_sampler.cc \
   sorted_random_sampler.cc \

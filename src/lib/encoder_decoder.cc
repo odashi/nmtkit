@@ -24,9 +24,11 @@ EncoderDecoder::EncoderDecoder(
     unsigned embed_size,
     unsigned hidden_size,
     dynet::Model * model)
-: encoder_(
-    new BidirectionalEncoder(1, src_vocab_size, embed_size, hidden_size, model))
-, rnn_dec_(1, embed_size, hidden_size, model) {
+: rnn_dec_(1, embed_size, hidden_size, model) {
+  encoder_.reset(
+      new BidirectionalEncoder(
+          1, src_vocab_size, embed_size, hidden_size, model));
+  
   // Note: In this implementation, encoder and decoder are connected through one
   //       nonlinear intermediate embedding layer. The size of this layer is
   //       determined using the average of both modules.
@@ -34,39 +36,25 @@ EncoderDecoder::EncoderDecoder(
   const unsigned dec_size = hidden_size;
   const unsigned ie_size = (enc_size + dec_size) / 2;
 
+  enc2dec_.reset(
+      new MultilayerPerceptron({enc_size, ie_size, dec_size}, model));
+  dec2out_.reset(
+      new MultilayerPerceptron({dec_size, trg_vocab_size}, model));
+
   p_dec_lookup_ = model->add_lookup_parameters(trg_vocab_size, {embed_size});
-  p_enc2ie_w_ = model->add_parameters({ie_size, enc_size});
-  p_enc2ie_b_ = model->add_parameters({ie_size});
-  p_ie2dec_w_ = model->add_parameters({dec_size, ie_size});
-  p_ie2dec_b_ = model->add_parameters({dec_size});
-  p_dec2out_w_ = model->add_parameters({trg_vocab_size, dec_size});
-  p_dec2out_b_ = model->add_parameters({trg_vocab_size});
 };
 
 void EncoderDecoder::buildDecoderInitializerGraph(
     const DE::Expression & enc_final_state,
     dynet::ComputationGraph * cg,
     vector<DE::Expression> * dec_init_states) {
-  dec_init_states->clear();
-
-  // Encoder -> intermediate node
-  DE::Expression enc2ie_w = DE::parameter(*cg, p_enc2ie_w_);
-  DE::Expression enc2ie_b = DE::parameter(*cg, p_enc2ie_b_);
-  DE::Expression ie_u = enc2ie_w * enc_final_state + enc2ie_b;
-  DE::Expression ie_h = DE::rectify(ie_u);
-
-  // Intermediate node -> decoder
-  DE::Expression ie2dec_w = DE::parameter(*cg, p_ie2dec_w_);
-  DE::Expression ie2dec_b = DE::parameter(*cg, p_ie2dec_b_);
-  DE::Expression dec_init_c = ie2dec_w * ie_h + ie2dec_b;
-  DE::Expression dec_init_h = DE::tanh(dec_init_c);
-
   // NOTE: LSTMBuilder::start_new_sequence() takes initial states with below
   //       layout:
   //         {c1, c2, ..., cn, h1, h2, ..., hn}
   //       where cx is the initial cell states and hx is the initial outputs.
-  dec_init_states->emplace_back(dec_init_c);
-  dec_init_states->emplace_back(dec_init_h);
+  DE::Expression dec_init_c = enc2dec_->build(enc_final_state, cg);
+  DE::Expression dec_init_h = DE::tanh(dec_init_c);
+  *dec_init_states = {dec_init_c, dec_init_h};
 }
 
 void EncoderDecoder::buildDecoderGraph(
@@ -79,13 +67,11 @@ void EncoderDecoder::buildDecoderGraph(
 
   rnn_dec_.new_graph(*cg);
   rnn_dec_.start_new_sequence(dec_init_states);
-  DE::Expression dec2out_w = DE::parameter(*cg, p_dec2out_w_);
-  DE::Expression dec2out_b = DE::parameter(*cg, p_dec2out_b_);
 
   for (unsigned i = 0; i < tl; ++i) {
     DE::Expression embed = DE::lookup(*cg, p_dec_lookup_, target_ids[i]);
     DE::Expression dec_h = rnn_dec_.add_input(embed);
-    DE::Expression dec_out = dec2out_w * dec_h + dec2out_b;
+    DE::Expression dec_out = dec2out_->build(dec_h, cg);
     dec_outputs->emplace_back(dec_out);
   }
 }
@@ -101,17 +87,14 @@ void EncoderDecoder::decodeForInference(
 
   rnn_dec_.new_graph(*cg);
   rnn_dec_.start_new_sequence(dec_init_states);
-  DE::Expression dec2out_w = DE::parameter(*cg, p_dec2out_w_);
-  DE::Expression dec2out_b = DE::parameter(*cg, p_dec2out_b_);
 
-  InferenceGraph::Node * prev_node = ig->addNode(
-      InferenceGraph::Label {bos_id, 0.0f});
+  InferenceGraph::Node * prev_node = ig->addNode({bos_id, 0.0f});
 
   for (unsigned generated = 0; ; ++generated) {
     vector<unsigned> inputs {prev_node->label().word_id};
     DE::Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
     DE::Expression dec_h = rnn_dec_.add_input(embed);
-    DE::Expression dec_out = dec2out_w * dec_h + dec2out_b;
+    DE::Expression dec_out = dec2out_->build(dec_h, cg);
     DE::Expression log_probs_expr = DE::log_softmax(dec_out);
     vector<dynet::real> log_probs = dynet::as_vector(
         cg->incremental_forward(log_probs_expr));

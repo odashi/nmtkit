@@ -20,7 +20,7 @@ public:
   Encoder() {}
   virtual ~Encoder() {}
 
-  // Constructs graph.
+  // Constructs computation graph.
   // Arguments:
   //   input_ids: List of input symbols as following format:
   //     { { sample_1[0], sample_2[0], ..., sample_n[0] },
