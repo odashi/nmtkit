@@ -7,12 +7,14 @@ AM_CXXFLAGS = \
   $(DYNET_CPPFLAGS)
 
 libnmtkit_la_SOURCES = \
+  attention.cc \
   corpus.cc \
   batch_converter.cc \
   bidirectional_encoder.cc \
   encoder.cc \
   encoder_decoder.cc \
   inference_graph.cc \
+  mlp_attention.cc \
   monotone_sampler.cc \
   multilayer_perceptron.cc \
   random.cc \
