@@ -51,7 +51,12 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Encoder>(*this);
-    ar & rnn_fw_ & rnn_bw_;
+    ar & num_layers_;
+    ar & vocab_size_;
+    ar & embed_size_;
+    ar & hidden_size_;
+    ar & rnn_fw_;
+    ar & rnn_bw_;
     ar & p_lookup_;
   }
 
