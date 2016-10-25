@@ -31,7 +31,7 @@ DE::Expression MultilayerPerceptron::build(
   for (unsigned i = 0; i < w_.size(); ++i) {
     DE::Expression w = DE::parameter(*cg, w_[i]);
     DE::Expression b = DE::parameter(*cg, b_[i]);
-    DE::Expression u = w * hidden.back() + b;
+    DE::Expression u = DE::affine_transform({b, w, hidden.back()});
     if (i == w_.size() - 1) {
       // Last (output) layer does not be nonliniarized.
       hidden.emplace_back(u);
