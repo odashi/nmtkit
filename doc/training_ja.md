@@ -82,6 +82,6 @@ paramsファイルの接頭辞には以下の意味があります。
 
 <dl>
   <dt>latest</dt><dd>最も新しい学習結果</dd>
-  <dt>best\_dev\_log\_ppl</dt><dd>過去の学習結果のうち、検証用データで最も高い翻訳確率となるもの</dd>
+  <dt>best_dev_log_ppl</dt><dd>過去の学習結果のうち、検証用データで最も高い翻訳確率となるもの</dd>
 </dl>
 
