@@ -14,6 +14,7 @@
 #include <nmtkit/corpus.h>
 #include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
+#include <nmtkit/html_formatter.h>
 #include <nmtkit/single_text_formatter.h>
 #include <nmtkit/vocabulary.h>
 
@@ -34,8 +35,10 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
      "(required) Location of the model directory.")
     ("format",
      PO::value<string>()->default_value("text"),
-     "Output format. Available options:\n"
-     "  \"text\": (default) One-best tokens in each line.")
+     "Output format.\n"
+     "Available options:\n"
+     "  text : One-best tokens in each line.\n"
+     "  html : HTML document with detailed information.")
     ;
 
   PO::options_description opt;
@@ -51,9 +54,10 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     cerr << "NMTKit decoder." << endl;
     cerr << "Author: Yusuke Oda (http://github.com/odashi/)" << endl;
     cerr << "Usage:" << endl;
-    cerr << "  decode --model MODEL_DIRECTORY" << endl;
-    cerr << "         < INPUT_TOKENS" << endl;
-    cerr << "         > OUTPUT_TOKENS" << endl;
+    cerr << "  decode [options]" << endl;
+    cerr << "         --model MODEL_DIRECTORY" << endl;
+    cerr << "         < INPUT_FILE" << endl;
+    cerr << "         > OUTPUT_FILE" << endl;
     cerr << "  decode --help" << endl;
     cerr << opt << endl;
     exit(1);
@@ -79,6 +83,8 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
 unique_ptr<nmtkit::Formatter> getFormatter(const std::string & name) {
   if (name == "text") {
     return unique_ptr<nmtkit::Formatter>(new nmtkit::SingleTextFormatter());
+  } else if (name == "html") {
+    return unique_ptr<nmtkit::Formatter>(new nmtkit::HTMLFormatter());
   }
   NMTKIT_FATAL("Unknown formatter name: " + name);
 }
@@ -121,6 +127,7 @@ void run(int argc, char * argv[]) try {
   ::loadParameters(model_dir / "best_dev_log_ppl.model.params", &encdec);
 
   // Consumes input lines and decodes them.
+  formatter->initialize(&cout);
   vector<string> input_words;
   while (nmtkit::Corpus::readTokens(&cin, &input_words)) {
     vector<unsigned> input_word_ids;
@@ -128,8 +135,9 @@ void run(int argc, char * argv[]) try {
     dynet::ComputationGraph cg;
     nmtkit::InferenceGraph ig;
     encdec.infer(input_word_ids, bos_id, eos_id, max_length, &cg, &ig);
-    formatter->write(ig, trg_vocab, &cout);
+    formatter->write(input_words, ig, src_vocab, trg_vocab, &cout);
   }
+  formatter->finalize(&cout);
 } catch (exception & ex) {
   cerr << ex.what() << endl;
   exit(1);

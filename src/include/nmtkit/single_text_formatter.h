@@ -16,9 +16,14 @@ public:
   SingleTextFormatter() {}
   ~SingleTextFormatter() override {}
 
+  void initialize(std::ostream * os) override {}
+  void finalize(std::ostream * os) override {}
+
   void write(
+      const std::vector<std::string> & source_words,
       const InferenceGraph & ig,
-      const Vocabulary & vocab,
+      const Vocabulary & source_vocab,
+      const Vocabulary & target_vocab,
       std::ostream * os) override;
 };
 

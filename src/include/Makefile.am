@@ -9,6 +9,7 @@ nobase_include_HEADERS = \
   nmtkit/encoder_decoder.h \
   nmtkit/exception.h \
   nmtkit/formatter.h \
+  nmtkit/html_formatter.h \
   nmtkit/inference_graph.h \
   nmtkit/mlp_attention.h \
 	nmtkit/monotone_sampler.h \

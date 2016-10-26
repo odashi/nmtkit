@@ -13,6 +13,7 @@ libnmtkit_la_SOURCES = \
   bidirectional_encoder.cc \
   encoder.cc \
   encoder_decoder.cc \
+  html_formatter.cc \
   inference_graph.cc \
   mlp_attention.cc \
   monotone_sampler.cc \
