@@ -11,6 +11,7 @@ libnmtkit_la_SOURCES = \
   corpus.cc \
   batch_converter.cc \
   bidirectional_encoder.cc \
+  bilinear_attention.cc \
   encoder.cc \
   encoder_decoder.cc \
   html_formatter.cc \

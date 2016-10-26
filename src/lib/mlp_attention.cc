@@ -1,5 +1,6 @@
 #include <nmtkit/mlp_attention.h>
 
+#include <utility>
 #include <nmtkit/exception.h>
 
 using namespace std;
@@ -81,10 +82,10 @@ void MLPAttention::compute(
 
   // Copies results.
   if (atten_probs != nullptr) {
-    *atten_probs = atten_probs_inner;
+    *atten_probs = std::move(atten_probs_inner);
   }
   if (context != nullptr) {
-    *context = context_inner;
+    *context = std::move(context_inner);
   }
 }
 

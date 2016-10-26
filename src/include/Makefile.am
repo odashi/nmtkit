@@ -4,6 +4,7 @@ nobase_include_HEADERS = \
   nmtkit/batch_converter.h \
   nmtkit/basic_types.h \
   nmtkit/bidirectional_encoder.h \
+  nmtkit/bilinear_attention.h \
   nmtkit/corpus.h \
   nmtkit/encoder.h \
   nmtkit/encoder_decoder.h \
