@@ -34,7 +34,7 @@ DyNetのインストール
 
 DyNetをインストールします。
 
-* ニューラルネットの計算にCPUを使用する場合
+ニューラルネットの計算にCPUを使用する場合は以下の通り。
 
     git clone git@github.com:clab/dynet /path/to/dynet
     cd /path/to/dynet

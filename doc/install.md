@@ -35,7 +35,7 @@ Install DyNet
 
 Next we get and build DyNet:
 
-* Case of using CPUs to calculate neural network:
+Case of using CPUs to calculate neural network:
 
     git clone git@github.com:clab/dynet /path/to/dynet
     cd /path/to/dynet
