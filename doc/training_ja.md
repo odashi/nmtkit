@@ -74,8 +74,8 @@ DyNetはデフォルトで512MBのメモリを確保します。
   <dt>config.ini</dt><dd>`--config`で指定した設定ファイルのコピー</dd>
   <dt>source.vocab</dt><dd>原言語の語彙一覧</dd>
   <dt>target.vocab</dt><dd>目的言語の語彙一覧</dd>
-  <dt>\*.model.params</dt><dd>翻訳モデルのパラメータ</dd>
-  <dt>\*.trainer.params</dt><dd>学習器のパラメータ</dd>
+  <dt>*.model.params</dt><dd>翻訳モデルのパラメータ</dd>
+  <dt>*.trainer.params</dt><dd>学習器のパラメータ</dd>
 </dl>
 
 paramsファイルの接頭辞には以下の意味があります。
