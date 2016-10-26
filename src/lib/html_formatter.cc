@@ -17,11 +17,15 @@ string escape(const string & text) {
   return regex_replace(result, regex(R"(")"), "&quot;");
 }
 
-// Computes attention color.
-string attentionColor(float prob) {
-  const string ids = "0123456789abcdef";
-  const int color = min(15, max(0, static_cast<int>(16.0 * prob)));
-  return string("#") + ids[color] + ids[color] + ids[color];
+// Computes background color of the attention matrix.
+string attenBGColor(float prob) {
+  const int col = min(255, max(0, static_cast<int>(256.0 * prob)));
+  return (boost::format("#%02x%02x%02x") % col % col % col).str();
+}
+
+// Computes foreground color of the attention matrix.
+string attenFGColor(float prob) {
+  return ::attenBGColor(prob >= 0.5f ? 0.0f : prob + 0.5f);
 }
 
 }  // namespace
@@ -71,22 +75,22 @@ table {
 }
 th {
   padding: 8px;
-  border: solid 1px #555;
+  border: solid 1px #000;
   text-align: center;
   vertical-align: middle;
 }
 td {
   padding: 8px;
-  border: solid 1px #555;
+  border: solid 1px #000;
   text-align: center;
   vertical-align: middle;
 }
 .word {
   display: inline-block;
-  margin: 0 2px;
+  margin: 0 3px;
   padding: 4px 6px;
   background: #ddd;
-  border: solid 1px #555;
+  border: solid 1px #666;
   border-radius: 4px;
 }
 </style>
@@ -196,7 +200,11 @@ void HTMLFormatter::write(
         << ::escape(target_vocab.getWord(label.word_id))
         << "</td>";
     for (const float atten : label.atten_probs) {
-      *os << "<td style=\"background: " << attentionColor(atten) << "\">"
+      *os << "<td style=\"background: "
+          << attenBGColor(atten)
+          << "; color: "
+          << attenFGColor(atten)
+          << ";\">"
           << (boost::format("%.2f") % atten)
           << "</td>";
     }
