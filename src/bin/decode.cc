@@ -118,8 +118,17 @@ void run(int argc, char * argv[]) try {
     });
     const nmtkit::InferenceGraph::Node * cur_node = heads[0];
     while (true) {
-      cout << trg_vocab.getWord(cur_node->label().word_id) << ' '
-           << cur_node->label().log_prob << endl;
+      // word
+      cout << trg_vocab.getWord(cur_node->label().word_id);
+      // word prob.
+      cout << ' ' << cur_node->label().word_log_prob;
+      // attention prob.
+      cout << " [";
+      for (const float p : cur_node->label().atten_probs) {
+        cout << ' ' << p;
+      }
+      cout << " ]";
+      cout << endl;
       if (cur_node->next().size() == 0) {
         break;
       }

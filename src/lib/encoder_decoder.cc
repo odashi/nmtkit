@@ -2,6 +2,7 @@
 
 #include <nmtkit/array.h>
 #include <nmtkit/bidirectional_encoder.h>
+#include <nmtkit/mlp_attention.h>
 
 /* Input/output mapping for training/force decoding:
  *
@@ -13,6 +14,7 @@
  */
 
 using namespace std;
+using dynet::expr::Expression;
 
 namespace DE = dynet::expr;
 
@@ -23,91 +25,119 @@ EncoderDecoder::EncoderDecoder(
     unsigned trg_vocab_size,
     unsigned embed_size,
     unsigned hidden_size,
-    dynet::Model * model)
-: rnn_dec_(1, embed_size, hidden_size, model) {
+    unsigned atten_size,
+    dynet::Model * model) {
   encoder_.reset(
       new BidirectionalEncoder(
           1, src_vocab_size, embed_size, hidden_size, model));
   
+  const unsigned mem_size = encoder_->getStateSize();
+  const unsigned enc_out_size = encoder_->getFinalStateSize();
+  const unsigned dec_in_size = embed_size + mem_size;
+  const unsigned dec_out_size = hidden_size;
   // Note: In this implementation, encoder and decoder are connected through one
   //       nonlinear intermediate embedding layer. The size of this layer is
   //       determined using the average of both modules.
-  const unsigned enc_size = encoder_->getFinalStateSize();
-  const unsigned dec_size = hidden_size;
-  const unsigned ie_size = (enc_size + dec_size) / 2;
+  const unsigned ie_size = (enc_out_size + dec_out_size) / 2;
 
   enc2dec_.reset(
-      new MultilayerPerceptron({enc_size, ie_size, dec_size}, model));
+      new MultilayerPerceptron({enc_out_size, ie_size, dec_out_size}, model));
   dec2out_.reset(
-      new MultilayerPerceptron({dec_size, trg_vocab_size}, model));
+      new MultilayerPerceptron({dec_out_size, trg_vocab_size}, model));
+  attention_.reset(
+      new MLPAttention(mem_size, dec_out_size, atten_size, model));
+  rnn_dec_.reset(
+      new dynet::LSTMBuilder(1, dec_in_size, dec_out_size, model));
 
   p_dec_lookup_ = model->add_lookup_parameters(trg_vocab_size, {embed_size});
 };
 
-void EncoderDecoder::buildDecoderInitializerGraph(
-    const DE::Expression & enc_final_state,
-    dynet::ComputationGraph * cg,
-    vector<DE::Expression> * dec_init_states) {
+Expression EncoderDecoder::buildDecoderInitializerGraph(
+    const Expression & enc_final_state,
+    dynet::ComputationGraph * cg) {
   // NOTE: LSTMBuilder::start_new_sequence() takes initial states with below
   //       layout:
   //         {c1, c2, ..., cn, h1, h2, ..., hn}
   //       where cx is the initial cell states and hx is the initial outputs.
-  DE::Expression dec_init_c = enc2dec_->build(enc_final_state, cg);
-  DE::Expression dec_init_h = DE::tanh(dec_init_c);
-  *dec_init_states = {dec_init_c, dec_init_h};
+  Expression dec_init_c = enc2dec_->build(enc_final_state, cg);
+  Expression dec_init_h = DE::tanh(dec_init_c);
+  rnn_dec_->new_graph(*cg);
+  rnn_dec_->start_new_sequence({dec_init_c, dec_init_h});
+  return dec_init_h;
 }
 
 void EncoderDecoder::buildDecoderGraph(
-    const vector<DE::Expression> & dec_init_states,
+    const Expression & dec_init_h,
+    const vector<Expression> & atten_info,
     const vector<vector<unsigned>> & target_ids,
     dynet::ComputationGraph * cg,
-    vector<DE::Expression> * dec_outputs) {
+    vector<Expression> * dec_outputs) {
   dec_outputs->clear();
   const unsigned tl = target_ids.size() - 1;
-
-  rnn_dec_.new_graph(*cg);
-  rnn_dec_.start_new_sequence(dec_init_states);
+  Expression dec_h = dec_init_h;
 
   for (unsigned i = 0; i < tl; ++i) {
-    DE::Expression embed = DE::lookup(*cg, p_dec_lookup_, target_ids[i]);
-    DE::Expression dec_h = rnn_dec_.add_input(embed);
-    DE::Expression dec_out = dec2out_->build(dec_h, cg);
+    // Embedding
+    Expression embed = DE::lookup(*cg, p_dec_lookup_, target_ids[i]);
+
+    // Attention
+    Expression context;
+    attention_->compute(atten_info, dec_h, cg, nullptr, &context);
+
+    // Decode
+    dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
+    Expression dec_out = dec2out_->build(dec_h, cg);
     dec_outputs->emplace_back(dec_out);
   }
 }
 
 void EncoderDecoder::decodeForInference(
-    const vector<DE::Expression> & dec_init_states,
+    const Expression & dec_init_h,
+    const vector<Expression> & atten_info,
     const unsigned bos_id,
     const unsigned eos_id,
     const unsigned max_length,
     dynet::ComputationGraph * cg,
     InferenceGraph * ig) {
   ig->clear();
-
-  rnn_dec_.new_graph(*cg);
-  rnn_dec_.start_new_sequence(dec_init_states);
-
-  InferenceGraph::Node * prev_node = ig->addNode({bos_id, 0.0f});
+  InferenceGraph::Node * prev_node = ig->addNode({bos_id, 0.0f, {}});
+  Expression dec_h = dec_init_h;
 
   for (unsigned generated = 0; ; ++generated) {
+    // Embedding
     vector<unsigned> inputs {prev_node->label().word_id};
-    DE::Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
-    DE::Expression dec_h = rnn_dec_.add_input(embed);
-    DE::Expression dec_out = dec2out_->build(dec_h, cg);
-    DE::Expression log_probs_expr = DE::log_softmax(dec_out);
-    vector<dynet::real> log_probs = dynet::as_vector(
-        cg->incremental_forward(log_probs_expr));
+    Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
 
-    unsigned output_id = eos_id;
+    // Attention
+    Expression atten_probs, context;
+    attention_->compute(atten_info, dec_h, cg, &atten_probs, &context);
+    vector<dynet::real> atten_probs_values = dynet::as_vector(
+        cg->incremental_forward(atten_probs));
+
+    // Decode
+    dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
+    Expression dec_out = dec2out_->build(dec_h, cg);
+    Expression log_probs = DE::log_softmax(dec_out);
+    vector<dynet::real> log_probs_values = dynet::as_vector(
+        cg->incremental_forward(log_probs));
+
+    // Store results.
+    unsigned out_word_id = eos_id;
     if (generated < max_length - 1) {
-      output_id = Array::argmax(log_probs);
+      out_word_id = Array::argmax(log_probs_values);
     }
-    InferenceGraph::Node * next_node = ig->addNode(
-        {output_id, static_cast<float>(log_probs[output_id])});
+    float out_word_log_prob = static_cast<float>(log_probs_values[out_word_id]);
+    vector<float> out_atten_probs;
+    for (const dynet::real p : atten_probs_values) {
+      out_atten_probs.emplace_back(static_cast<float>(p));
+    }
+    InferenceGraph::Node * next_node = ig->addNode({
+        out_word_id, out_word_log_prob, out_atten_probs});
     ig->connect(prev_node, next_node);
+
+    // Go ahead or finish.
     prev_node = next_node;
-    if (output_id == eos_id) {
+    if (out_word_id == eos_id) {
       break;
     }
   }
@@ -115,39 +145,38 @@ void EncoderDecoder::decodeForInference(
 
 void EncoderDecoder::buildLossGraph(
     const vector<vector<unsigned>> & target_ids,
-    const vector<DE::Expression> & dec_outputs,
-    vector<DE::Expression> * losses) {
+    const vector<Expression> & dec_outputs,
+    vector<Expression> * losses) {
   losses->clear();
   const unsigned tl = target_ids.size() - 1;
 
   for (unsigned i = 0; i < tl; ++i) {
-    DE::Expression loss = DE::pickneglogsoftmax(
+    Expression loss = DE::pickneglogsoftmax(
         dec_outputs[i], target_ids[i + 1]);
     losses->emplace_back(loss);
   }
 }
 
-DE::Expression EncoderDecoder::buildTrainGraph(
+Expression EncoderDecoder::buildTrainGraph(
     const Batch & batch,
     dynet::ComputationGraph * cg) {
   // Encode
-  //vector<DE::Expression> enc_output_states;
-  DE::Expression enc_final_state;
-  //encoder_->build(batch.source_ids, cg, &enc_output_states, &enc_final_state);
-  encoder_->build(batch.source_ids, cg, nullptr, &enc_final_state);
+  vector<Expression> enc_states;
+  Expression enc_final_state;
+  encoder_->build(batch.source_ids, cg, &enc_states, &enc_final_state);
 
-  // Initialize decoder
-  vector<DE::Expression> dec_init_states;
-  buildDecoderInitializerGraph(enc_final_state, cg, &dec_init_states);
+  // Initialize attention
+  vector<Expression> atten_info = attention_->prepare(enc_states, cg);
 
   // Decode
-  vector<DE::Expression> dec_outputs;
-  buildDecoderGraph(dec_init_states, batch.target_ids, cg, &dec_outputs);
+  Expression dec_init_h = buildDecoderInitializerGraph(enc_final_state, cg);
+  vector<Expression> dec_outputs;
+  buildDecoderGraph(dec_init_h, atten_info, batch.target_ids, cg, &dec_outputs);
 
   // Calculate losses
-  vector<DE::Expression> losses;
+  vector<Expression> losses;
   buildLossGraph(batch.target_ids, dec_outputs, &losses);
-  DE::Expression total_loss = DE::sum_batches(DE::sum(losses));
+  Expression total_loss = DE::sum_batches(DE::sum(losses));
   return total_loss;
 }
 
@@ -168,17 +197,17 @@ void EncoderDecoder::infer(
   source_ids_inner.emplace_back(vector<unsigned> {eos_id});
 
   // Encode
-  //vector<DE::Expression> enc_output_states;
-  DE::Expression enc_final_state;
-  //encoder_->build(batch.source_ids, cg, &enc_output_states, &enc_final_state);
-  encoder_->build(source_ids_inner, cg, nullptr, &enc_final_state);
-
-  // Initialize decoder
-  vector<DE::Expression> dec_init_states;
-  buildDecoderInitializerGraph(enc_final_state, cg, &dec_init_states);
+  vector<Expression> enc_states;
+  Expression enc_final_state;
+  encoder_->build(source_ids_inner, cg, &enc_states, &enc_final_state);
+  
+  // Initialize attention
+  vector<Expression> atten_info = attention_->prepare(enc_states, cg);
 
   // Infer output words
-  decodeForInference(dec_init_states, bos_id, eos_id, max_length, cg, ig);
+  Expression dec_init_h = buildDecoderInitializerGraph(enc_final_state, cg);
+  decodeForInference(
+      dec_init_h, atten_info, bos_id, eos_id, max_length, cg, ig);
 }
 
 }  // namespace nmtkit

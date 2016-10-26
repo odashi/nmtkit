@@ -18,6 +18,30 @@ vector<nmtkit::InferenceGraph::Label> labels {
 
 BOOST_AUTO_TEST_SUITE(InferenceGraphTest)
 
+BOOST_AUTO_TEST_CASE(ChckLabels) {
+  nmtkit::InferenceGraph graph;
+  vector<nmtkit::InferenceGraph::Label> labels {
+    {0, 0.0f, {}},
+    {1, 2.0f, {3.0f, 4.0f, 5.0f}},
+  };
+  
+  // Checks the empty label.
+  nmtkit::InferenceGraph::Node * empty_node = graph.addNode({});
+  BOOST_CHECK_EQUAL(0, empty_node->label().word_id);
+  BOOST_CHECK_EQUAL(0.0f, empty_node->label().word_log_prob);
+  BOOST_CHECK(empty_node->label().atten_probs.empty());
+
+  // Checks usual cases.
+  for (const nmtkit::InferenceGraph::Label & label : labels) {
+    nmtkit::InferenceGraph::Node * node = graph.addNode(label);
+    BOOST_CHECK_EQUAL(label.word_id, node->label().word_id);
+    BOOST_CHECK_EQUAL(label.word_log_prob, node->label().word_log_prob);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        label.atten_probs.begin(), label.atten_probs.end(),
+        node->label().atten_probs.begin(), node->label().atten_probs.end());
+  }
+}
+
 BOOST_AUTO_TEST_CASE(CheckAdding) {
   nmtkit::InferenceGraph graph;
   BOOST_CHECK_EQUAL(0, graph.size());
@@ -131,7 +155,7 @@ BOOST_AUTO_TEST_CASE(CheckFinding) {
   BOOST_CHECK_EQUAL(nodes[1], result[1]);
   
   graph.findNodes(&result, [](const nmtkit::InferenceGraph::Node & node) {
-      return node.label().log_prob == 2.0;
+      return node.label().word_log_prob == 2.0;
   });
   BOOST_CHECK_EQUAL(1, result.size());
   BOOST_CHECK_EQUAL(nodes[3], result[0]);

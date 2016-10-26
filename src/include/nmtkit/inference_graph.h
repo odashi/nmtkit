@@ -15,7 +15,8 @@ class InferenceGraph {
 public:
   struct Label {
     unsigned word_id;
-    float log_prob;
+    float word_log_prob;
+    std::vector<float> atten_probs;
   };
 
   class Node {

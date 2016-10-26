@@ -10,6 +10,7 @@
 #include <dynet/expr.h>
 #include <dynet/lstm.h>
 #include <dynet/model.h>
+#include <nmtkit/attention.h>
 #include <nmtkit/basic_types.h>
 #include <nmtkit/encoder.h>
 #include <nmtkit/inference_graph.h>
@@ -29,21 +30,24 @@ public:
   EncoderDecoder() {}
   
   // Constructs a new encoder-decoder model.
+  //
   // Arguments:
   //   src_vocab_size: Source vocabulary size.
   //   trg_vocab_size: Target vocabulary size.
-  //   embed_size: Embedding layer size.
-  //   hidden_size: RNN hidden layer size.
-  //   atten_size: Attention MLP hidden layer size.
+  //   embed_size: Number of units in each embedding layer.
+  //   hidden_size: Number of units in each RNN hidden layer.
+  //   atten_size: Number of units in attention hidden layer.
   //   model: Model object for training.
   EncoderDecoder(
       unsigned src_vocab_size,
       unsigned trg_vocab_size,
       unsigned embed_size,
       unsigned hidden_size,
+      unsigned atten_size,
       dynet::Model * model);
 
   // Constructs computation graph for the batch data.
+  //
   // Arguments:
   //   batch: Batch data to be trained.
   //   cg: Target computation graph.
@@ -55,6 +59,7 @@ public:
       dynet::ComputationGraph * cg);
 
   // Generates output sentence using given input sentence.
+  //
   // Arguments:
   //   source_ids: List of source word IDs.
   //   bos_id: "<s>" ID in the target language.
@@ -72,28 +77,53 @@ public:
 
 private:
   // Constructs decoder initializer graph.
+  //
   // Arguments:
   //   enc_final_state: Final state of the encoder.
   //   cg: Target computation graph.
-  //   dec_init_states: Placeholder of the initial decoder states.
-  void buildDecoderInitializerGraph(
+  //
+  // Returns:
+  //   Initial output value of the decoder.
+  dynet::expr::Expression buildDecoderInitializerGraph(
       const dynet::expr::Expression & enc_final_state,
-      dynet::ComputationGraph * cg,
-      std::vector<dynet::expr::Expression> * dec_init_states);
+      dynet::ComputationGraph * cg);
 
   // Constructs decoder graph for training.
+  //
   // Arguments:
-  //   dec_init_states: List of decoder initial states.
+  //   dec_init_h: Initial output value of the decoder.
+  //   atten_info: Precomputed values for the attention estimator.
   //   target_ids: Target word IDs for this step.
   //   cg: Target computation graph.
   //   dec_outputs: Placeholder of the decoder output distributions.
   void buildDecoderGraph(
-      const std::vector<dynet::expr::Expression> & dec_init_states,
+      const dynet::expr::Expression & dec_init_h,
+      const std::vector<dynet::expr::Expression> & atten_info,
       const std::vector<std::vector<unsigned>> & target_ids,
       dynet::ComputationGraph * cg,
       std::vector<dynet::expr::Expression> * dec_outputs);
 
+  // Generates output sequence using encoder results.
+  //
+  // Arguments:
+  //   dec_init_h: Initial output value of the decoder.
+  //   atten_info: Precomputed values for the attention estimator.
+  //   bos_id: "<s>" ID in the target language.
+  //   eos_id: "</s>" ID in the target language.
+  //   max_length: Maximum number of words (except "<s>") to be generated.
+  //   cg: Target computation graph.
+  //   ig: Placeholder of the output inference graph.
+  void decodeForInference(
+      const dynet::expr::Expression & dec_init_h,
+      const std::vector<dynet::expr::Expression> & atten_info,
+      const unsigned bos_id,
+      const unsigned eos_id,
+      const unsigned max_length,
+      dynet::ComputationGraph * cg,
+      InferenceGraph * ig);
+
   // Constructs graph of the output loss function.
+  //
   // Arguments:
   //   target_ids: Target word IDs for this step.
   //   dec_outputs: Decoder output distributions.
@@ -103,22 +133,6 @@ private:
       const std::vector<dynet::expr::Expression> & dec_outputs,
       std::vector<dynet::expr::Expression> * losses);
 
-  // Generates output sequence using encoder results.
-  // Arguments:
-  //   dec_init_states: List of decoder initial states.
-  //   bos_id: "<s>" ID in the target language.
-  //   eos_id: "</s>" ID in the target language.
-  //   max_length: Maximum number of words (except "<s>") to be generated.
-  //   cg: Target computation graph.
-  //   ig: Placeholder of the output inference graph.
-  void decodeForInference(
-      const std::vector<dynet::expr::Expression> & dec_init_states,
-      const unsigned bos_id,
-      const unsigned eos_id,
-      const unsigned max_length,
-      dynet::ComputationGraph * cg,
-      InferenceGraph * ig);
-
   // Boost serialization interface.
   friend class boost::serialization::access;
   template <class Archive>
@@ -126,6 +140,7 @@ private:
     ar & encoder_;
     ar & enc2dec_;
     ar & dec2out_;
+    ar & attention_;
     ar & rnn_dec_;
     ar & p_dec_lookup_;
   }
@@ -133,7 +148,8 @@ private:
   boost::scoped_ptr<nmtkit::Encoder> encoder_;
   boost::scoped_ptr<nmtkit::MultilayerPerceptron> enc2dec_;
   boost::scoped_ptr<nmtkit::MultilayerPerceptron> dec2out_;
-  dynet::LSTMBuilder rnn_dec_;
+  boost::scoped_ptr<nmtkit::Attention> attention_;
+  boost::scoped_ptr<dynet::LSTMBuilder> rnn_dec_;
   dynet::LookupParameter p_dec_lookup_;
 };
 

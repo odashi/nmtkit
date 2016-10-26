@@ -12,6 +12,29 @@ using namespace std;
 
 BOOST_AUTO_TEST_SUITE(ArrayTest)
 
+BOOST_AUTO_TEST_CASE(CheckReversing) {
+  const vector<vector<int>> test_data {
+    {},
+    {0},
+    {0, 1},
+    {0, 1, 2, 3, 4},
+  };
+  const vector<vector<int>> expected {
+    {},
+    {0},
+    {1, 0},
+    {4, 3, 2, 1, 0,}
+  };
+
+  for (unsigned i = 0; i < test_data.size(); ++i) {
+    vector<int> result = test_data[i];
+    nmtkit::Array::reverse(&result);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected[i].begin(), expected[i].end(),
+        result.begin(), result.end());
+  }
+}
+
 BOOST_AUTO_TEST_CASE(CheckSortingIntegers) {
   const vector<vector<int>> test_data {
     {},

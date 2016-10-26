@@ -6,6 +6,7 @@
 #include <boost/serialization/vector.hpp>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
+#include <dynet/model.h>
 #include <nmtkit/serialization_utils.h>
 
 namespace nmtkit {

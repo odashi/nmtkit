@@ -1,7 +1,6 @@
 #ifndef NMTKIT_MLP_ATTENTION_H_
 #define NMTKIT_MLP_ATTENTION_H_
 
-#include <iostream>
 #include <boost/serialization/base_object.hpp>
 #include <dynet/model.h>
 #include <nmtkit/attention.h>
@@ -51,7 +50,6 @@ private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
-    std::cout << "MLPAttention" << std::endl;
     ar & boost::serialization::base_object<Attention>(*this);
     ar & p_mem2h_;
     ar & p_ctrl2h_;
