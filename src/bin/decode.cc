@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -13,6 +14,7 @@
 #include <nmtkit/corpus.h>
 #include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
+#include <nmtkit/single_text_formatter.h>
 #include <nmtkit/vocabulary.h>
 
 using namespace std;
@@ -30,6 +32,10 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     ("model",
      PO::value<string>(),
      "(required) Location of the model directory.")
+    ("format",
+     PO::value<string>()->default_value("text"),
+     "Output format. Available options:\n"
+     "  \"text\": (default) One-best tokens in each line.")
     ;
 
   PO::options_description opt;
@@ -54,7 +60,7 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
   }
 
   // check required arguments
-  const vector<string> required_args = {"model"};
+  const vector<string> required_args = {"format", "model"};
   bool ok = true;
   for (const string & arg : required_args) {
     if (!args.count(arg)) {
@@ -70,6 +76,13 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
   return args;
 }
 
+unique_ptr<nmtkit::Formatter> getFormatter(const std::string & name) {
+  if (name == "text") {
+    return unique_ptr<nmtkit::Formatter>(new nmtkit::SingleTextFormatter());
+  }
+  NMTKIT_FATAL("Unknown formatter name: " + name);
+}
+
 template <class T>
 void loadParameters(const FS::path & filepath, T * obj) {
   std::ifstream ifs(filepath.string());
@@ -80,16 +93,19 @@ void loadParameters(const FS::path & filepath, T * obj) {
 }
 
 void run(int argc, char * argv[]) try {
-  // parse commandline args.
+  // Parses commandline args.
   const auto args = ::parseArgs(argc, argv);
 
   FS::path model_dir(args["model"].as<string>());
 
-  // parse config file.
+  // Parses config file.
   PT::ptree config;
   PT::read_ini((model_dir / "config.ini").string(), config);
 
-  // load vocabularies.
+  // Retrieves the formatter.
+  auto formatter = ::getFormatter(args["format"].as<string>());
+
+  // Loads vocabularies.
   nmtkit::Vocabulary src_vocab((model_dir / "source.vocab").string());
   nmtkit::Vocabulary trg_vocab((model_dir / "target.vocab").string());
   
@@ -97,14 +113,14 @@ void run(int argc, char * argv[]) try {
   const unsigned bos_id = trg_vocab.getID("<s>");
   const unsigned eos_id = trg_vocab.getID("</s>");
 
-  // maximum lengths
+  // Maximum generation length
   const unsigned max_length = config.get<unsigned>("Train.max_length");
 
-  // load EncoderDecoder model.
+  // Loads EncoderDecoder model.
   nmtkit::EncoderDecoder encdec;
   ::loadParameters(model_dir / "best_dev_log_ppl.model.params", &encdec);
 
-  // consume input lines and decode them.
+  // Consumes input lines and decodes them.
   vector<string> input_words;
   while (nmtkit::Corpus::readTokens(&cin, &input_words)) {
     vector<unsigned> input_word_ids;
@@ -112,28 +128,7 @@ void run(int argc, char * argv[]) try {
     dynet::ComputationGraph cg;
     nmtkit::InferenceGraph ig;
     encdec.infer(input_word_ids, bos_id, eos_id, max_length, &cg, &ig);
-    vector<const nmtkit::InferenceGraph::Node *> heads;
-    ig.findNodes(&heads, [&](const nmtkit::InferenceGraph::Node & node) {
-        return node.label().word_id == bos_id;
-    });
-    const nmtkit::InferenceGraph::Node * cur_node = heads[0];
-    while (true) {
-      // word
-      cout << trg_vocab.getWord(cur_node->label().word_id);
-      // word prob.
-      cout << ' ' << cur_node->label().word_log_prob;
-      // attention prob.
-      cout << " [";
-      for (const float p : cur_node->label().atten_probs) {
-        cout << ' ' << p;
-      }
-      cout << " ]";
-      cout << endl;
-      if (cur_node->next().size() == 0) {
-        break;
-      }
-      cur_node = cur_node->next()[0];
-    }
+    formatter->write(ig, trg_vocab, &cout);
   }
 } catch (exception & ex) {
   cerr << ex.what() << endl;

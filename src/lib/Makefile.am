@@ -19,6 +19,7 @@ libnmtkit_la_SOURCES = \
   multilayer_perceptron.cc \
   random.cc \
   random_sampler.cc \
+  single_text_formatter.cc \
   sorted_random_sampler.cc \
   vocabulary.cc
 
