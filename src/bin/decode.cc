@@ -102,7 +102,7 @@ void run(int argc, char * argv[]) try {
 
   // load EncoderDecoder model.
   nmtkit::EncoderDecoder encdec;
-  ::loadParameters(model_dir / "latest.model.params", &encdec);
+  ::loadParameters(model_dir / "best_dev_log_ppl.model.params", &encdec);
 
   // consume input lines and decode them.
   vector<string> input_words;

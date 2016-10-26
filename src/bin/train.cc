@@ -123,27 +123,28 @@ void run(int argc, char * argv[]) try {
   trg_vocab.save((model_dir / "target.vocab").string());
 
   // "<s>" and "</s>" IDs
-  const unsigned bos_id = trg_vocab.getID("<s>");
-  const unsigned eos_id = trg_vocab.getID("</s>");
+  //const unsigned bos_id = trg_vocab.getID("<s>");
+  //const unsigned eos_id = trg_vocab.getID("</s>");
 
   // maximum lengths
-  const unsigned max_length = config.get<unsigned>("Train.max_length");
+  const unsigned train_max_length = config.get<unsigned>("Train.max_length");
+  const unsigned test_max_length = 1024;
 
   // create samplers and batch converter.
   nmtkit::SortedRandomSampler train_sampler(
       config.get<string>("Corpus.train_source"),
       config.get<string>("Corpus.train_target"),
-      src_vocab, trg_vocab, max_length,
+      src_vocab, trg_vocab, train_max_length,
       config.get<unsigned>("Train.num_words_in_batch"),
       config.get<unsigned>("Train.random_seed"));
   nmtkit::MonotoneSampler dev_sampler(
       config.get<string>("Corpus.dev_source"),
       config.get<string>("Corpus.dev_target"),
-      src_vocab, trg_vocab, max_length, 1);
+      src_vocab, trg_vocab, test_max_length, 1);
   nmtkit::MonotoneSampler test_sampler(
       config.get<string>("Corpus.test_source"),
       config.get<string>("Corpus.test_target"),
-      src_vocab, trg_vocab, max_length, 1);
+      src_vocab, trg_vocab, test_max_length, 1);
   nmtkit::BatchConverter batch_converter(src_vocab, trg_vocab);
 
   // create new trainer and EncoderDecoder model.
@@ -166,8 +167,8 @@ void run(int argc, char * argv[]) try {
   const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
   const unsigned eval_interval = config.get<unsigned>(
       "Train.evaluation_interval");
-  unsigned long num_trained_batches = 0;
   unsigned long num_trained_samples = 0;
+  float best_dev_log_ppl = 1e100;
   for (unsigned iteration = 1; iteration <= max_iteration; ++iteration) {
     // Training
     {
@@ -182,7 +183,6 @@ void run(int argc, char * argv[]) try {
       cg.backward(total_loss_expr);
       trainer.update();
 
-      ++num_trained_batches;
       num_trained_samples += batch.source_ids[0].size();
       if (!train_sampler.hasSamples()) {
         train_sampler.rewind();
@@ -190,6 +190,8 @@ void run(int argc, char * argv[]) try {
     }
 
     if (iteration % eval_interval == 0) {
+      float dev_log_ppl, test_log_ppl;
+
       // Devtest
       {
         unsigned num_outputs = 0;
@@ -206,39 +208,11 @@ void run(int argc, char * argv[]) try {
           total_loss += static_cast<float>(
               dynet::as_scalar(cg.forward(total_loss_expr)));
         }
-        dev_sampler.rewind();
 
-        while (dev_sampler.hasSamples()) {
-          vector<nmtkit::Sample> samples;
-          dev_sampler.getSamples(&samples);
-          dynet::ComputationGraph cg;
-          nmtkit::InferenceGraph ig;
-          encdec.infer(
-              samples[0].source, bos_id, eos_id, max_length, &cg, &ig);
-          cout << "Output[0]:" << endl;
-          vector<const nmtkit::InferenceGraph::Node *> heads;
-          ig.findNodes(&heads, [&](const nmtkit::InferenceGraph::Node & node) {
-              return node.label().word_id == bos_id;
-          });
-          const nmtkit::InferenceGraph::Node * cur_node = heads[0];
-          while (true) {
-            cout << trg_vocab.getWord(cur_node->label().word_id) << ' '
-                 << cur_node->label().word_log_prob << endl;
-            if (cur_node->next().size() == 0) {
-              break;
-            }
-            cur_node = cur_node->next()[0];
-          }
-          break;
-        }
-
-        const float log_ppl = total_loss / num_outputs;
-        const auto fmt = boost::format("iter: %8d, dev-log-ppl: %.6e")
-            % iteration
-            % log_ppl;
-        cout << fmt.str() << endl;
+        dev_log_ppl = total_loss / num_outputs;
         dev_sampler.rewind();
       }
+
       // Test
       {
         unsigned num_outputs = 0;
@@ -256,16 +230,28 @@ void run(int argc, char * argv[]) try {
               dynet::as_scalar(cg.forward(total_loss_expr)));
         }
 
-        const float log_ppl = total_loss / num_outputs;
-        const auto fmt = boost::format("iter: %8d, test-log-ppl: %.6e")
-            % iteration
-            % log_ppl;
-        cout << fmt.str() << endl;
+        test_log_ppl = total_loss / num_outputs;
         test_sampler.rewind();
       }
 
+      const string fmt_str =
+          "iter=%d samples=%d dev-log-ppl=%.6e test-log-ppl=%.6e";
+      const auto fmt = boost::format(fmt_str)
+          % iteration % num_trained_samples % dev_log_ppl % test_log_ppl;
+      cout << fmt.str() << endl;
+
       ::saveParameters(model_dir / "latest.trainer.params", trainer);
       ::saveParameters(model_dir / "latest.model.params", encdec);
+      cout << "saved the latest model." << endl;
+      
+      if (dev_log_ppl < best_dev_log_ppl) {
+        best_dev_log_ppl = dev_log_ppl;
+        ::saveParameters(
+            model_dir / "best_dev_log_ppl.trainer.params", trainer);
+        ::saveParameters(
+            model_dir / "best_dev_log_ppl.model.params", encdec);
+        cout << "saved the best_dev_log_ppl model." << endl;
+      }
 
       cout << endl;
     }
