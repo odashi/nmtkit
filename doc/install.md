@@ -5,15 +5,27 @@ How to Install NMTKit
 Prerequisites for installing
 ----------------------------
 
-NMTKit needs the latest version of **Boost C++ Library**, **Eigen**, **DyNet**.
+NMTKit needs following libraries:
 
-The installation process requires **Git**, **Marcurial**, and **autotools**.
+* **Boost C++ Library** ... v1.50 or later
+* **Eigen** ... The newest development version
+* **DyNet** ... v1.0-rc1.
+* ~~**CUDA** ... v7.5 or later~~ *Currently not supported*.
+
+
+And the installation process requires following tools:
+
+* **Git**
+* **Marcurial**
+* **autotools**.
 
 
 Install Eigen
 -------------
 
-Eigen is a C++ linear algebra toolkit which is used DyNet.
+First we get the development version of Eigen.
+This process could be done by only putting obtained files into an appropriate
+location because Eigen consists of only header files:
 
     hg clone https://bitbucket.org/eigen/eigen/ /path/to/eigen
 
@@ -21,7 +33,9 @@ Eigen is a C++ linear algebra toolkit which is used DyNet.
 Install DyNet
 -------------
 
-DyNet is a C++/Python neural network toolkit.
+Next we get and build DyNet:
+
+* Case of using CPUs to calculate neural network:
 
     git clone git@github.com:clab/dynet /path/to/dynet
     cd /path/to/dynet
@@ -34,7 +48,8 @@ DyNet is a C++/Python neural network toolkit.
 Configuring library paths
 -------------------------
 
-Add a configuration to locate DyNet shared library in your shell-rc file like:
+All shared libraries of DyNet should be visible from the NMTKit binaries.
+Add a configuration in your shell-rc file like:
 
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/dynet/build/dynet
 
@@ -49,5 +64,14 @@ Install NMTKit
     autoreconf -i
     ./configure --with-eigen=/path/to/eigen --with-dynet=/path/to/dynet
     make
+
+
+Varidation
+----------
+
     make check
 
+Sample files could be used to validate the behavior of binaries:
+
+    src/bin/train --config sample_data/tiny_config.ini --model model
+    src/bin/decode --model model < sample_data/tiny.in
