@@ -1,3 +1,6 @@
 [submodule "submodules/mteval"]
 	path = submodules/mteval
 	url = git@github.com:odashi/mteval
+[submodule "submodules/small_parallel_enja"]
+	path = submodules/small_parallel_enja
+	url = git@github.com:odashi/small_parallel_enja

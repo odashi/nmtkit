@@ -7,7 +7,7 @@
 
     src/bin/decode \
         --model model \
-        < sample_data/test.en \
+        < submodules/small_parallel_enja/test.en \
         > result.ja
 
 メモリが足りない場合は、
@@ -16,7 +16,7 @@ trainコマンドと同様に`--dynet-mem`オプションに適当な値を指�
     src/bin/decode \
         --dynet-mem 4096 \
         --model model \
-        < sample_data/test.en \
+        < submodules/small_parallel_enja/test.en \
         > result.ja
 
 
@@ -26,6 +26,6 @@ trainコマンドと同様に`--dynet-mem`オプションに適当な値を指�
     src/bin/decode \
         --model model \
         --format html \
-        < sample_data/test.en \
+        < submodules/small_parallel_enja/test.en \
         > result.ja.html
 

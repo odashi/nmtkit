@@ -20,11 +20,10 @@
   <dt>test</dt><dd>学習結果の評価用データ。数百文程度</dd>
 </dl>
 
-NMTKitにはこれらの処理をあらかじめ行った
-[サンプルデータ](https://github.com/odashi/nmtkit/tree/master/sample_data)
-が付属しています。このデータは
-[Tanaka Corpus](http://www.edrdg.org/wiki/index.php/Tanaka_Corpus)
-から抽出した日英対訳文で、NMTKitの入力として適した形に整理してあります。
+NMTKitはこれらの処理をあらかじめ行った
+[サンプルデータ](https://github.com/odashi/small_parallel_enja)
+をsubmoduleとして保持しています。
+簡単な実験にはこのデータを用いるのが便利です。
 
 
 学習設定ファイルの準備
