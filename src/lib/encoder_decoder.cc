@@ -2,6 +2,7 @@
 
 #include <nmtkit/array.h>
 #include <nmtkit/bidirectional_encoder.h>
+#include <nmtkit/bilinear_attention.h>
 #include <nmtkit/mlp_attention.h>
 
 /* Input/output mapping for training/force decoding:
@@ -25,8 +26,15 @@ EncoderDecoder::EncoderDecoder(
     unsigned trg_vocab_size,
     unsigned embed_size,
     unsigned hidden_size,
+    const string & atten_type,
     unsigned atten_size,
     dynet::Model * model) {
+  NMTKIT_CHECK(src_vocab_size > 0, "src_vocab_size should be greater than 0.");
+  NMTKIT_CHECK(trg_vocab_size > 0, "trg_vocab_size should be greater than 0.");
+  NMTKIT_CHECK(embed_size > 0, "embed_size should be greater than 0.");
+  NMTKIT_CHECK(hidden_size > 0, "hidden_size should be greater than 0.");
+  // NOTE: atten_size would be checked in the attention selection section.
+
   encoder_.reset(
       new BidirectionalEncoder(
           1, src_vocab_size, embed_size, hidden_size, model));
@@ -44,10 +52,19 @@ EncoderDecoder::EncoderDecoder(
       new MultilayerPerceptron({enc_out_size, ie_size, dec_out_size}, model));
   dec2out_.reset(
       new MultilayerPerceptron({dec_out_size, trg_vocab_size}, model));
-  attention_.reset(
-      new MLPAttention(mem_size, dec_out_size, atten_size, model));
-  rnn_dec_.reset(
-      new dynet::LSTMBuilder(1, dec_in_size, dec_out_size, model));
+
+  // Attention selection.
+  if (atten_type == "mlp") {
+    NMTKIT_CHECK(atten_size > 0, "atten_size should be greater than 0.");
+    attention_.reset(
+        new MLPAttention(mem_size, dec_out_size, atten_size, model));
+  } else if (atten_type == "bilinear") {
+    attention_.reset(new BilinearAttention(mem_size, dec_out_size, model));
+  } else {
+    NMTKIT_FATAL("Invalid attention type: " + atten_type);
+  }
+
+  rnn_dec_.reset(new dynet::LSTMBuilder(1, dec_in_size, dec_out_size, model));
 
   p_dec_lookup_ = model->add_lookup_parameters(trg_vocab_size, {embed_size});
 };

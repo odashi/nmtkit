@@ -160,6 +160,7 @@ void run(int argc, char * argv[]) try {
       config.get<unsigned>("Model.target_vocabulary"),
       config.get<unsigned>("Model.embedding"),
       config.get<unsigned>("Model.rnn_hidden"),
+      config.get<string>("Model.attention_type"),
       config.get<unsigned>("Model.attention_hidden"),
       &model);
 

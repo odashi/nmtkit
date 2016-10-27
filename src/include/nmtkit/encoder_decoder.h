@@ -36,13 +36,21 @@ public:
   //   trg_vocab_size: Target vocabulary size.
   //   embed_size: Number of units in each embedding layer.
   //   hidden_size: Number of units in each RNN hidden layer.
+  //   atten_type: Name of the attention estimator.
+  //               Available values:
+  //                 "mlp": Multilayer perceptron-based attention
+  //                        (similar to [Bahdanau+14])
+  //                 "bilinear": Bilinear attention
+  //                             ("general" method in [Luong+15])
   //   atten_size: Number of units in attention hidden layer.
+  //               This parameter is used only in "mlp" attention.
   //   model: Model object for training.
   EncoderDecoder(
       unsigned src_vocab_size,
       unsigned trg_vocab_size,
       unsigned embed_size,
       unsigned hidden_size,
+      const std::string & atten_type,
       unsigned atten_size,
       dynet::Model * model);
 
