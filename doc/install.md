@@ -66,7 +66,7 @@ Install NMTKit
     make
 
 
-Varidation
+Validation
 ----------
 
     make check
