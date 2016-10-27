@@ -18,21 +18,25 @@ BilinearAttention::BilinearAttention(
   NMTKIT_CHECK(
       controller_size > 0, "controller_size should be greater than 0.");
   
-  p_interaction_ = model->add_parameters({memory_size, controller_size});
+  p_interaction_ = model->add_parameters({controller_size, memory_size});
 }
 
 vector<DE::Expression> BilinearAttention::prepare(
     const vector<DE::Expression> & memories,
     dynet::ComputationGraph * cg) {
   // Concatenated memory matrix.
-  // Shape: {seq_length, memory_size}
-  DE::Expression concat_mem = DE::transpose(DE::concatenate_cols(memories));
+  // Shape: {memory_size, seq_length}
+  DE::Expression concat_mem = DE::concatenate_cols(memories);
 
   // Interaction coefficients between the memory and the controller.
-  // Shape: {memory_size, controller_size}
+  // Shape: {controller_size, memory_size}
   DE::Expression interaction = DE::parameter(*cg, p_interaction_);
 
-  return {concat_mem, interaction};
+  // Precomputes conversion of the memory matrix.
+  // Shape: {seq_length, controller_size}
+  DE::Expression converted_mem = DE::transpose(interaction * concat_mem);
+
+  return {concat_mem, converted_mem};
 }
 
 void BilinearAttention::compute(
@@ -46,16 +50,11 @@ void BilinearAttention::compute(
 
   // Aliases
   const DE::Expression & concat_mem = precomputed[0];
-  const DE::Expression & interaction = precomputed[1];
-
-  // Computes transformation only using controller first to avoid calculation
-  // Amount.
-  // Shape: {memory_size, 1}
-  DE::Expression converted_ctrl = interaction * controller;
+  const DE::Expression & converted_mem = precomputed[1];
 
   // Computes attention.
   // Shape: {seq_length, 1}
-  DE::Expression atten_probs_inner = DE::softmax(concat_mem * converted_ctrl);
+  DE::Expression atten_probs_inner = DE::softmax(converted_mem * controller);
 
   // Computes the context vector.
   // Shape: {memory_size, 1}
