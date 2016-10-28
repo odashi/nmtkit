@@ -129,24 +129,27 @@ void run(int argc, char * argv[]) try {
   // maximum lengths
   const unsigned train_max_length = config.get<unsigned>("Train.max_length");
   const unsigned test_max_length = 1024;
+  const float train_max_length_ratio = config.get<float>(
+      "Train.max_length_ratio");
+  const float test_max_length_ratio = 1e10;
 
   // create samplers and batch converter.
   nmtkit::SortedRandomSampler train_sampler(
       config.get<string>("Corpus.train_source"),
       config.get<string>("Corpus.train_target"),
-      src_vocab, trg_vocab, train_max_length,
+      src_vocab, trg_vocab, train_max_length, train_max_length_ratio,
       config.get<unsigned>("Train.num_words_in_batch"),
       config.get<unsigned>("Train.random_seed"));
   cout << "Loaded 'train' corpus." << endl;
   nmtkit::MonotoneSampler dev_sampler(
       config.get<string>("Corpus.dev_source"),
       config.get<string>("Corpus.dev_target"),
-      src_vocab, trg_vocab, test_max_length, 1);
+      src_vocab, trg_vocab, test_max_length, test_max_length_ratio, 1);
   cout << "Loaded 'dev' corpus." << endl;
   nmtkit::MonotoneSampler test_sampler(
       config.get<string>("Corpus.test_source"),
       config.get<string>("Corpus.test_target"),
-      src_vocab, trg_vocab, test_max_length, 1);
+      src_vocab, trg_vocab, test_max_length, test_max_length_ratio, 1);
   cout << "Loaded 'test' corpus." << endl;
   nmtkit::BatchConverter batch_converter(src_vocab, trg_vocab);
 

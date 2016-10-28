@@ -21,6 +21,7 @@ public:
       const Vocabulary & src_vocab,
       const Vocabulary & trg_vocab,
       unsigned max_length,
+      float max_length_ratio,
       unsigned batch_size,
       unsigned random_seed);
 

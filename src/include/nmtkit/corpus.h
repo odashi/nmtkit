@@ -57,6 +57,8 @@ public:
   //   trg_vocab: Vocabulary object for the target language.
   //   max_length: Maximum number of words in a sentence. Samples which exceeds
   //               this value will be skipped.
+  //   max_length_ratio: Maximum ratio of lengths in source/target sentences.
+  //                     Samples which exceeds this value will be skipped.
   //   src_result: Placeholder to store new source samples. Old data will be
   //               deleted automatically before storing new samples.
   //   trg_result: Placeholder to store new target samples. Old data will be
@@ -67,6 +69,7 @@ public:
       const Vocabulary & src_vocab,
       const Vocabulary & trg_vocab,
       unsigned max_length,
+      float max_length_ratio,
       std::vector<std::vector<unsigned>> * src_result,
       std::vector<std::vector<unsigned>> * trg_result);
 
@@ -78,6 +81,8 @@ public:
   //   trg_vocab: Vocabulary object for the target language.
   //   max_length: Maximum number of words in a sentence. Samples which exceeds
   //               this value will be skipped.
+  //   max_length_ratio: Maximum ratio of lengths in source/target sentences.
+  //                     Samples which exceeds this value will be skipped.
   //   result: Placeholder to store new source/target samples. Old data will be
   //           deleted automatically before storing new samples.
   static void loadParallelSentences(
@@ -86,6 +91,7 @@ public:
       const Vocabulary & src_vocab,
       const Vocabulary & trg_vocab,
       unsigned max_length,
+      float max_length_ratio,
       std::vector<Sample> * result);
 };
 

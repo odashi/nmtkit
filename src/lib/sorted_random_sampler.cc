@@ -15,10 +15,13 @@ SortedRandomSampler::SortedRandomSampler(
     const Vocabulary & src_vocab,
     const Vocabulary & trg_vocab,
     unsigned max_length,
+    float max_length_ratio,
     unsigned num_words_in_batch,
     unsigned random_seed) {
   Corpus::loadParallelSentences(
-      src_filepath, trg_filepath, src_vocab, trg_vocab, max_length, &samples_);
+      src_filepath, trg_filepath,
+      src_vocab, trg_vocab, max_length, max_length_ratio,
+      &samples_);
   NMTKIT_CHECK(samples_.size() > 0, "Corpus files are empty.");
   NMTKIT_CHECK(
       num_words_in_batch > 0, "num_words_in_batch should be greater than 0.");

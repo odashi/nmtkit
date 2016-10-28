@@ -13,11 +13,12 @@ MonotoneSampler::MonotoneSampler(
     const Vocabulary & src_vocab,
     const Vocabulary & trg_vocab,
     unsigned max_length,
+    float max_length_ratio,
     unsigned batch_size)
 : batch_size_(batch_size) {
   Corpus::loadParallelSentences(
       src_filepath, trg_filepath,
-      src_vocab, trg_vocab, max_length,
+      src_vocab, trg_vocab, max_length, max_length_ratio,
       &src_samples_, &trg_samples_);
   NMTKIT_CHECK(src_samples_.size() > 0, "Corpus files are empty.");
   NMTKIT_CHECK(batch_size_ > 0, "batch_size should be greater than 0.");

@@ -1,5 +1,6 @@
 #include <nmtkit/corpus.h>
 
+#include <algorithm>
 #include <fstream>
 #include <boost/algorithm/string.hpp>
 #include <nmtkit/exception.h>
@@ -51,6 +52,7 @@ void Corpus::loadParallelSentences(
     const Vocabulary & src_vocab,
     const Vocabulary & trg_vocab,
     unsigned max_length,
+    float max_length_ratio,
     vector<vector<unsigned>> * src_result,
     vector<vector<unsigned>> * trg_result) {
   ifstream src_ifs(src_filepath), trg_ifs(trg_filepath);
@@ -70,7 +72,15 @@ void Corpus::loadParallelSentences(
       readTokens(&trg_ifs, &trg_words)) {
 
     // Filters sentences.
-    if (src_words.size() > max_length || trg_words.size() > max_length) {
+    unsigned len1 = src_words.size();
+    unsigned len2 = trg_words.size();
+    if (len1 > max_length || len2 > max_length) {
+      continue;
+    }
+    if (len1 > len2) {
+      swap(len1, len2);
+    }
+    if (len2 > len1 * max_length_ratio) {
       continue;
     }
 
@@ -87,6 +97,7 @@ void Corpus::loadParallelSentences(
     const Vocabulary & src_vocab,
     const Vocabulary & trg_vocab,
     unsigned max_length,
+    float max_length_ratio,
     vector<Sample> * result) {
   ifstream src_ifs(src_filepath), trg_ifs(trg_filepath);
   NMTKIT_CHECK(
@@ -104,9 +115,18 @@ void Corpus::loadParallelSentences(
       readTokens(&trg_ifs, &trg_words)) {
 
     // Filters sentences.
-    if (src_words.size() > max_length || trg_words.size() > max_length) {
+    unsigned len1 = src_words.size();
+    unsigned len2 = trg_words.size();
+    if (len1 > max_length || len2 > max_length) {
       continue;
     }
+    if (len1 > len2) {
+      swap(len1, len2);
+    }
+    if (len2 > len1 * max_length_ratio) {
+      continue;
+    }
+
 
     result->emplace_back(Sample());
     wordsToWordIDs(src_words, src_vocab, &result->back().source);
