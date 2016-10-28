@@ -54,9 +54,11 @@ Case of using CUDA:
 Configuring library paths
 -------------------------
 
-All shared libraries of DyNet should be visible from the NMTKit binaries.
+All shared libraries of CUDA and DyNet should be visible from the NMTKit
+binaries.
 Add a configuration in your shell-rc file like:
 
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/cuda
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/dynet/build/dynet
 
 

@@ -2,7 +2,7 @@
 ==============
 
 [学習](https://github.com/odashi/nmtkit/tree/master/doc/training_ja.md)
-により出力ディレクトリにbest_dev_log_ppl.model.paramsが生成されていれば、
+により出力ディレクトリに`best_dev_log_ppl.model.params`が生成されていれば、
 **decode**コマンドにより実際の翻訳結果を生成することができます。
 
     src/bin/decode \
@@ -18,7 +18,6 @@ trainコマンドと同様に`--dynet-mem`オプションに適当な値を指�
         --model model \
         < submodules/small_parallel_enja/test.en \
         > result.ja
-
 
 `--format html`を指定することで、
 翻訳中の様々な情報を記録したHTMLを出力することが可能です。
