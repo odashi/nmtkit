@@ -137,14 +137,17 @@ void run(int argc, char * argv[]) try {
       src_vocab, trg_vocab, train_max_length,
       config.get<unsigned>("Train.num_words_in_batch"),
       config.get<unsigned>("Train.random_seed"));
+  cout << "Loaded 'train' corpus." << endl;
   nmtkit::MonotoneSampler dev_sampler(
       config.get<string>("Corpus.dev_source"),
       config.get<string>("Corpus.dev_target"),
       src_vocab, trg_vocab, test_max_length, 1);
+  cout << "Loaded 'dev' corpus." << endl;
   nmtkit::MonotoneSampler test_sampler(
       config.get<string>("Corpus.test_source"),
       config.get<string>("Corpus.test_target"),
       src_vocab, trg_vocab, test_max_length, 1);
+  cout << "Loaded 'test' corpus." << endl;
   nmtkit::BatchConverter batch_converter(src_vocab, trg_vocab);
 
   // create new trainer and EncoderDecoder model.
@@ -155,6 +158,7 @@ void run(int argc, char * argv[]) try {
       config.get<float>("Train.adam_beta1"),
       config.get<float>("Train.adam_beta2"),
       config.get<float>("Train.adam_eps"));
+  cout << "Created new trainer." << endl;
   nmtkit::EncoderDecoder encdec(
       config.get<unsigned>("Model.source_vocabulary"),
       config.get<unsigned>("Model.target_vocabulary"),
@@ -163,6 +167,7 @@ void run(int argc, char * argv[]) try {
       config.get<string>("Model.attention_type"),
       config.get<unsigned>("Model.attention_hidden"),
       &model);
+  cout << "Created new encoder-decoder model." << endl;
 
   // Train/dev/test loop
   const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
@@ -170,6 +175,8 @@ void run(int argc, char * argv[]) try {
       "Train.evaluation_interval");
   unsigned long num_trained_samples = 0;
   float best_dev_log_ppl = 1e100;
+  cout << "Start training." << endl;
+
   for (unsigned iteration = 1; iteration <= max_iteration; ++iteration) {
     // Training
     {
@@ -236,27 +243,24 @@ void run(int argc, char * argv[]) try {
       }
 
       const string fmt_str =
-          "iter=%d samples=%d dev-log-ppl=%.6e test-log-ppl=%.6e";
+          "iteration=%d samples=%d dev-log-ppl=%.6e test-log-ppl=%.6e";
       const auto fmt = boost::format(fmt_str)
           % iteration % num_trained_samples % dev_log_ppl % test_log_ppl;
       cout << fmt.str() << endl;
 
       ::saveParameters(model_dir / "latest.trainer.params", trainer);
       ::saveParameters(model_dir / "latest.model.params", encdec);
-      cout << "saved the latest model." << endl;
+      cout << "Saved 'latest' model." << endl;
       
       if (dev_log_ppl < best_dev_log_ppl) {
         best_dev_log_ppl = dev_log_ppl;
         ::saveParameters(
-            model_dir / "best_dev_log_ppl.trainer.params", trainer);
-        ::saveParameters(
             model_dir / "best_dev_log_ppl.model.params", encdec);
-        cout << "saved the best_dev_log_ppl model." << endl;
+        cout << "Saved 'best_dev_log_ppl' model." << endl;
       }
-
-      cout << endl;
     }
   }
+  cout << "Finished." << endl;
 } catch (exception & ex) {
   cerr << ex.what() << endl;
   exit(1);
