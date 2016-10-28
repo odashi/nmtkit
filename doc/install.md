@@ -16,14 +16,14 @@ NMTKit needs following libraries:
 And the installation process requires following tools:
 
 * **Git**
-* **Marcurial**
+* **Mercurial**
 * **autotools**.
 
 
 Install Eigen
 -------------
 
-First we get the development version of Eigen.
+First we get the development version of Eigen using Mercurial.
 This process could be done by only putting obtained files into an appropriate
 location because Eigen consists of only header files:
 
