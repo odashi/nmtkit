@@ -10,7 +10,7 @@ NMTKitは以下のライブラリに依存しています。
 * **Boost C++ Library** ... v1.50 以降
 * **Eigen** ... 最新の開発版
 * **DyNet** ... v1.0-rc1
-* ~~**CUDA** ... v7.5 以降~~ *現在未対応*
+* **CUDA** ... v7.5 以降
 
 またインストール作業のために以下のツールが必要です。
 
@@ -34,13 +34,19 @@ DyNetのインストール
 
 DyNetをインストールします。
 
-ニューラルネットの計算にCPUを使用する場合は以下の通り。
-
     git clone git@github.com:clab/dynet /path/to/dynet
     cd /path/to/dynet
     mkdir build
     cd build
+
+ニューラルネットの計算にCPUを使用する場合：
+
     cmake .. -DEIGEN3_INCLUDE_DIR=/path/to/eigen
+    make -j <threads>
+
+CUDA環境がある場合：
+
+    cmake .. -DEIGEN3_INCLUDE_DIR=/path/to/eigen -DBACKEND=cuda
     make -j <threads>
 
 
@@ -61,7 +67,15 @@ NMTKitのインストール
     git submodule init
     git submodule update
     autoreconf -i
+
+ニューラルネットの計算にCPUを使用する場合：
+
     ./configure --with-eigen=/path/to/eigen --with-dynet=/path/to/dynet
+    make
+
+CUDA環境がある場合：
+
+    ./configure --with-eigen=/path/to/eigen --with-dynet=/path/to/dynet --with-cuda=/path/to/cuda
     make
 
 

@@ -10,7 +10,7 @@ NMTKit needs following libraries:
 * **Boost C++ Library** ... v1.50 or later
 * **Eigen** ... The newest development version
 * **DyNet** ... v1.0-rc1.
-* ~~**CUDA** ... v7.5 or later~~ *Currently not supported*.
+* **CUDA** ... v7.5 or later
 
 
 And the installation process requires following tools:
@@ -35,15 +35,21 @@ Install DyNet
 
 Next we get and build DyNet:
 
-Case of using CPUs to calculate neural network:
-
     git clone git@github.com:clab/dynet /path/to/dynet
     cd /path/to/dynet
     mkdir build
     cd build
+
+Case of using CPUs to calculate neural network:
+
     cmake .. -DEIGEN3_INCLUDE_DIR=/path/to/eigen
     make -j <threads>
-    
+
+Case of using CUDA:
+
+    cmake .. -DEIGEN3_INCLUDE_DIR=/path/to/eigen -DBACKEND=cuda
+    make -j <threads>
+
 
 Configuring library paths
 -------------------------
@@ -62,7 +68,15 @@ Install NMTKit
     git submodule init
     git submodule update
     autoreconf -i
+
+Case of using CPUs to calculate neural network:
+
     ./configure --with-eigen=/path/to/eigen --with-dynet=/path/to/dynet
+    make
+
+Case of using CUDA:
+
+    ./configure --with-eigen=/path/to/eigen --with-dynet=/path/to/dynet --with-cuda=/path/to/cuda
     make
 
 

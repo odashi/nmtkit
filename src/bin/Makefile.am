@@ -14,6 +14,7 @@ LDADD = \
   $(BOOST_SERIALIZATION_LIB) \
   $(BOOST_SYSTEM_LIB) \
   $(DYNET_LDFLAGS) \
+  $(CUDA_LDFLAGS) \
   $(top_builddir)/submodules/mteval/src/lib/libmteval.la
 
 bin_PROGRAMS = train decode

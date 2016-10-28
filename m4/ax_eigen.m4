@@ -13,7 +13,7 @@
 AC_DEFUN([AX_EIGEN],
 [
 AC_ARG_WITH([eigen],
-  [AS_HELP_STRING([--with-eigen=DIR], [Location to Eigen library])],
+  [AS_HELP_STRING([--with-eigen=DIR], [Location to the Eigen library])],
   [eigen_dir="${withval}"],
   [eigen_dir=""])
 
