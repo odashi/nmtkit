@@ -101,7 +101,7 @@ The prefix of the `*.params` files means:
   <dt>best_dev_log_ppl</dt><dd>The best model according to the translation probability over the *dev* data.</dd>
 </dl>
 
-We also could output similar contents to `training.log` by specifying
+We also could output similar contents as `training.log` to stderr by specifying
 `--log-to-stderr` option:
 
     src/bin/train \
