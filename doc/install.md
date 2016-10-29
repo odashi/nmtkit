@@ -7,6 +7,7 @@ Prerequisites for installing
 
 NMTKit needs following libraries:
 
+* **GNU C++** ... v4.9 or later (or other compatible compilers)
 * **Boost C++ Library** ... v1.50 or later
 * **Eigen** ... The newest development version
 * **DyNet** ... v1.0-rc1.
