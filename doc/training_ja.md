@@ -85,6 +85,7 @@ DyNetはデフォルトで512MBのメモリを確保します。
 
 <dl>
   <dt>config.ini</dt><dd>`--config`で指定した設定ファイルのコピー</dd>
+  <dt>training.log</dt><dd>学習経過の記録</dd>
   <dt>source.vocab</dt><dd>原言語の語彙一覧</dd>
   <dt>target.vocab</dt><dd>目的言語の語彙一覧</dd>
   <dt>*.model.params</dt><dd>翻訳モデルのパラメータ</dd>
@@ -98,3 +99,11 @@ paramsファイルの接頭辞には以下の意味があります。
   <dt>best_dev_log_ppl</dt><dd>過去の学習結果のうち、検証用データで最も高い翻訳確率となるもの</dd>
 </dl>
 
+`--log-to-stderr`オプションを付与すると、
+`training.log`と同じ内容が標準エラー出力に書き出されます。
+
+    src/bin/train \
+        --dynet-mem 4096 \
+        --config sample_data/sample_config.ini \
+        --model model \
+        --log-to-stderr

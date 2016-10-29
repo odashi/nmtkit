@@ -111,7 +111,7 @@ void initializeLogger(
       std::make_shared<spdlog::sinks::simple_file_sink_st>(
           (dirpath / "training.log").string()));
   if (log_to_stderr) {
-    sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_sink_st>());
+    sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_sink_st>());
   }
 
   // Configures and registers the combined logger object.
