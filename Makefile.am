@@ -4,7 +4,9 @@ AUTOMAKE_OPTIONS = foreign
 SUBDIRS = submodules src
 
 EXTRA_DIST = \
+	doc \
 	README.md \
+	README_ja.md \
 	COPYING \
 	ChangeLog \
 	AUTHORS \
