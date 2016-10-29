@@ -1,5 +1,4 @@
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 #include <boost/archive/text_oarchive.hpp>
@@ -23,6 +22,7 @@
 #include <nmtkit/monotone_sampler.h>
 #include <nmtkit/sorted_random_sampler.h>
 #include <nmtkit/vocabulary.h>
+#include <spdlog/spdlog.h>
 
 using namespace std;
 
@@ -36,6 +36,18 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
   PO::options_description opt_generic("Generic options");
   opt_generic.add_options()
     ("help", "Print this manual and exit.")
+    ("log-level",
+     PO::value<string>()->default_value("info"),
+     "Logging level to output.\n"
+     "Available options:\n"
+     "  trace (most frequent)\n"
+     "  debug\n"
+     "  info\n"
+     "  warn\n"
+     "  error\n"
+     "  critical (fewest)")
+    ("log-to-stderr",
+     "Print logs to the stderr as well as the 'training.log' file.")
     ("config",
      PO::value<string>(),
      "(required) Location of the training configuration file.")
@@ -89,6 +101,41 @@ void makeDirectory(const FS::path & dirpath) {
       "Could not create directory: " + dirpath.string());
 }
 
+void initializeLogger(
+    const FS::path & dirpath,
+    const string & log_level,
+    bool log_to_stderr) {
+  // Registers sinks.
+  vector<spdlog::sink_ptr> sinks;
+  sinks.emplace_back(
+      std::make_shared<spdlog::sinks::simple_file_sink_st>(
+          (dirpath / "training.log").string()));
+  if (log_to_stderr) {
+    sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_sink_st>());
+  }
+
+  // Configures and registers the combined logger object.
+  auto logger = std::make_shared<spdlog::logger>(
+      "status", begin(sinks), end(sinks));
+  logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e]\t[%l]\t%v");
+  if (log_level == "trace") {
+    logger->set_level(spdlog::level::trace);
+  } else if (log_level == "debug") {
+    logger->set_level(spdlog::level::debug);
+  } else if (log_level == "info") {
+    logger->set_level(spdlog::level::info);
+  } else if (log_level == "warn") {
+    logger->set_level(spdlog::level::warn);
+  } else if (log_level == "error") {
+    logger->set_level(spdlog::level::err);
+  } else if (log_level == "critical") {
+    logger->set_level(spdlog::level::critical);
+  } else {
+    NMTKIT_FATAL("Invalid log-level value: " + log_level);
+  }
+  spdlog::register_logger(logger);
+}
+
 template <class T>
 void saveParameters(const FS::path & filepath, const T & obj) {
   std::ofstream ofs(filepath.string());
@@ -99,14 +146,21 @@ void saveParameters(const FS::path & filepath, const T & obj) {
 }
 
 void run(int argc, char * argv[]) try {
-  // parse commandline args and config file.
+  // parse commandline args and the config file.
   const auto args = ::parseArgs(argc, argv);
 
-  // create model directory.
+  // create the model directory.
   FS::path model_dir(args["model"].as<string>());
   ::makeDirectory(model_dir);
 
-  // copy and parse config file.
+  // initialize the logger.
+  ::initializeLogger(
+      model_dir,
+      args["log-level"].as<string>(),
+      static_cast<bool>(args.count("log-to-stderr")));
+  auto logger = spdlog::get("status");
+
+  // copy and parse the config file.
   FS::path cfg_filepath = model_dir / "config.ini";
   FS::copy_file(args["config"].as<string>(), cfg_filepath);
   PT::ptree config;
@@ -140,17 +194,17 @@ void run(int argc, char * argv[]) try {
       src_vocab, trg_vocab, train_max_length, train_max_length_ratio,
       config.get<unsigned>("Train.num_words_in_batch"),
       config.get<unsigned>("Train.random_seed"));
-  cout << "Loaded 'train' corpus." << endl;
+  logger->info("Loaded 'train' corpus.");
   nmtkit::MonotoneSampler dev_sampler(
       config.get<string>("Corpus.dev_source"),
       config.get<string>("Corpus.dev_target"),
       src_vocab, trg_vocab, test_max_length, test_max_length_ratio, 1);
-  cout << "Loaded 'dev' corpus." << endl;
+  logger->info("Loaded 'dev' corpus.");
   nmtkit::MonotoneSampler test_sampler(
       config.get<string>("Corpus.test_source"),
       config.get<string>("Corpus.test_target"),
       src_vocab, trg_vocab, test_max_length, test_max_length_ratio, 1);
-  cout << "Loaded 'test' corpus." << endl;
+  logger->info("Loaded 'test' corpus.");
   nmtkit::BatchConverter batch_converter(src_vocab, trg_vocab);
 
   // create new trainer and EncoderDecoder model.
@@ -161,7 +215,7 @@ void run(int argc, char * argv[]) try {
       config.get<float>("Train.adam_beta1"),
       config.get<float>("Train.adam_beta2"),
       config.get<float>("Train.adam_eps"));
-  cout << "Created new trainer." << endl;
+  logger->info("Created new trainer.");
   nmtkit::EncoderDecoder encdec(
       config.get<unsigned>("Model.source_vocabulary"),
       config.get<unsigned>("Model.target_vocabulary"),
@@ -170,7 +224,7 @@ void run(int argc, char * argv[]) try {
       config.get<string>("Model.attention_type"),
       config.get<unsigned>("Model.attention_hidden"),
       &model);
-  cout << "Created new encoder-decoder model." << endl;
+  logger->info("Created new encoder-decoder model.");
 
   // Train/dev/test loop
   const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
@@ -178,7 +232,7 @@ void run(int argc, char * argv[]) try {
       "Train.evaluation_interval");
   unsigned long num_trained_samples = 0;
   float best_dev_log_ppl = 1e100;
-  cout << "Start training." << endl;
+  logger->info("Start training.");
 
   for (unsigned iteration = 1; iteration <= max_iteration; ++iteration) {
     // Training
@@ -249,21 +303,21 @@ void run(int argc, char * argv[]) try {
           "iteration=%d samples=%d dev-log-ppl=%.6e test-log-ppl=%.6e";
       const auto fmt = boost::format(fmt_str)
           % iteration % num_trained_samples % dev_log_ppl % test_log_ppl;
-      cout << fmt.str() << endl;
+      logger->info(fmt.str());
 
       ::saveParameters(model_dir / "latest.trainer.params", trainer);
       ::saveParameters(model_dir / "latest.model.params", encdec);
-      cout << "Saved 'latest' model." << endl;
+      logger->info("Saved 'latest' model.");
       
       if (dev_log_ppl < best_dev_log_ppl) {
         best_dev_log_ppl = dev_log_ppl;
         ::saveParameters(
             model_dir / "best_dev_log_ppl.model.params", encdec);
-        cout << "Saved 'best_dev_log_ppl' model." << endl;
+        logger->info("Saved 'best_dev_log_ppl' model.");
       }
     }
   }
-  cout << "Finished." << endl;
+  logger->info("Finished.");
 } catch (exception & ex) {
   cerr << ex.what() << endl;
   exit(1);
