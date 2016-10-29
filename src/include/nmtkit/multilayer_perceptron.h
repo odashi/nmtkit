@@ -38,15 +38,26 @@ public:
       const std::vector<unsigned> & spec,
       dynet::Model * model);
 
+  // Prepares precomputed values.
+  //
+  // Arguments:
+  //   cg: Target computation graph.
+  //
+  // Returns:
+  //   List of expressions representing precomputed values.
+  std::vector<dynet::expr::Expression> prepare(dynet::ComputationGraph * cg);
+
   // Constructs computation graph.
   // 
   // Arguments:
+  //   precomputed: List of expressions returned by prepare().
   //   input: input expression.
   //   cg: Target computation graph.
   // 
   // Returns:
   //   Output expression.
-  dynet::expr::Expression build(
+  dynet::expr::Expression compute(
+      const std::vector<dynet::expr::Expression> & precomputed,
       const dynet::expr::Expression & input,
       dynet::ComputationGraph * cg);
 

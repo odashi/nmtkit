@@ -76,7 +76,8 @@ Expression EncoderDecoder::buildDecoderInitializerGraph(
   //       layout:
   //         {c1, c2, ..., cn, h1, h2, ..., hn}
   //       where cx is the initial cell states and hx is the initial outputs.
-  Expression dec_init_c = enc2dec_->build(enc_final_state, cg);
+  Expression dec_init_c = enc2dec_->compute(
+      enc2dec_->prepare(cg), enc_final_state, cg);
   Expression dec_init_h = DE::tanh(dec_init_c);
   rnn_dec_->new_graph(*cg);
   rnn_dec_->start_new_sequence({dec_init_c, dec_init_h});
@@ -92,6 +93,7 @@ void EncoderDecoder::buildDecoderGraph(
   dec_outputs->clear();
   const unsigned tl = target_ids.size() - 1;
   Expression dec_h = dec_init_h;
+  vector<Expression> dec2out_params = dec2out_->prepare(cg);
 
   for (unsigned i = 0; i < tl; ++i) {
     // Embedding
@@ -103,7 +105,7 @@ void EncoderDecoder::buildDecoderGraph(
 
     // Decode
     dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
-    Expression dec_out = dec2out_->build(dec_h, cg);
+    Expression dec_out = dec2out_->compute(dec2out_params, dec_h, cg);
     dec_outputs->emplace_back(dec_out);
   }
 }
@@ -119,6 +121,7 @@ void EncoderDecoder::decodeForInference(
   ig->clear();
   InferenceGraph::Node * prev_node = ig->addNode({bos_id, 0.0f, {}});
   Expression dec_h = dec_init_h;
+  vector<Expression> dec2out_params = dec2out_->prepare(cg);
 
   for (unsigned generated = 0; ; ++generated) {
     // Embedding
@@ -133,7 +136,7 @@ void EncoderDecoder::decodeForInference(
 
     // Decode
     dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
-    Expression dec_out = dec2out_->build(dec_h, cg);
+    Expression dec_out = dec2out_->compute(dec2out_params, dec_h, cg);
     Expression log_probs = DE::log_softmax(dec_out);
     vector<dynet::real> log_probs_values = dynet::as_vector(
         cg->incremental_forward(log_probs));

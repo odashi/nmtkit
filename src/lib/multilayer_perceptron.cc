@@ -24,13 +24,26 @@ MultilayerPerceptron::MultilayerPerceptron(
   }
 }
 
-DE::Expression MultilayerPerceptron::build(
+vector<DE::Expression> MultilayerPerceptron::prepare(
+    dynet::ComputationGraph * cg) {
+  vector<DE::Expression> params;
+  // Note: params[2*i]: i-th matrix
+  //       params[2*i+1]: i-th bias
+  for (unsigned i = 0; i < w_.size(); ++i) {
+    params.emplace_back(DE::parameter(*cg, w_[i]));
+    params.emplace_back(DE::parameter(*cg, b_[i]));
+  }
+  return params;
+}
+
+DE::Expression MultilayerPerceptron::compute(
+    const vector<DE::Expression> & precomputed,
     const DE::Expression & input,
-    dynet::ComputationGraph  * cg) {
+    dynet::ComputationGraph * cg) {
   vector<DE::Expression> hidden {input};
   for (unsigned i = 0; i < w_.size(); ++i) {
-    DE::Expression w = DE::parameter(*cg, w_[i]);
-    DE::Expression b = DE::parameter(*cg, b_[i]);
+    const DE::Expression & w = precomputed[2 * i];
+    const DE::Expression & b = precomputed[2 * i + 1];
     DE::Expression u = DE::affine_transform({b, w, hidden.back()});
     if (i == w_.size() - 1) {
       // Last (output) layer does not be nonliniarized.

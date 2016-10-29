@@ -36,7 +36,7 @@ public:
   // Calculate the attention distribution and the context vector.
   //
   // Arguments:
-  //   precomputed: List of xpressions returned by prepareMemory().
+  //   precomputed: List of expressions returned by prepare().
   //   controller: An input vector expression to compute the attention
   //               distribution.
   //   cg: Target computation graph.
