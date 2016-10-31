@@ -12,8 +12,9 @@ nobase_include_HEADERS = \
   nmtkit/formatter.h \
   nmtkit/html_formatter.h \
   nmtkit/inference_graph.h \
+  nmtkit/init.h \
   nmtkit/mlp_attention.h \
-	nmtkit/monotone_sampler.h \
+  nmtkit/monotone_sampler.h \
   nmtkit/multilayer_perceptron.h \
   nmtkit/random.h \
   nmtkit/random_sampler.h \

@@ -6,9 +6,8 @@ Preparing parallel corpus
 -------------------------
 
 To make translation models using NMTKit, the toolkit requires a **parallel
-corpus**.
-The parallel corpus consists of two texts written in different languages,
-and each lines of them have same meaning each other.
+corpus**, which consists of two texts written in different languages,
+and each lines of them have the same meaning each other.
 For example, following texts in English:
 
     It works.
@@ -21,7 +20,7 @@ and corresponding texts in French:
     Le vif renard brun saute par-dessus le chien paresseux.
     Franchement, ma chère, c'est le cadet de mes soucis.
 
-could be assumed as the parallel corpus.
+could be assumed as a parallel corpus.
 
 In addition, we usually need the **tokenization** preprocessing to separate
 words and some additional symbols, such as comma (,), period (.), according to
@@ -69,21 +68,10 @@ To launch the trainer with the sample corpus, type following lines:
         --model model
 
 `train` command modifies only files in the output directory specified by the
-`--model` option. `train` may fail when any other file or directory already
-exists in the same path.
+`--model` option. `train` may fail when any problems occurd, for example, other
+file or directory already exists in the path specified in `--model`.
 
-If `train` fails due to the out-of-memory error, we could use larger amount of
-the reserved memory using `--dynet-mem` option in MB:
-
-    src/bin/train \
-        --dynet-mem 4096 \
-        --config sample_data/sample_config.ini \
-        --model model
-
-Note that the `--dynet-mem` option should be placed just after the `train`.
-
-Some files would be generated while running the training process in the output
-directory:
+Some files would be generated while training in the output directory:
 
 <dl>
   <dt>config.ini</dt><dd>Copy of the configuration script specified by `--config`.</dd>
@@ -105,7 +93,6 @@ We also could output similar contents as `training.log` to stderr by specifying
 `--log-to-stderr` option:
 
     src/bin/train \
-        --dynet-mem 4096 \
         --config sample_data/sample_config.ini \
         --model model \
         --log-to-stderr

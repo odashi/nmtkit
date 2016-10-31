@@ -10,14 +10,7 @@
         < submodules/small_parallel_enja/test.en \
         > result.ja
 
-メモリが足りない場合は、
-trainコマンドと同様に`--dynet-mem`オプションに適当な値を指定します。
-
-    src/bin/decode \
-        --dynet-mem 4096 \
-        --model model \
-        < submodules/small_parallel_enja/test.en \
-        > result.ja
+`decode`コマンドに渡す入力文は予め単語分割を行っておく必要があります。
 
 `--format html`を指定することで、
 翻訳中の様々な情報を記録したHTMLを出力することが可能です。

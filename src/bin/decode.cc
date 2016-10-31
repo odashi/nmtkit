@@ -10,11 +10,11 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <dynet/dynet.h>
-#include <dynet/init.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
 #include <nmtkit/html_formatter.h>
+#include <nmtkit/init.h>
 #include <nmtkit/single_text_formatter.h>
 #include <nmtkit/vocabulary.h>
 
@@ -44,12 +44,12 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
   PO::options_description opt;
   opt.add(opt_generic);
 
-  // parse
+  // Parse
   PO::variables_map args;
   PO::store(PO::parse_command_line(argc, argv, opt), args);
   PO::notify(args);
 
-  // print usage
+  // Prints usage
   if (args.count("help")) {
     cerr << "NMTKit decoder." << endl;
     cerr << "Author: Yusuke Oda (http://github.com/odashi/)" << endl;
@@ -63,7 +63,7 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     exit(1);
   }
 
-  // check required arguments
+  // Checks required arguments
   const vector<string> required_args = {"format", "model"};
   bool ok = true;
   for (const string & arg : required_args) {
@@ -108,6 +108,18 @@ void run(int argc, char * argv[]) try {
   PT::ptree config;
   PT::read_ini((model_dir / "config.ini").string(), config);
 
+  // Initializes NMTKit.
+  nmtkit::GlobalConfig global_config;
+  global_config.backend_random_seed = config.get<unsigned>(
+      "Global.backend_random_seed");
+  global_config.forward_memory_mb = config.get<unsigned>(
+      "Global.forward_memory_mb");
+  global_config.backward_memory_mb = config.get<unsigned>(
+      "Global.backward_memory_mb");
+  global_config.parameter_memory_mb = config.get<unsigned>(
+      "Global.parameter_memory_mb");
+  nmtkit::initialize(global_config);
+
   // Retrieves the formatter.
   auto formatter = ::getFormatter(args["format"].as<string>());
 
@@ -137,16 +149,22 @@ void run(int argc, char * argv[]) try {
     encdec.infer(input_word_ids, bos_id, eos_id, max_length, &cg, &ig);
     formatter->write(input_words, ig, src_vocab, trg_vocab, &cout);
   }
+
+  // Finalizes all components.
   formatter->finalize(&cout);
+  nmtkit::finalize();
+
 } catch (exception & ex) {
   cerr << ex.what() << endl;
+  if (nmtkit::isInitialized()) {
+    nmtkit::finalize();
+  }
   exit(1);
 }
 
 }  // namespace
 
 int main(int argc, char * argv[]) {
-  dynet::initialize(argc, argv);
   ::run(argc, argv);
-  dynet::cleanup();
+  return 0;
 }

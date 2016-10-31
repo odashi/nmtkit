@@ -16,6 +16,7 @@ libnmtkit_la_SOURCES = \
   encoder_decoder.cc \
   html_formatter.cc \
   inference_graph.cc \
+  init.cc \
   mlp_attention.cc \
   monotone_sampler.cc \
   multilayer_perceptron.cc \

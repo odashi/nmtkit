@@ -12,15 +12,6 @@ we can generate output sentences using `decode` command:
 
 Note that the input data of the `decode` should be tokenized in advance.
 
-If the command failed due to out-of-memory, we can specify the amount of the
-memory using `--dynet-mem` option as same as `train` command:
-
-    src/bin/decode \
-        --dynet-mem 4096 \
-        --model model \
-        < submodules/small_parallel_enja/test.en \
-        > result.ja
-
 If you want to generate HTML file with more detailed information during the
 decoding process, use `--format html` option:
 

@@ -11,7 +11,6 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
-#include <dynet/init.h>
 #include <dynet/model.h>
 #include <dynet/tensor.h>
 #include <dynet/training.h>
@@ -19,6 +18,7 @@
 #include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
 #include <nmtkit/inference_graph.h>
+#include <nmtkit/init.h>
 #include <nmtkit/monotone_sampler.h>
 #include <nmtkit/sorted_random_sampler.h>
 #include <nmtkit/vocabulary.h>
@@ -59,12 +59,12 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
   PO::options_description opt;
   opt.add(opt_generic);
 
-  // parse
+  // Parse
   PO::variables_map args;
   PO::store(PO::parse_command_line(argc, argv, opt), args);
   PO::notify(args);
 
-  // print usage
+  // Prints usage
   if (args.count("help")) {
     cerr << "NMTKit trainer." << endl;
     cerr << "Author: Yusuke Oda (http://github.com/odashi/)" << endl;
@@ -75,7 +75,7 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     exit(1);
   }
 
-  // check required arguments
+  // Checks required arguments
   const vector<string> required_args = {"config", "model"};
   bool ok = true;
   for (const string & arg : required_args) {
@@ -147,27 +147,39 @@ void saveParameters(const FS::path & filepath, const T & obj) {
 }
 
 void run(int argc, char * argv[]) try {
-  // parse commandline args and the config file.
+  // Parses commandline args and the config file.
   const auto args = ::parseArgs(argc, argv);
 
-  // create the model directory.
+  // Creates the model directory.
   FS::path model_dir(args["model"].as<string>());
   ::makeDirectory(model_dir);
 
-  // initialize the logger.
+  // Initializes the logger.
   ::initializeLogger(
       model_dir,
       args["log-level"].as<string>(),
       static_cast<bool>(args.count("log-to-stderr")));
   auto logger = spdlog::get("status");
 
-  // copy and parse the config file.
+  // Copies and parses the config file.
   FS::path cfg_filepath = model_dir / "config.ini";
   FS::copy_file(args["config"].as<string>(), cfg_filepath);
   PT::ptree config;
   PT::read_ini(cfg_filepath.string(), config);
 
-  // create vocabularies.
+  // Initializes NMTKit.
+  nmtkit::GlobalConfig global_config;
+  global_config.backend_random_seed = config.get<unsigned>(
+      "Global.backend_random_seed");
+  global_config.forward_memory_mb = config.get<unsigned>(
+      "Global.forward_memory_mb");
+  global_config.backward_memory_mb = config.get<unsigned>(
+      "Global.backward_memory_mb");
+  global_config.parameter_memory_mb = config.get<unsigned>(
+      "Global.parameter_memory_mb");
+  nmtkit::initialize(global_config);
+
+  // Creates vocabularies.
   nmtkit::Vocabulary src_vocab(
       config.get<string>("Corpus.train_source"),
       config.get<unsigned>("Model.source_vocabulary"));
@@ -177,24 +189,20 @@ void run(int argc, char * argv[]) try {
   src_vocab.save((model_dir / "source.vocab").string());
   trg_vocab.save((model_dir / "target.vocab").string());
 
-  // "<s>" and "</s>" IDs
-  //const unsigned bos_id = trg_vocab.getID("<s>");
-  //const unsigned eos_id = trg_vocab.getID("</s>");
-
-  // maximum lengths
+  // Maximum lengths
   const unsigned train_max_length = config.get<unsigned>("Train.max_length");
   const unsigned test_max_length = 1024;
   const float train_max_length_ratio = config.get<float>(
       "Train.max_length_ratio");
   const float test_max_length_ratio = 1e10;
 
-  // create samplers and batch converter.
+  // Creates samplers and batch converter.
   nmtkit::SortedRandomSampler train_sampler(
       config.get<string>("Corpus.train_source"),
       config.get<string>("Corpus.train_target"),
       src_vocab, trg_vocab, train_max_length, train_max_length_ratio,
       config.get<unsigned>("Train.num_words_in_batch"),
-      config.get<unsigned>("Train.random_seed"));
+      config.get<unsigned>("Global.random_seed"));
   logger->info("Loaded 'train' corpus.");
   nmtkit::MonotoneSampler dev_sampler(
       config.get<string>("Corpus.dev_source"),
@@ -208,7 +216,7 @@ void run(int argc, char * argv[]) try {
   logger->info("Loaded 'test' corpus.");
   nmtkit::BatchConverter batch_converter(src_vocab, trg_vocab);
 
-  // create new trainer and EncoderDecoder model.
+  // Creates new trainer and EncoderDecoder model.
   dynet::Model model;
   dynet::AdamTrainer trainer(
       &model,
@@ -318,17 +326,22 @@ void run(int argc, char * argv[]) try {
       }
     }
   }
+
+  // Finalizes all components.
   logger->info("Finished.");
+  nmtkit::finalize();
+
 } catch (exception & ex) {
   cerr << ex.what() << endl;
+  if (nmtkit::isInitialized()) {
+    nmtkit::finalize();
+  }
   exit(1);
 }
 
 }  // namespace
 
 int main(int argc, char * argv[]) {
-  dynet::initialize(argc, argv);
   ::run(argc, argv);
-  dynet::cleanup();
   return 0;
 }
