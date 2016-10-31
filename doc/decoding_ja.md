@@ -22,6 +22,6 @@
         > result.ja.html
 
 どのような出力が得られるのかは、実際にサンプルデータを用いて生成した
-[HTMLの例](https://github.com/odashi/nmtkit/tree/master/doc/test_top100.ja.html)
+[HTMLの例](https://odashi.github.io/nmtkit/doc/test_top100.ja.html)
 をご覧ください。
 
