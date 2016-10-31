@@ -34,8 +34,10 @@ public:
   // Arguments:
   //   src_vocab_size: Source vocabulary size.
   //   trg_vocab_size: Target vocabulary size.
-  //   embed_size: Number of units in each embedding layer.
-  //   hidden_size: Number of units in each RNN hidden layer.
+  //   src_embed_size: Number of units in source embedding layer.
+  //   trg_embed_size: Number of units in target embedding layer.
+  //   enc_hidden_size: Number of units in encoder states.
+  //   dec_hidden_size: Number of units in decoder states.
   //   atten_type: Name of the attention estimator.
   //               Available values:
   //                 "mlp": Multilayer perceptron-based attention
@@ -48,8 +50,10 @@ public:
   EncoderDecoder(
       unsigned src_vocab_size,
       unsigned trg_vocab_size,
-      unsigned embed_size,
-      unsigned hidden_size,
+      unsigned src_embed_size,
+      unsigned trg_embed_size,
+      unsigned enc_hidden_size,
+      unsigned dec_hidden_size,
       const std::string & atten_type,
       unsigned atten_size,
       dynet::Model * model);

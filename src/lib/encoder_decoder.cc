@@ -24,25 +24,31 @@ namespace nmtkit {
 EncoderDecoder::EncoderDecoder(
     unsigned src_vocab_size,
     unsigned trg_vocab_size,
-    unsigned embed_size,
-    unsigned hidden_size,
+    unsigned src_embed_size,
+    unsigned trg_embed_size,
+    unsigned enc_hidden_size,
+    unsigned dec_hidden_size,
     const string & atten_type,
     unsigned atten_size,
     dynet::Model * model) {
   NMTKIT_CHECK(src_vocab_size > 0, "src_vocab_size should be greater than 0.");
   NMTKIT_CHECK(trg_vocab_size > 0, "trg_vocab_size should be greater than 0.");
-  NMTKIT_CHECK(embed_size > 0, "embed_size should be greater than 0.");
-  NMTKIT_CHECK(hidden_size > 0, "hidden_size should be greater than 0.");
+  NMTKIT_CHECK(src_embed_size > 0, "src_embed_size should be greater than 0.");
+  NMTKIT_CHECK(trg_embed_size > 0, "trg_embed_size should be greater than 0.");
+  NMTKIT_CHECK(
+      enc_hidden_size > 0, "enc_hidden_size should be greater than 0.");
+  NMTKIT_CHECK(
+      dec_hidden_size > 0, "dec_hidden_size should be greater than 0.");
   // NOTE: atten_size would be checked in the attention selection section.
 
   encoder_.reset(
       new BidirectionalEncoder(
-          1, src_vocab_size, embed_size, hidden_size, model));
+          1, src_vocab_size, src_embed_size, enc_hidden_size, model));
   
   const unsigned mem_size = encoder_->getStateSize();
   const unsigned enc_out_size = encoder_->getFinalStateSize();
-  const unsigned dec_in_size = embed_size + mem_size;
-  const unsigned dec_out_size = hidden_size;
+  const unsigned dec_in_size = trg_embed_size + mem_size;
+  const unsigned dec_out_size = dec_hidden_size;
   // Note: In this implementation, encoder and decoder are connected through one
   //       nonlinear intermediate embedding layer. The size of this layer is
   //       determined using the average of both modules.
@@ -66,7 +72,8 @@ EncoderDecoder::EncoderDecoder(
 
   rnn_dec_.reset(new dynet::LSTMBuilder(1, dec_in_size, dec_out_size, model));
 
-  p_dec_lookup_ = model->add_lookup_parameters(trg_vocab_size, {embed_size});
+  p_dec_lookup_ = model->add_lookup_parameters(
+      trg_vocab_size, {trg_embed_size});
 };
 
 Expression EncoderDecoder::buildDecoderInitializerGraph(
