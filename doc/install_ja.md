@@ -35,7 +35,7 @@ DyNetのインストール
 
 DyNetをインストールします。
 
-    git clone git@github.com:clab/dynet /path/to/dynet
+    git clone https://github.com/clab/dynet.git /path/to/dynet
     cd /path/to/dynet
     mkdir build
     cd build
@@ -64,7 +64,7 @@ CUDAとDyNetの共有ライブラリがNMTKitから見える場所に設置さ�
 NMTKitのインストール
 --------------------
 
-    git clone git@github.com:odashi/nmtkit /path/to/nmtkit
+    git clone https://github.com/odashi/nmtkit.git /path/to/nmtkit
     cd /path/to/nmtkit
     git submodule init
     git submodule update

@@ -36,7 +36,7 @@ Install DyNet
 
 Next we get and build DyNet:
 
-    git clone git@github.com:clab/dynet /path/to/dynet
+    git clone https://github.com/clab/dynet.git /path/to/dynet
     cd /path/to/dynet
     mkdir build
     cd build
@@ -66,7 +66,7 @@ Add a configuration in your shell-rc file like:
 Install NMTKit
 --------------
 
-    git clone git@github.com:odashi/nmtkit /path/to/nmtkit
+    git clone https://github.com/odashi/nmtkit.git /path/to/nmtkit
     cd /path/to/nmtkit
     git submodule init
     git submodule update
