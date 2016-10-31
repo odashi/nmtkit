@@ -21,3 +21,7 @@
         < submodules/small_parallel_enja/test.en \
         > result.ja.html
 
+どのような出力が得られるのかは、実際にサンプルデータを用いて生成した
+[HTMLの例](https://github.com/odashi/nmtkit/tree/master/doc/test_top100.ja.html)
+をご覧ください。
+

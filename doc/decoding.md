@@ -21,3 +21,7 @@ decoding process, use `--format html` option:
         < submodules/small_parallel_enja/test.en \
         > result.ja.html
 
+Here is the
+[sample HTML output](https://github.com/odashi/nmtkit/tree/master/doc/test_top100.ja.html)
+in where you could see what kind of outputs is be obtained.
+
