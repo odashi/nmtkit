@@ -23,5 +23,5 @@ decoding process, use `--format html` option:
 
 Here is the
 [sample HTML output](https://odashi.github.io/nmtkit/doc/test_top100.ja.html)
-in where you could see what kind of outputs is be obtained.
+in where you could see what kind of outputs are obtained.
 
