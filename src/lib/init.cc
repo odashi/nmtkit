@@ -30,6 +30,7 @@ void initialize(const GlobalConfig & config) {
   params.weight_decay = 0.0f;
   params.shared_parameters = false;
 
+#if HAVE_CUDA
   params.ngpus_requested = false;
   params.ids_requested = false;
   params.requested_gpus = -1;
@@ -37,6 +38,7 @@ void initialize(const GlobalConfig & config) {
   // Note: If the machine had 1025 or more GPUs then this process fails.
   const unsigned MAX_GPUS = 1024;
   params.gpu_mask = vector<int>(MAX_GPUS, 0);
+#endif  // HAVE_CUDA
   
   dynet::initialize(params);
   ::initialized = true;
