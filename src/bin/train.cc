@@ -118,6 +118,7 @@ void initializeLogger(
   auto logger = std::make_shared<spdlog::logger>(
       "status", begin(sinks), end(sinks));
   logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e]\t[%l]\t%v");
+  logger->flush_on(spdlog::level::trace);
   if (log_level == "trace") {
     logger->set_level(spdlog::level::trace);
   } else if (log_level == "debug") {
