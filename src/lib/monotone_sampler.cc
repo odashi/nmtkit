@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <nmtkit/monotone_sampler.h>
 
 #include <nmtkit/corpus.h>

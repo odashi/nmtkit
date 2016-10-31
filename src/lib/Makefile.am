@@ -4,7 +4,8 @@ AM_CXXFLAGS = \
   -I$(top_builddir)/src/include \
   $(BOOST_CPPFLAGS) \
   $(EIGEN_CPPFLAGS) \
-  $(DYNET_CPPFLAGS)
+  $(DYNET_CPPFLAGS) \
+  $(CUDA_CPPFLAGS)
 
 libnmtkit_la_SOURCES = \
   attention.cc \

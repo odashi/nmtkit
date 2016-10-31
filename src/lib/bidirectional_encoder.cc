@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <nmtkit/bidirectional_encoder.h>
 
 #include <nmtkit/array.h>

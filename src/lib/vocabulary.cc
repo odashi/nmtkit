@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <nmtkit/vocabulary.h>
 
 #include <algorithm>

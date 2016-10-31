@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <nmtkit/html_formatter.h>
 
 #include <algorithm>

@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <nmtkit/random_sampler.h>
 
 #include <numeric>

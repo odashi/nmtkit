@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <nmtkit/encoder_decoder.h>
 
 #include <nmtkit/array.h>

@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <nmtkit/batch_converter.h>
 
 #include <algorithm>

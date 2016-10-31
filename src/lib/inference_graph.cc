@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <nmtkit/inference_graph.h>
 
 #include <algorithm>

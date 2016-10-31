@@ -3,6 +3,7 @@ AM_CXXFLAGS = \
   $(BOOST_CPPFLAGS) \
   $(EIGEN_CPPFLAGS) \
   $(DYNET_CPPFLAGS) \
+  $(CUDA_CPPFLAGS) \
   -I$(top_builddir)/submodules/mteval/src/include \
   -I$(top_builddir)/submodules/spdlog/include
 
