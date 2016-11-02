@@ -21,9 +21,11 @@ libnmtkit_la_SOURCES = \
   mlp_attention.cc \
   monotone_sampler.cc \
   multilayer_perceptron.cc \
+  predictor.cc \
   random.cc \
   random_sampler.cc \
   single_text_formatter.cc \
+  softmax_predictor.cc \
   sorted_random_sampler.cc \
   vocabulary.cc
 

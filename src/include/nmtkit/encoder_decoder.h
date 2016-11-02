@@ -16,6 +16,7 @@
 #include <nmtkit/inference_graph.h>
 #include <nmtkit/multilayer_perceptron.h>
 #include <nmtkit/serialization_utils.h>
+#include <nmtkit/predictor.h>
 
 namespace nmtkit {
 
@@ -107,13 +108,13 @@ private:
   //   atten_info: Precomputed values for the attention estimator.
   //   target_ids: Target word IDs for this step.
   //   cg: Target computation graph.
-  //   dec_outputs: Placeholder of the decoder output distributions.
+  //   logits: Placeholder of the logit values.
   void buildDecoderGraph(
       const dynet::expr::Expression & dec_init_h,
       const std::vector<dynet::expr::Expression> & atten_info,
       const std::vector<std::vector<unsigned>> & target_ids,
       dynet::ComputationGraph * cg,
-      std::vector<dynet::expr::Expression> * dec_outputs);
+      std::vector<dynet::expr::Expression> * logits);
 
   // Generates output sequence using encoder results.
   //
@@ -134,34 +135,25 @@ private:
       dynet::ComputationGraph * cg,
       InferenceGraph * ig);
 
-  // Constructs graph of the output loss function.
-  //
-  // Arguments:
-  //   target_ids: Target word IDs for this step.
-  //   dec_outputs: Decoder output distributions.
-  //   losses: Placeholder of the loss expressions.
-  void buildLossGraph(
-      const std::vector<std::vector<unsigned>> & target_ids,
-      const std::vector<dynet::expr::Expression> & dec_outputs,
-      std::vector<dynet::expr::Expression> * losses);
-
   // Boost serialization interface.
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & encoder_;
     ar & enc2dec_;
-    ar & dec2out_;
+    ar & dec2logit_;
     ar & attention_;
     ar & rnn_dec_;
+    ar & predictor_;
     ar & p_dec_lookup_;
   }
 
   boost::scoped_ptr<nmtkit::Encoder> encoder_;
   boost::scoped_ptr<nmtkit::MultilayerPerceptron> enc2dec_;
-  boost::scoped_ptr<nmtkit::MultilayerPerceptron> dec2out_;
+  boost::scoped_ptr<nmtkit::MultilayerPerceptron> dec2logit_;
   boost::scoped_ptr<nmtkit::Attention> attention_;
   boost::scoped_ptr<dynet::LSTMBuilder> rnn_dec_;
+  boost::scoped_ptr<nmtkit::Predictor> predictor_;
   dynet::LookupParameter p_dec_lookup_;
 };
 

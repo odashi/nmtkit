@@ -2,10 +2,11 @@
 
 #include <nmtkit/encoder_decoder.h>
 
-#include <nmtkit/array.h>
 #include <nmtkit/bidirectional_encoder.h>
 #include <nmtkit/bilinear_attention.h>
+#include <nmtkit/exception.h>
 #include <nmtkit/mlp_attention.h>
+#include <nmtkit/softmax_predictor.h>
 
 /* Input/output mapping for training/force decoding:
  *
@@ -58,7 +59,7 @@ EncoderDecoder::EncoderDecoder(
 
   enc2dec_.reset(
       new MultilayerPerceptron({enc_out_size, ie_size, dec_out_size}, model));
-  dec2out_.reset(
+  dec2logit_.reset(
       new MultilayerPerceptron({dec_out_size, trg_vocab_size}, model));
 
   // Attention selection.
@@ -73,6 +74,8 @@ EncoderDecoder::EncoderDecoder(
   }
 
   rnn_dec_.reset(new dynet::LSTMBuilder(1, dec_in_size, dec_out_size, model));
+
+  predictor_.reset(new SoftmaxPredictor(trg_vocab_size));
 
   p_dec_lookup_ = model->add_lookup_parameters(
       trg_vocab_size, {trg_embed_size});
@@ -98,11 +101,11 @@ void EncoderDecoder::buildDecoderGraph(
     const vector<Expression> & atten_info,
     const vector<vector<unsigned>> & target_ids,
     dynet::ComputationGraph * cg,
-    vector<Expression> * dec_outputs) {
-  dec_outputs->clear();
+    vector<Expression> * logits) {
+  logits->clear();
   const unsigned tl = target_ids.size() - 1;
   Expression dec_h = dec_init_h;
-  vector<Expression> dec2out_params = dec2out_->prepare(cg);
+  vector<Expression> dec2logit_params = dec2logit_->prepare(cg);
 
   for (unsigned i = 0; i < tl; ++i) {
     // Embedding
@@ -114,8 +117,8 @@ void EncoderDecoder::buildDecoderGraph(
 
     // Decode
     dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
-    Expression dec_out = dec2out_->compute(dec2out_params, dec_h, cg);
-    dec_outputs->emplace_back(dec_out);
+    Expression logit = dec2logit_->compute(dec2logit_params, dec_h, cg);
+    logits->emplace_back(logit);
   }
 }
 
@@ -130,7 +133,7 @@ void EncoderDecoder::decodeForInference(
   ig->clear();
   InferenceGraph::Node * prev_node = ig->addNode({bos_id, 0.0f, {}});
   Expression dec_h = dec_init_h;
-  vector<Expression> dec2out_params = dec2out_->prepare(cg);
+  vector<Expression> dec2logit_params = dec2logit_->prepare(cg);
 
   for (unsigned generated = 0; ; ++generated) {
     // Embedding
@@ -145,44 +148,32 @@ void EncoderDecoder::decodeForInference(
 
     // Decode
     dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
-    Expression dec_out = dec2out_->compute(dec2out_params, dec_h, cg);
-    Expression log_probs = DE::log_softmax(dec_out);
-    vector<dynet::real> log_probs_values = dynet::as_vector(
-        cg->incremental_forward(log_probs));
+    Expression logit = dec2logit_->compute(dec2logit_params, dec_h, cg);
 
-    // Store results.
-    unsigned out_word_id = eos_id;
+    // Predict next words.
+    vector<PredictorResult> next_words;
     if (generated < max_length - 1) {
-      out_word_id = Array::argmax(log_probs_values);
+      next_words = predictor_->predictKBest(logit, 1, cg);
+    } else {
+      next_words = predictor_->predictByIDs(logit, {eos_id}, cg);
     }
-    float out_word_log_prob = static_cast<float>(log_probs_values[out_word_id]);
+
+    // Make attention matrix.
     vector<float> out_atten_probs;
     for (const dynet::real p : atten_probs_values) {
       out_atten_probs.emplace_back(static_cast<float>(p));
     }
+
+    // Make new graph nodes.
     InferenceGraph::Node * next_node = ig->addNode({
-        out_word_id, out_word_log_prob, out_atten_probs});
+        next_words[0].word_id, next_words[0].log_prob, out_atten_probs});
     ig->connect(prev_node, next_node);
 
     // Go ahead or finish.
     prev_node = next_node;
-    if (out_word_id == eos_id) {
+    if (next_words[0].word_id == eos_id) {
       break;
     }
-  }
-}
-
-void EncoderDecoder::buildLossGraph(
-    const vector<vector<unsigned>> & target_ids,
-    const vector<Expression> & dec_outputs,
-    vector<Expression> * losses) {
-  losses->clear();
-  const unsigned tl = target_ids.size() - 1;
-
-  for (unsigned i = 0; i < tl; ++i) {
-    Expression loss = DE::pickneglogsoftmax(
-        dec_outputs[i], target_ids[i + 1]);
-    losses->emplace_back(loss);
   }
 }
 
@@ -199,14 +190,10 @@ Expression EncoderDecoder::buildTrainGraph(
 
   // Decode
   Expression dec_init_h = buildDecoderInitializerGraph(enc_final_state, cg);
-  vector<Expression> dec_outputs;
-  buildDecoderGraph(dec_init_h, atten_info, batch.target_ids, cg, &dec_outputs);
+  vector<Expression> logits;
+  buildDecoderGraph(dec_init_h, atten_info, batch.target_ids, cg, &logits);
 
-  // Calculate losses
-  vector<Expression> losses;
-  buildLossGraph(batch.target_ids, dec_outputs, &losses);
-  Expression total_loss = DE::sum_batches(DE::sum(losses));
-  return total_loss;
+  return predictor_->computeLoss(batch.target_ids, logits);
 }
 
 void EncoderDecoder::infer(

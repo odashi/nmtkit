@@ -16,10 +16,12 @@ nobase_include_HEADERS = \
   nmtkit/mlp_attention.h \
   nmtkit/monotone_sampler.h \
   nmtkit/multilayer_perceptron.h \
+  nmtkit/predictor.h \
   nmtkit/random.h \
   nmtkit/random_sampler.h \
   nmtkit/sampler.h \
   nmtkit/serialization_utils.h \
   nmtkit/single_text_formatter.h \
+  nmtkit/softmax_predictor.h \
   nmtkit/sorted_random_sampler.h \
   nmtkit/vocabulary.h
