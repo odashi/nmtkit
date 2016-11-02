@@ -32,7 +32,8 @@ struct GlobalConfig {
 void initialize(const GlobalConfig & config);
 
 // Finalizes NMTKit.
-// This function should be called just before exiting the program.
+// This function should be called just before exiting the program, i.e., all
+// NMTKit/DyNet objects should be disposed before calling this function.
 void finalize();
 
 // Check whether NMTKit is initialized or not.
