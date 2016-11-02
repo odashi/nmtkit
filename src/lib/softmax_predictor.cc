@@ -31,7 +31,7 @@ DE::Expression SoftmaxPredictor::computeLoss(
   return DE::sum_batches(DE::sum(losses));
 }
 
-vector<PredictorResult> SoftmaxPredictor::predictKBest(
+vector<Predictor::Result> SoftmaxPredictor::predictKBest(
     const DE::Expression & logit,
     unsigned num_results,
     dynet::ComputationGraph * cg) {
@@ -46,16 +46,16 @@ vector<PredictorResult> SoftmaxPredictor::predictKBest(
   vector<unsigned> kbest_ids;
   Array::kbest(log_probs, num_results, &kbest_ids);
 
-  vector<PredictorResult> results;
+  vector<Predictor::Result> results;
   for (const unsigned word_id : kbest_ids) {
     float log_prob = static_cast<float>(log_probs[word_id]);
-    results.emplace_back(PredictorResult {word_id, log_prob});
+    results.emplace_back(Predictor::Result {word_id, log_prob});
   }
 
   return results;
 }
 
-vector<PredictorResult> SoftmaxPredictor::predictByIDs(
+vector<Predictor::Result> SoftmaxPredictor::predictByIDs(
     const DE::Expression & logit,
     const vector<unsigned> word_ids,
     dynet::ComputationGraph * cg) {
@@ -63,10 +63,10 @@ vector<PredictorResult> SoftmaxPredictor::predictByIDs(
   vector<dynet::real> log_probs = dynet::as_vector(
       cg->incremental_forward(log_probs_expr));
 
-  vector<PredictorResult> results;
+  vector<Predictor::Result> results;
   for (const unsigned word_id : word_ids) {
     float log_prob = static_cast<float>(log_probs[word_id]);
-    results.emplace_back(PredictorResult {word_id, log_prob});
+    results.emplace_back(Predictor::Result {word_id, log_prob});
   }
 
   return results;

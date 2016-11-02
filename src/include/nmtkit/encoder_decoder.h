@@ -108,13 +108,14 @@ private:
   //   atten_info: Precomputed values for the attention estimator.
   //   target_ids: Target word IDs for this step.
   //   cg: Target computation graph.
-  //   logits: Placeholder of the logit values.
-  void buildDecoderGraph(
+  //
+  // Returns:
+  //   List of expression objects representing logit values.
+  std::vector<dynet::expr::Expression> buildDecoderGraph(
       const dynet::expr::Expression & dec_init_h,
       const std::vector<dynet::expr::Expression> & atten_info,
       const std::vector<std::vector<unsigned>> & target_ids,
-      dynet::ComputationGraph * cg,
-      std::vector<dynet::expr::Expression> * logits);
+      dynet::ComputationGraph * cg);
 
   // Generates output sequence using encoder results.
   //

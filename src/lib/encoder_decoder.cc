@@ -96,16 +96,15 @@ Expression EncoderDecoder::buildDecoderInitializerGraph(
   return dec_init_h;
 }
 
-void EncoderDecoder::buildDecoderGraph(
+vector<Expression> EncoderDecoder::buildDecoderGraph(
     const Expression & dec_init_h,
     const vector<Expression> & atten_info,
     const vector<vector<unsigned>> & target_ids,
-    dynet::ComputationGraph * cg,
-    vector<Expression> * logits) {
-  logits->clear();
+    dynet::ComputationGraph * cg) {
   const unsigned tl = target_ids.size() - 1;
   Expression dec_h = dec_init_h;
   vector<Expression> dec2logit_params = dec2logit_->prepare(cg);
+  vector<Expression> logits;
 
   for (unsigned i = 0; i < tl; ++i) {
     // Embedding
@@ -118,8 +117,10 @@ void EncoderDecoder::buildDecoderGraph(
     // Decode
     dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
     Expression logit = dec2logit_->compute(dec2logit_params, dec_h, cg);
-    logits->emplace_back(logit);
+    logits.emplace_back(logit);
   }
+
+  return logits;
 }
 
 void EncoderDecoder::decodeForInference(
@@ -151,7 +152,7 @@ void EncoderDecoder::decodeForInference(
     Expression logit = dec2logit_->compute(dec2logit_params, dec_h, cg);
 
     // Predict next words.
-    vector<PredictorResult> next_words;
+    vector<Predictor::Result> next_words;
     if (generated < max_length - 1) {
       next_words = predictor_->predictKBest(logit, 1, cg);
     } else {
@@ -190,8 +191,8 @@ Expression EncoderDecoder::buildTrainGraph(
 
   // Decode
   Expression dec_init_h = buildDecoderInitializerGraph(enc_final_state, cg);
-  vector<Expression> logits;
-  buildDecoderGraph(dec_init_h, atten_info, batch.target_ids, cg, &logits);
+  vector<Expression> logits = buildDecoderGraph(
+      dec_init_h, atten_info, batch.target_ids, cg);
 
   return predictor_->computeLoss(batch.target_ids, logits);
 }

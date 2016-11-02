@@ -31,12 +31,12 @@ public:
       const std::vector<std::vector<unsigned>> & target_ids,
       const std::vector<dynet::expr::Expression> & logits) override;
 
-  std::vector<PredictorResult> predictKBest(
+  std::vector<Predictor::Result> predictKBest(
       const dynet::expr::Expression & logit,
       unsigned num_results,
       dynet::ComputationGraph * cg) override;
 
-  std::vector<PredictorResult> predictByIDs(
+  std::vector<Predictor::Result> predictByIDs(
       const dynet::expr::Expression & logit,
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) override;

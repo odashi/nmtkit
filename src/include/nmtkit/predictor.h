@@ -9,12 +9,6 @@
 
 namespace nmtkit {
 
-// Output candidates of the predictor.
-struct PredictorResult {
-  unsigned word_id;
-  float log_prob;
-};
-
 // Abstract class of the word predictor.
 class Predictor {
   Predictor(const Predictor &) = delete;
@@ -23,6 +17,12 @@ class Predictor {
   Predictor & operator=(Predictor &&) = delete;
 
 public:
+  // Output candidates of the predictor.
+  struct Result {
+    unsigned word_id;
+    float log_prob;
+  };
+
   Predictor() {}
   virtual ~Predictor() {}
 
@@ -50,7 +50,7 @@ public:
   // Returns:
   //   List of top-k candidates. The order of elements in the output vector
   //   would be sorted by the decsending order according to their probabilities.
-  virtual std::vector<PredictorResult> predictKBest(
+  virtual std::vector<Result> predictKBest(
       const dynet::expr::Expression & logit,
       unsigned num_results,
       dynet::ComputationGraph * cg) = 0;
@@ -66,7 +66,7 @@ public:
   // Returns:
   //   List of candidates. The order of outputs would be similar to that of
   //   word_ids.
-  virtual std::vector<PredictorResult> predictByIDs(
+  virtual std::vector<Result> predictByIDs(
       const dynet::expr::Expression & logit,
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) = 0;
