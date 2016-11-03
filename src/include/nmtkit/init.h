@@ -20,8 +20,11 @@ struct GlobalConfig {
   // In most cases, this parameter could be set as same as forward_memory_mb.
   unsigned backward_memory_mb;
 
-  // size of the reserved memory in MN for the shared parameters.
+  // Size of the reserved memory in MN for the shared parameters.
   unsigned parameter_memory_mb;
+
+  // Force to run the command regardless the amount of the requested memory.
+  bool force_run;
 };
 
 // Initializes NMTKit.

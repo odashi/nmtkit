@@ -41,6 +41,7 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
      "Available options:\n"
      "  text : One-best tokens in each line.\n"
      "  html : HTML document with detailed information.")
+    ("force", "Force to run the command regardless the amount of the memory.")
     ;
 
   PO::options_description opt;
@@ -123,6 +124,7 @@ int main(int argc, char * argv[]) {
         "Global.backward_memory_mb");
     global_config.parameter_memory_mb = config.get<unsigned>(
         "Global.parameter_memory_mb");
+    global_config.force_run = !!args.count("force");
     nmtkit::initialize(global_config);
 
     // Retrieves the formatter.

@@ -2,6 +2,8 @@
 
 #include <nmtkit/init.h>
 
+#include <iostream>
+#include <sys/sysinfo.h>
 #include <boost/format.hpp>
 #include <dynet/init.h>
 #include <nmtkit/exception.h>
@@ -12,12 +14,55 @@ namespace {
 
 bool initialized = false;
 
+// Check whether the requested memory size is fit to the actual memory or not.
+//
+// Arguments:
+//   requested_size: Size of the requested memory in bytes.
+void checkRequestedMemorySize(unsigned long requested_size) {
+  struct sysinfo info;
+  if (::sysinfo(&info) != 0) {
+    NMTKIT_FATAL("Something wrong in ::sysinfo().");
+  }
+
+  unsigned long total_ram = info.totalram * info.mem_unit;
+  if (requested_size > total_ram * 2 / 3) {
+    cerr << "Requested memory size exceeds the 2/3 of the total RAM:" << endl;
+    cerr << "  Requested: " << (requested_size >> 20) << " MiB," << endl;
+    cerr << "  Total    : " << (total_ram >> 20) << " MiB." << endl;
+    cerr << "Please reconfirm the memory usage in your config script." << endl;
+    cerr << "If you want to force to run the command with the current" << endl;
+    cerr << "config, add `--force` as well as other arguments." << endl;
+    NMTKIT_FATAL("Requested memory size exceeds the limit (2/3 of total).");
+  }
+
+  unsigned long free_ram = info.freeram * info.mem_unit;
+  if (requested_size > free_ram) {
+    cerr << "Requested memory size exceeds the current free RAM:" << endl;
+    cerr << "  Requested: " << (requested_size >> 20) << " MiB," << endl;
+    cerr << "  Free     : " << (free_ram >> 20) << " MiB." << endl;
+    cerr << "Please reconfirm the memory usage in your config script" << endl;
+    cerr << "or refresh your machine." << endl;
+    cerr << "If you want to force to run the command with the current" << endl;
+    cerr << "config, add `--force` as well as other arguments." << endl;
+    NMTKIT_FATAL("Requested memory size exceeds the free RAM.");
+  }
+}
+
 }  // namespace
 
 namespace nmtkit {
 
 void initialize(const GlobalConfig & config) {
   NMTKIT_CHECK(!::initialized, "NMTKit should not be initialized twice.");
+
+  // Check memory size.
+  if (!config.force_run) {
+    const unsigned long total_memory_mb =
+        config.forward_memory_mb +
+        config.backward_memory_mb +
+        config.parameter_memory_mb;
+    ::checkRequestedMemorySize(total_memory_mb << 20);
+  }
 
   dynet::DynetParams params;
   params.random_seed = config.backend_random_seed;
