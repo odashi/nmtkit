@@ -102,6 +102,17 @@ string Vocabulary::getWord(unsigned id) const {
   return itos_[id];
 }
 
+vector<unsigned> Vocabulary::convertToIDs(const string & sentence) const {
+  vector<string> words;
+  boost::split(
+      words, sentence, boost::is_space(), boost::algorithm::token_compress_on);
+  vector<unsigned> ids;
+  for (const string & word : words) {
+    ids.emplace_back(getID(word));
+  }
+  return ids;
+}
+
 unsigned Vocabulary::size() const {
   return itos_.size();
 }
