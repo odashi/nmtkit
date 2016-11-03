@@ -43,13 +43,13 @@ public:
   // Writes output information into a stream.
   //
   // Arguments:
-  //   source_words: List of source words.
+  //   source_line: Source sentence.
   //   ig: Inference graph object which has the output information.
   //   source_vocab: Vocabulary object for the source language.
   //   target_vocab: Vocabulary object for the target language.
   //   os: Target output stream.
   virtual void write(
-      const std::vector<std::string> & source_words,
+      const std::string & source_line,
       const InferenceGraph & ig,
       const Vocabulary & source_vocab,
       const Vocabulary & target_vocab,

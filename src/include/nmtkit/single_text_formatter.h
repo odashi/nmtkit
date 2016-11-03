@@ -20,7 +20,7 @@ public:
   void finalize(std::ostream * os) override {}
 
   void write(
-      const std::vector<std::string> & source_words,
+      const std::string & source_line,
       const InferenceGraph & ig,
       const Vocabulary & source_vocab,
       const Vocabulary & target_vocab,

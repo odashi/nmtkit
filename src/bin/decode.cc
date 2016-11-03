@@ -143,16 +143,16 @@ int main(int argc, char * argv[]) {
     nmtkit::EncoderDecoder encdec;
     ::loadParameters(model_dir / "best_dev_log_ppl.model.params", &encdec);
 
-    // Consumes input lines and decodes them.
     formatter->initialize(&cout);
-    vector<string> input_words;
-    while (nmtkit::Corpus::readTokens(&cin, &input_words)) {
-      vector<unsigned> input_word_ids;
-      nmtkit::Corpus::wordsToWordIDs(input_words, src_vocab, &input_word_ids);
+
+    // Consumes input lines and decodes them.
+    string input_line;
+    while (nmtkit::Corpus::readLine(&cin, &input_line)) {
+      vector<unsigned> input_ids = src_vocab.convertToIDs(input_line);
       dynet::ComputationGraph cg;
       nmtkit::InferenceGraph ig;
-      encdec.infer(input_word_ids, bos_id, eos_id, max_length, &cg, &ig);
-      formatter->write(input_words, ig, src_vocab, trg_vocab, &cout);
+      encdec.infer(input_ids, bos_id, eos_id, max_length, &cg, &ig);
+      formatter->write(input_line, ig, src_vocab, trg_vocab, &cout);
     }
 
     formatter->finalize(&cout);

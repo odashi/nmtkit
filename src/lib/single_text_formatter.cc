@@ -9,7 +9,7 @@ using namespace std;
 namespace nmtkit {
 
 void SingleTextFormatter::write(
-    const vector<string> & source_words,
+    const string & source_line,
     const InferenceGraph & ig,
     const Vocabulary & source_vocab,
     const Vocabulary & target_vocab,

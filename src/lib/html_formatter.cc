@@ -113,7 +113,7 @@ void HTMLFormatter::finalize(std::ostream * os) {
 }
 
 void HTMLFormatter::write(
-    const vector<string> & source_words,
+    const string & source_line,
     const InferenceGraph & ig,
     const Vocabulary & source_vocab,
     const Vocabulary & target_vocab,
@@ -147,20 +147,17 @@ void HTMLFormatter::write(
 
   // Retrieves actual input words.
   vector<string> actual_source_words;
-  for (const string & w : source_words) {
-    actual_source_words.emplace_back(
-        source_vocab.getWord(source_vocab.getID(w)));
+  for (const unsigned id : source_vocab.convertToIDs(source_line)) {
+    actual_source_words.emplace_back(source_vocab.getWord(id));
   }
 
   // Outputs HTML.
   *os << "<section>\n";
   *os << "<h2>Sentence " << (num_output_ + 1) << "</h2>\n";
 
-  *os << "<p>Raw input words: ";
-  for (const string & w : source_words) {
-    *os << "<span class=\"word\">" << ::escape(w) << "</span>";
-  }
-  *os << "</p>\n";
+  *os << "<p>Raw input line: <span class=\"word\">"
+      << source_line
+      << "</span></p>\n";
   
   *os << "<p>Actual input words: ";
   for (const string & w : actual_source_words) {

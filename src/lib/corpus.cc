@@ -9,27 +9,50 @@
 
 using namespace std;
 
-namespace nmtkit {
+namespace {
 
-bool Corpus::readTokens(istream * is, vector<string> * words) {
-  string line;
-  if (!getline(*is, line)) {
-    return false;
-  }
-  boost::trim(line);
-  boost::split(
-      *words, line, boost::is_space(), boost::algorithm::token_compress_on);
+// Checks whether given sample is acceptable or not.
+//
+// Arguments:
+//   src_ids: List of source word IDs.
+//   trg_ids: List of target word IDs.
+//   max_length: Acceptable maximum of the sequence length.
+//   max_length_ratio: Acceptable maximum of the ratio of both sequences
+//                     lengths.
+//
+// Returns:
+//   true if the sample is acceptable, false otherwise.
+bool checkSample(
+    const vector<unsigned> & src_ids,
+    const vector<unsigned> & trg_ids,
+    unsigned max_length,
+    float max_length_ratio) {
+  unsigned len1 = src_ids.size();
+  unsigned len2 = trg_ids.size();
+  if (len1 > max_length || len2 > max_length) return false;
+  if (len1 > len2) swap(len1, len2);
+  if (len2 > len1 * max_length_ratio) return false;
   return true;
 }
 
-void Corpus::wordsToWordIDs(
-    const vector<string> & words,
-    const nmtkit::Vocabulary & vocab,
-    vector<unsigned> * ids) {
-  ids->resize(words.size());
-  for (unsigned i = 0; i < words.size(); ++i) {
-    (*ids)[i] = vocab.getID(words[i]);
-  }
+}  // namespae
+
+namespace nmtkit {
+
+bool Corpus::readLine(istream * is, string * line) {
+  if (!getline(*is, *line)) return false;
+  boost::trim(*line);
+  return true;
+}
+
+bool Corpus::readTokens(
+    const Vocabulary & vocab,
+    istream * is,
+    vector<unsigned> * word_ids) {
+  string line;
+  if (!readLine(is, &line)) return false;
+  *word_ids = vocab.convertToIDs(line);
+  return true;
 }
 
 void Corpus::loadSingleSentences(
@@ -41,10 +64,9 @@ void Corpus::loadSingleSentences(
       ifs.is_open(), "Could not open the corpus file to load: " + filepath);
 
   result->clear();
-  vector<string> words;
-  while (readTokens(&ifs, &words)) {
-    result->emplace_back(vector<unsigned>());
-    wordsToWordIDs(words, vocab, &result->back());
+  vector<unsigned> word_ids;
+  while (readTokens(vocab, &ifs, &word_ids)) {
+    result->emplace_back(std::move(word_ids));
   }
 }
 
@@ -68,28 +90,14 @@ void Corpus::loadParallelSentences(
 
   src_result->clear();
   trg_result->clear();
-  vector<string> src_words, trg_words;
+  vector<unsigned> src_ids, trg_ids;
   while (
-      readTokens(&src_ifs, &src_words) &&
-      readTokens(&trg_ifs, &trg_words)) {
-
-    // Filters sentences.
-    unsigned len1 = src_words.size();
-    unsigned len2 = trg_words.size();
-    if (len1 > max_length || len2 > max_length) {
-      continue;
+      readTokens(src_vocab, &src_ifs, &src_ids) and
+      readTokens(trg_vocab, &trg_ifs, &trg_ids)) {
+    if (::checkSample(src_ids, trg_ids, max_length, max_length_ratio)) {
+      src_result->emplace_back(std::move(src_ids));
+      trg_result->emplace_back(std::move(trg_ids));
     }
-    if (len1 > len2) {
-      swap(len1, len2);
-    }
-    if (len2 > len1 * max_length_ratio) {
-      continue;
-    }
-
-    src_result->emplace_back(vector<unsigned>());
-    trg_result->emplace_back(vector<unsigned>());
-    wordsToWordIDs(src_words, src_vocab, &src_result->back());
-    wordsToWordIDs(trg_words, trg_vocab, &trg_result->back());
   }
 }
 
@@ -111,28 +119,13 @@ void Corpus::loadParallelSentences(
   NMTKIT_CHECK(max_length > 0, "max_length should be greater than 0.");
 
   result->clear();
-  vector<string> src_words, trg_words;
+  vector<unsigned> src_ids, trg_ids;
   while (
-      readTokens(&src_ifs, &src_words) &&
-      readTokens(&trg_ifs, &trg_words)) {
-
-    // Filters sentences.
-    unsigned len1 = src_words.size();
-    unsigned len2 = trg_words.size();
-    if (len1 > max_length || len2 > max_length) {
-      continue;
+      readTokens(src_vocab, &src_ifs, &src_ids) and
+      readTokens(trg_vocab, &trg_ifs, &trg_ids)) {
+    if (::checkSample(src_ids, trg_ids, max_length, max_length_ratio)) {
+      result->emplace_back(Sample {std::move(src_ids), std::move(trg_ids)});
     }
-    if (len1 > len2) {
-      swap(len1, len2);
-    }
-    if (len2 > len1 * max_length_ratio) {
-      continue;
-    }
-
-
-    result->emplace_back(Sample());
-    wordsToWordIDs(src_words, src_vocab, &result->back().source);
-    wordsToWordIDs(trg_words, trg_vocab, &result->back().target);
   }
 }
 
