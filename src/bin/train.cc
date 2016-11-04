@@ -192,11 +192,11 @@ int main(int argc, char * argv[]) {
     boost::scoped_ptr<nmtkit::Vocabulary> src_vocab(
         new nmtkit::WordVocabulary(
             config.get<string>("Corpus.train_source"),
-            config.get<unsigned>("Model.source_vocabulary")));
+            config.get<unsigned>("Model.source_vocabulary_size")));
     boost::scoped_ptr<nmtkit::Vocabulary> trg_vocab(
         new nmtkit::WordVocabulary(
             config.get<string>("Corpus.train_target"),
-            config.get<unsigned>("Model.target_vocabulary")));
+            config.get<unsigned>("Model.target_vocabulary_size")));
     ::saveArchive(model_dir / "source.vocab", src_vocab);
     ::saveArchive(model_dir / "target.vocab", trg_vocab);
 
@@ -237,14 +237,14 @@ int main(int argc, char * argv[]) {
         config.get<float>("Train.adam_eps"));
     logger->info("Created new trainer.");
     nmtkit::EncoderDecoder encdec(
-        config.get<unsigned>("Model.source_vocabulary"),
-        config.get<unsigned>("Model.target_vocabulary"),
-        config.get<unsigned>("Model.source_embedding"),
-        config.get<unsigned>("Model.target_embedding"),
-        config.get<unsigned>("Model.encoder_hidden"),
-        config.get<unsigned>("Model.decoder_hidden"),
+        config.get<unsigned>("Model.source_vocabulary_size"),
+        config.get<unsigned>("Model.target_vocabulary_size"),
+        config.get<unsigned>("Model.source_embedding_size"),
+        config.get<unsigned>("Model.target_embedding_size"),
+        config.get<unsigned>("Model.encoder_hidden_size"),
+        config.get<unsigned>("Model.decoder_hidden_size"),
         config.get<string>("Model.attention_type"),
-        config.get<unsigned>("Model.attention_hidden"),
+        config.get<unsigned>("Model.attention_hidden_size"),
         &model);
     logger->info("Created new encoder-decoder model.");
 
