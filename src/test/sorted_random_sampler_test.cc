@@ -3,9 +3,11 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
-#include <iostream>
+#include <fstream>
 #include <vector>
+#include <boost/archive/text_iarchive.hpp>
 #include <nmtkit/sorted_random_sampler.h>
+#include <nmtkit/word_vocabulary.h>
 
 using namespace std;
 
@@ -28,10 +30,10 @@ const vector<vector<unsigned>> expected_src {
   {26, 191, 9, 10, 0, 376, 3},
 };
 const vector<vector<unsigned>> expected_trg {
-  {14, 9, 166, 4, 343, 7, 192, 20, 46, 8, 3},
-  {18, 87, 4, 27, 179, 7, 0, 6, 16, 8, 3},
-  {14, 9, 0, 4, 107, 25, 319, 13, 32, 17, 3},
-  {21, 9, 366, 126, 4, 401, 11, 328, 12, 19, 3},
+  {14, 9, 173, 4, 345, 7, 181, 20, 46, 8, 3},
+  {18, 85, 4, 27, 189, 7, 0, 6, 16, 8, 3},
+  {14, 9, 481, 4, 106, 25, 231, 13, 32, 17, 3},
+  {21, 9, 368, 127, 4, 0, 11, 303, 12, 19, 3},
 };
 const vector<vector<unsigned>> expected_src2 {
   {8, 175, 22, 336, 67, 3},
@@ -40,10 +42,10 @@ const vector<vector<unsigned>> expected_src2 {
   {391, 30, 4, 240, 3},
 };
 const vector<vector<unsigned>> expected_trg2 {
-  {14, 4, 78, 34, 41, 243, 7, 60, 15, 10, 73, 8, 3},
-  {161, 0, 5, 367, 6, 0, 6, 128, 38, 20, 65, 26, 3},
-  {86, 13, 39, 0, 7, 0, 30, 9, 12, 65, 26, 22, 3},
-  {18, 6, 27, 183, 7, 60, 15, 10, 37, 11, 69, 5, 3},
+  {14, 4, 78, 34, 41, 292, 7, 60, 15, 10, 76, 8, 3},
+  {161, 436, 5, 369, 6, 0, 6, 129, 38, 20, 65, 26, 3},
+  {86, 13, 39, 0, 7, 464, 30, 9, 12, 65, 26, 22, 3},
+  {18, 6, 27, 171, 7, 60, 15, 10, 37, 11, 69, 5, 3},
 };
 
 const vector<unsigned> expected_batch_sizes {
@@ -56,6 +58,13 @@ const vector<unsigned> expected_lengths {
   11,  7, 16, 10, 13, 14, 10, 15, 12, 11,
    9, 10, 16,  9, 12,
 };
+
+template <class T>
+void loadArchive(const string & filepath, T * obj) {
+  ifstream ifs(filepath);
+  boost::archive::text_iarchive iar(ifs);
+  iar >> *obj;
+}
 
 }  // namespace
 
@@ -73,8 +82,9 @@ BOOST_AUTO_TEST_CASE(CheckIteration) {
   }
   BOOST_REQUIRE_EQUAL(corpus_size, total_num_samples);
 
-  nmtkit::Vocabulary src_vocab(::src_vocab_filename);
-  nmtkit::Vocabulary trg_vocab(::trg_vocab_filename);
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  ::loadArchive(::src_vocab_filename, &src_vocab);
+  ::loadArchive(::trg_vocab_filename, &trg_vocab);
   nmtkit::SortedRandomSampler sampler(
       ::src_tok_filename, ::trg_tok_filename,
       src_vocab, trg_vocab, ::max_length, ::max_length_ratio,

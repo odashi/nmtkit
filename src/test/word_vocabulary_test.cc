@@ -3,16 +3,30 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
-#include <vector>
+#include <fstream>
 #include <string>
-#include <nmtkit/vocabulary.h>
+#include <vector>
+#include <boost/archive/text_iarchive.hpp>
+#include <nmtkit/word_vocabulary.h>
 
 using namespace std;
 
-BOOST_AUTO_TEST_SUITE(VocabularyTest)
+namespace {
+
+template <class T>
+void loadArchive(const string & filepath, T * obj) {
+  ifstream ifs(filepath);
+  boost::archive::text_iarchive iar(ifs);
+  iar >> *obj;
+}
+
+}  // namespace
+
+BOOST_AUTO_TEST_SUITE(WordVocabularyTest)
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
-  nmtkit::Vocabulary vocab("data/small.en.vocab");
+  nmtkit::WordVocabulary vocab;
+  ::loadArchive("data/small.en.vocab", &vocab);
   BOOST_CHECK_EQUAL(500, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
@@ -26,7 +40,8 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
-  nmtkit::Vocabulary vocab("data/small.ja.vocab");
+  nmtkit::WordVocabulary vocab;
+  ::loadArchive("data/small.ja.vocab", &vocab);
   BOOST_CHECK_EQUAL(500, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
@@ -40,7 +55,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
-  nmtkit::Vocabulary vocab("data/small.en.tok", 100);
+  nmtkit::WordVocabulary vocab("data/small.en.tok", 100);
   BOOST_CHECK_EQUAL(100, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", ".", "the", "to", "i", "you"};
@@ -54,7 +69,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
-  nmtkit::Vocabulary vocab("data/small.ja.tok", 100);
+  nmtkit::WordVocabulary vocab("data/small.ja.tok", 100);
   BOOST_CHECK_EQUAL(100, vocab.size());
   const vector<string> topk {
     "<unk>", "<s>", "</s>", "。", "は", "い", "に", "を"};
@@ -68,7 +83,8 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckConversion) {
-  nmtkit::Vocabulary vocab("data/small.en.vocab");
+  nmtkit::WordVocabulary vocab;
+  ::loadArchive("data/small.en.vocab", &vocab);
   const vector<string> sentences {
     "anything that can go wrong , will go wrong .",
     "there is always light behind the clouds .",

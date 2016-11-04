@@ -3,10 +3,23 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
+#include <fstream>
+#include <boost/archive/text_iarchive.hpp>
 #include <nmtkit/batch_converter.h>
-#include <nmtkit/vocabulary.h>
+#include <nmtkit/word_vocabulary.h>
 
 using namespace std;
+
+namespace {
+
+template <class T>
+void loadArchive(const string & filepath, T * obj) {
+  ifstream ifs(filepath);
+  boost::archive::text_iarchive iar(ifs);
+  iar >> *obj;
+}
+
+}  // namespace
 
 BOOST_AUTO_TEST_SUITE(BatchConverterTest)
 
@@ -33,8 +46,10 @@ BOOST_AUTO_TEST_CASE(CheckConvertion) {
       { 2, 50, 50,  2},
       { 2,  2,  2,  2} },
   };
-  nmtkit::Vocabulary src_vocab("data/small.en.vocab");
-  nmtkit::Vocabulary trg_vocab("data/small.ja.vocab");
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  ::loadArchive("data/small.en.vocab", &src_vocab);
+  ::loadArchive("data/small.ja.vocab", &trg_vocab);
+
   nmtkit::BatchConverter conv(src_vocab, trg_vocab);
   nmtkit::Batch observed;
   conv.convert(input, &observed);

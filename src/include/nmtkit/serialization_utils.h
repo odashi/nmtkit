@@ -3,6 +3,7 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
 
 #define NMTKIT_SERIALIZATION_DECL(cls) BOOST_CLASS_EXPORT_KEY(cls)
 

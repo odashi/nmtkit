@@ -3,9 +3,11 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
-#include <iostream>
+#include <fstream>
 #include <vector>
+#include <boost/archive/text_iarchive.hpp>
 #include <nmtkit/random_sampler.h>
+#include <nmtkit/word_vocabulary.h>
 
 using namespace std;
 
@@ -29,10 +31,10 @@ const vector<vector<unsigned>> expected_src {
   {4, 0, 312, 49, 4, 140, 3},
 };
 const vector<vector<unsigned>> expected_trg {
-  {0, 4, 33, 5, 489, 23, 25, 61, 5, 20, 19, 3},
-  {21, 4, 100, 17, 0, 6, 145, 16, 8, 3},
-  {14, 4, 21, 9, 237, 25, 97, 16, 8, 3},
-  {463, 4, 133, 7, 216, 483, 15, 8, 3},
+  {0, 4, 33, 5, 0, 23, 25, 61, 5, 20, 19, 3},
+  {21, 4, 100, 17, 0, 6, 148, 16, 8, 3},
+  {14, 4, 21, 9, 295, 25, 92, 16, 8, 3},
+  {0, 4, 141, 7, 219, 0, 15, 8, 3},
 };
 const vector<vector<unsigned>> expected_src2 {
   {22, 195, 0, 5, 33, 295, 3},
@@ -41,19 +43,27 @@ const vector<vector<unsigned>> expected_src2 {
   {91, 14, 0, 31, 21, 41, 300, 3},
 };
 const vector<vector<unsigned>> expected_trg2 {
-  {14, 9, 166, 4, 0, 6, 429, 17, 3},
-  {326, 7, 45, 99, 88, 17, 9, 13, 96, 11, 55, 4, 5, 11, 5, 3},
-  {177, 31, 163, 347, 256, 16, 11, 104, 68, 11, 28, 11, 5, 3},
-  {0, 21, 13, 476, 0, 68, 18, 51, 4, 291, 49, 20, 19, 3},
+  {14, 9, 173, 4, 0, 6, 482, 17, 3},
+  {228, 7, 44, 99, 88, 17, 9, 13, 96, 11, 56, 4, 5, 11, 5, 3},
+  {184, 31, 163, 349, 304, 16, 11, 104, 68, 11, 28, 11, 5, 3},
+  {0, 21, 13, 0, 0, 68, 18, 51, 4, 311, 49, 20, 19, 3},
 };
+
+template <class T>
+void loadArchive(const string & filepath, T * obj) {
+  ifstream ifs(filepath);
+  boost::archive::text_iarchive iar(ifs);
+  iar >> *obj;
+}
 
 }  // namespace
 
 BOOST_AUTO_TEST_SUITE(RandomSamplerTest)
 
 BOOST_AUTO_TEST_CASE(CheckIteration) {
-  nmtkit::Vocabulary src_vocab(::src_vocab_filename);
-  nmtkit::Vocabulary trg_vocab(::trg_vocab_filename);
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  ::loadArchive(::src_vocab_filename, &src_vocab);
+  ::loadArchive(::trg_vocab_filename, &trg_vocab);
   nmtkit::RandomSampler sampler(
       ::src_tok_filename, ::trg_tok_filename,
       src_vocab, trg_vocab, ::max_length, ::max_length_ratio,

@@ -4,9 +4,11 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include <algorithm>
+#include <fstream>
 #include <vector>
+#include <boost/archive/text_iarchive.hpp>
 #include <nmtkit/corpus.h>
-#include <nmtkit/vocabulary.h>
+#include <nmtkit/word_vocabulary.h>
 
 using namespace std;
 
@@ -16,6 +18,13 @@ const string src_tok_filename = "data/small.en.tok";
 const string trg_tok_filename = "data/small.ja.tok";
 const string src_vocab_filename = "data/small.en.vocab";
 const string trg_vocab_filename = "data/small.ja.vocab";
+
+template <class T>
+void loadArchive(const string & filepath, T * obj) {
+  ifstream ifs(filepath);
+  boost::archive::text_iarchive iar(ifs);
+  iar >> *obj;
+}
 
 }  // namespace
 
@@ -31,7 +40,8 @@ BOOST_AUTO_TEST_CASE(CheckLoadingSingle) {
     {0, 219, 228, 3},
   };
 
-  nmtkit::Vocabulary vocab(::src_vocab_filename);
+  nmtkit::WordVocabulary vocab;
+  ::loadArchive(::src_vocab_filename, &vocab);
   vector<vector<unsigned>> result;
   nmtkit::Corpus::loadSingleSentences(::src_tok_filename, vocab, &result);
   
@@ -72,8 +82,9 @@ BOOST_AUTO_TEST_CASE(CheckLoadingParallel) {
     {450, 1552, 5626}
   };
 
-  nmtkit::Vocabulary src_vocab(::src_vocab_filename);
-  nmtkit::Vocabulary trg_vocab(::trg_vocab_filename);
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  ::loadArchive(::src_vocab_filename, &src_vocab);
+  ::loadArchive(::trg_vocab_filename, &trg_vocab);
   vector<vector<unsigned>> src_result, trg_result;
 
   for (unsigned i = 0; i < max_lengths.size(); ++i) {
@@ -124,8 +135,9 @@ BOOST_AUTO_TEST_CASE(CheckLoadingParallel2) {
     {450, 1552, 5626}
   };
 
-  nmtkit::Vocabulary src_vocab(::src_vocab_filename);
-  nmtkit::Vocabulary trg_vocab(::trg_vocab_filename);
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  ::loadArchive(::src_vocab_filename, &src_vocab);
+  ::loadArchive(::trg_vocab_filename, &trg_vocab);
   vector<nmtkit::Sample> result;
 
   for (unsigned i = 0; i < max_lengths.size(); ++i) {

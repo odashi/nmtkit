@@ -3,9 +3,11 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
-#include <iostream>
+#include <fstream>
 #include <vector>
+#include <boost/archive/text_iarchive.hpp>
 #include <nmtkit/monotone_sampler.h>
+#include <nmtkit/word_vocabulary.h>
 
 using namespace std;
 
@@ -28,19 +30,27 @@ const vector<vector<unsigned>> expected_src {
   {0, 219, 228, 3},
 };
 const vector<vector<unsigned>> expected_trg {
-  {86, 13, 198, 6, 142, 30, 22, 18, 6, 4, 245, 38, 20, 46, 29, 3},
-  {268, 9, 472, 13, 283, 6, 33, 15, 10, 411, 69, 88, 8, 3},
-  {18, 4, 158, 435, 12, 19, 3},
-  {0, 4, 0, 164, 6, 309, 20, 19, 3},
+  {86, 13, 202, 6, 138, 30, 22, 18, 6, 4, 310, 38, 20, 46, 29, 3},
+  {298, 9, 0, 13, 325, 6, 33, 15, 10, 0, 69, 88, 8, 3},
+  {18, 4, 158, 416, 12, 19, 3},
+  {0, 4, 0, 164, 6, 242, 20, 19, 3},
 };
+
+template <class T>
+void loadArchive(const string & filepath, T * obj) {
+  ifstream ifs(filepath);
+  boost::archive::text_iarchive iar(ifs);
+  iar >> *obj;
+}
 
 }  // namespace
 
 BOOST_AUTO_TEST_SUITE(MonotoneSamplerTest)
 
 BOOST_AUTO_TEST_CASE(CheckIteration) {
-  nmtkit::Vocabulary src_vocab(::src_vocab_filename);
-  nmtkit::Vocabulary trg_vocab(::trg_vocab_filename);
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  ::loadArchive(::src_vocab_filename, &src_vocab);
+  ::loadArchive(::trg_vocab_filename, &trg_vocab);
   nmtkit::MonotoneSampler sampler(
       ::src_tok_filename, ::trg_tok_filename,
       src_vocab, trg_vocab, ::max_length, ::max_length_ratio, ::batch_size);

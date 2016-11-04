@@ -11,6 +11,8 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/serialization/scoped_ptr.hpp>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
 #include <dynet/model.h>
@@ -23,7 +25,7 @@
 #include <nmtkit/init.h>
 #include <nmtkit/monotone_sampler.h>
 #include <nmtkit/sorted_random_sampler.h>
-#include <nmtkit/vocabulary.h>
+#include <nmtkit/word_vocabulary.h>
 #include <spdlog/spdlog.h>
 
 using namespace std;
@@ -141,8 +143,8 @@ void initializeLogger(
 }
 
 template <class T>
-void saveParameters(const FS::path & filepath, const T & obj) {
-  std::ofstream ofs(filepath.string());
+void saveArchive(const FS::path & filepath, const T & obj) {
+  ofstream ofs(filepath.string());
   NMTKIT_CHECK(
       ofs.is_open(), "Could not open file to write: " + filepath.string());
   boost::archive::text_oarchive oar(ofs);
@@ -187,14 +189,16 @@ int main(int argc, char * argv[]) {
     nmtkit::initialize(global_config);
 
     // Creates vocabularies.
-    nmtkit::Vocabulary src_vocab(
-        config.get<string>("Corpus.train_source"),
-        config.get<unsigned>("Model.source_vocabulary"));
-    nmtkit::Vocabulary trg_vocab(
-        config.get<string>("Corpus.train_target"),
-        config.get<unsigned>("Model.target_vocabulary"));
-    src_vocab.save((model_dir / "source.vocab").string());
-    trg_vocab.save((model_dir / "target.vocab").string());
+    boost::scoped_ptr<nmtkit::Vocabulary> src_vocab(
+        new nmtkit::WordVocabulary(
+            config.get<string>("Corpus.train_source"),
+            config.get<unsigned>("Model.source_vocabulary")));
+    boost::scoped_ptr<nmtkit::Vocabulary> trg_vocab(
+        new nmtkit::WordVocabulary(
+            config.get<string>("Corpus.train_target"),
+            config.get<unsigned>("Model.target_vocabulary")));
+    ::saveArchive(model_dir / "source.vocab", src_vocab);
+    ::saveArchive(model_dir / "target.vocab", trg_vocab);
 
     // Maximum lengths
     const unsigned train_max_length = config.get<unsigned>("Train.max_length");
@@ -207,21 +211,21 @@ int main(int argc, char * argv[]) {
     nmtkit::SortedRandomSampler train_sampler(
         config.get<string>("Corpus.train_source"),
         config.get<string>("Corpus.train_target"),
-        src_vocab, trg_vocab, train_max_length, train_max_length_ratio,
+        *src_vocab, *trg_vocab, train_max_length, train_max_length_ratio,
         config.get<unsigned>("Train.num_words_in_batch"),
         config.get<unsigned>("Global.random_seed"));
     logger->info("Loaded 'train' corpus.");
     nmtkit::MonotoneSampler dev_sampler(
         config.get<string>("Corpus.dev_source"),
         config.get<string>("Corpus.dev_target"),
-        src_vocab, trg_vocab, test_max_length, test_max_length_ratio, 1);
+        *src_vocab, *trg_vocab, test_max_length, test_max_length_ratio, 1);
     logger->info("Loaded 'dev' corpus.");
     nmtkit::MonotoneSampler test_sampler(
         config.get<string>("Corpus.test_source"),
         config.get<string>("Corpus.test_target"),
-        src_vocab, trg_vocab, test_max_length, test_max_length_ratio, 1);
+        *src_vocab, *trg_vocab, test_max_length, test_max_length_ratio, 1);
     logger->info("Loaded 'test' corpus.");
-    nmtkit::BatchConverter batch_converter(src_vocab, trg_vocab);
+    nmtkit::BatchConverter batch_converter(*src_vocab, *trg_vocab);
 
     // Creates a new trainer and an EncoderDecoder model.
     dynet::Model model;
@@ -323,14 +327,13 @@ int main(int argc, char * argv[]) {
             % iteration % num_trained_samples % dev_log_ppl % test_log_ppl;
         logger->info(fmt.str());
 
-        ::saveParameters(model_dir / "latest.trainer.params", trainer);
-        ::saveParameters(model_dir / "latest.model.params", encdec);
+        ::saveArchive(model_dir / "latest.trainer.params", trainer);
+        ::saveArchive(model_dir / "latest.model.params", encdec);
         logger->info("Saved 'latest' model.");
 
         if (dev_log_ppl < best_dev_log_ppl) {
           best_dev_log_ppl = dev_log_ppl;
-          ::saveParameters(
-              model_dir / "best_dev_log_ppl.model.params", encdec);
+          ::saveArchive(model_dir / "best_dev_log_ppl.model.params", encdec);
           logger->info("Saved 'best_dev_log_ppl' model.");
         }
       }

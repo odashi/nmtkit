@@ -11,6 +11,8 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/serialization/scoped_ptr.hpp>
 #include <dynet/dynet.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/encoder_decoder.h>
@@ -93,8 +95,8 @@ unique_ptr<nmtkit::Formatter> getFormatter(const std::string & name) {
 }
 
 template <class T>
-void loadParameters(const FS::path & filepath, T * obj) {
-  std::ifstream ifs(filepath.string());
+void loadArchive(const FS::path & filepath, T * obj) {
+  ifstream ifs(filepath.string());
   NMTKIT_CHECK(
       ifs.is_open(), "Could not open file to read: " + filepath.string());
   boost::archive::text_iarchive iar(ifs);
@@ -131,30 +133,31 @@ int main(int argc, char * argv[]) {
     auto formatter = ::getFormatter(args["format"].as<string>());
 
     // Loads vocabularies.
-    nmtkit::Vocabulary src_vocab((model_dir / "source.vocab").string());
-    nmtkit::Vocabulary trg_vocab((model_dir / "target.vocab").string());
+    boost::scoped_ptr<nmtkit::Vocabulary> src_vocab, trg_vocab;
+    ::loadArchive(model_dir / "source.vocab", &src_vocab);
+    ::loadArchive(model_dir / "target.vocab", &trg_vocab);
 
     // "<s>" and "</s>" IDs
-    const unsigned bos_id = trg_vocab.getID("<s>");
-    const unsigned eos_id = trg_vocab.getID("</s>");
+    const unsigned bos_id = trg_vocab->getID("<s>");
+    const unsigned eos_id = trg_vocab->getID("</s>");
 
     // Maximum generation length
     const unsigned max_length = config.get<unsigned>("Train.max_length");
 
     // Loads EncoderDecoder model.
     nmtkit::EncoderDecoder encdec;
-    ::loadParameters(model_dir / "best_dev_log_ppl.model.params", &encdec);
+    ::loadArchive(model_dir / "best_dev_log_ppl.model.params", &encdec);
 
     formatter->initialize(&cout);
 
     // Consumes input lines and decodes them.
     string input_line;
     while (nmtkit::Corpus::readLine(&cin, &input_line)) {
-      vector<unsigned> input_ids = src_vocab.convertToIDs(input_line);
+      vector<unsigned> input_ids = src_vocab->convertToIDs(input_line);
       dynet::ComputationGraph cg;
       nmtkit::InferenceGraph ig;
       encdec.infer(input_ids, bos_id, eos_id, max_length, &cg, &ig);
-      formatter->write(input_line, ig, src_vocab, trg_vocab, &cout);
+      formatter->write(input_line, ig, *src_vocab, *trg_vocab, &cout);
     }
 
     formatter->finalize(&cout);

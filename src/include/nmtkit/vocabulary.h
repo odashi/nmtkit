@@ -1,38 +1,23 @@
 #ifndef NMTKIT_VOCABULARY_H_
 #define NMTKIT_VOCABULARY_H_
 
-#include <map>
 #include <string>
 #include <vector>
+#include <boost/serialization/access.hpp>
+#include <nmtkit/serialization_utils.h>
 
 namespace nmtkit {
 
+// Abstract class of conversion methods between words and word IDs.
 class Vocabulary {
-  Vocabulary() = delete;
   Vocabulary(const Vocabulary &) = delete;
   Vocabulary(Vocabulary &&) = delete;
   Vocabulary & operator=(const Vocabulary &) = delete;
   Vocabulary & operator=(Vocabulary &&) = delete;
 
 public:
-  // Loads existing vocabulary from a file.
-  //
-  // Arguments:
-  //   vocab_filename: Location of the vocabulary file.
-  explicit Vocabulary(const std::string & vocab_filename);
-
-  // Analyzes a corpus and make a new vocabulary.
-  //
-  // Arguments:
-  //   corpus_filename: Location of the corpus file to be analyzed.
-  //   size: Size of the vocabulary.
-  Vocabulary(const std::string & corpus_filename, unsigned size);
-
-  // Saves the vocabulary to a file.
-  //
-  // Arguments:
-  //   vocab_filename: Location of the vocabulary file.
-  void save(const std::string & vocab_filename) const;
+  Vocabulary() {}
+  virtual ~Vocabulary() {}
 
   // Retrieves a word ID according to given word.
   //
@@ -41,7 +26,7 @@ public:
   //
   // Returns:
   //   Corresponding word ID of `word`.
-  unsigned getID(const std::string & word) const;
+  virtual unsigned getID(const std::string & word) const = 0;
 
   // Retrieves actual word according to given word ID.
   //
@@ -50,7 +35,7 @@ public:
   //
   // Returns:
   //   Corresponding word string of `id`.
-  std::string getWord(unsigned id) const;
+  virtual std::string getWord(unsigned id) const = 0;
 
   // Converts a sentence into a list of word IDs.
   //
@@ -59,19 +44,24 @@ public:
   //
   // Returns:
   //   List of word IDs that represents given sentence.
-  std::vector<unsigned> convertToIDs(const std::string & sentence) const;
+  virtual std::vector<unsigned> convertToIDs(
+      const std::string & sentence) const = 0;
 
   // Retrieves the size of the vocabulary.
   //
   // Returns:
   //   The size of the vocabulary.
-  unsigned size() const;
+  virtual unsigned size() const = 0;
 
 private:
-  std::map<std::string, unsigned> stoi_;
-  std::vector<std::string> itos_;
+  // Boost serialization interface.
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive & ar, const unsigned) {}
 };
 
 }  // namespace nmtkit
+
+NMTKIT_SERIALIZATION_DECL(nmtkit::Vocabulary);
 
 #endif  // NMTKIT_VOCABULARY_H_
