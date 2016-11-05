@@ -75,6 +75,15 @@ vector<unsigned> WordVocabulary::convertToIDs(const string & sentence) const {
   return ids;
 }
 
+string WordVocabulary::convertToSentence(
+    const vector<unsigned> & word_ids) const {
+  vector<string> words;
+  for (const unsigned word_id : word_ids) {
+    words.emplace_back(getWord(word_id));
+  }
+  return boost::join(words, " ");
+}
+
 unsigned WordVocabulary::size() const {
   return itos_.size();
 }

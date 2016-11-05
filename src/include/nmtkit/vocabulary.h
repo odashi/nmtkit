@@ -47,6 +47,16 @@ public:
   virtual std::vector<unsigned> convertToIDs(
       const std::string & sentence) const = 0;
 
+  // Converts a list of word IDs into a sentence.
+  //
+  // Arguments:
+  //   word_ids: A list of word IDs.
+  //
+  // Returns:
+  //   Generaed sentence string.
+  virtual std::string convertToSentence(
+      const std::vector<unsigned> & word_ids) const = 0;
+
   // Retrieves the size of the vocabulary.
   //
   // Returns:

@@ -40,6 +40,8 @@ public:
   std::string getWord(unsigned id) const override;
   std::vector<unsigned> convertToIDs(
       const std::string & sentence) const override;
+  std::string convertToSentence(
+      const std::vector<unsigned> & word_ids) const override;
   unsigned size() const override;
 
 private:

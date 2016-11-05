@@ -28,6 +28,7 @@ void SingleTextFormatter::write(
       1, heads.size(), "No or multiple '<s>' nodes in the inference graph.");
   const nmtkit::InferenceGraph::Node * cur_node = heads[0];
 
+  vector<unsigned> word_ids;
   for (unsigned num_words = 0; ; ++num_words) {
     // Finds the most accurate word.
     NMTKIT_CHECK(!cur_node->next().empty(), "No next node of the current node");
@@ -46,12 +47,9 @@ void SingleTextFormatter::write(
     if (word_id == eos_id) {
       break;
     }
-    if (num_words > 0) {
-      *os << ' ';
-    }
-    *os << target_vocab.getWord(word_id);
+    word_ids.emplace_back(word_id);
   }
-  *os << endl;
+  *os << target_vocab.convertToSentence(word_ids) << endl;
 }
 
 }  // namespace nmtkit

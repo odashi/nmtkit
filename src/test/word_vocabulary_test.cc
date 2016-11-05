@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
   BOOST_CHECK_EQUAL("<unk>", vocab.getWord(-1));
 }
 
-BOOST_AUTO_TEST_CASE(CheckConversion) {
+BOOST_AUTO_TEST_CASE(CheckConvertingToIDs) {
   nmtkit::WordVocabulary vocab;
   ::loadArchive("data/small.en.vocab", &vocab);
   const vector<string> sentences {
@@ -103,6 +103,28 @@ BOOST_AUTO_TEST_CASE(CheckConversion) {
     BOOST_CHECK_EQUAL_COLLECTIONS(
         expected[i].begin(), expected[i].end(),
         observed.begin(), observed.end());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(CheckConvertingToSentence) {
+  nmtkit::WordVocabulary vocab;
+  ::loadArchive("data/small.en.vocab", &vocab);
+  const vector<vector<unsigned>> word_ids {
+    {0, 20, 41, 45, 134, 31, 37, 45, 134, 3},
+    {39, 9, 85, 0, 400, 4, 0, 3},
+    {56, 183, 16, 0, 3},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+  };
+  const vector<string> expected {
+    "<unk> that can go wrong , will go wrong .",
+    "there is always <unk> behind the <unk> .",
+    "and yet it <unk> .",
+    "<unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk>",
+  };
+
+  for (unsigned i = 0; i < word_ids.size(); ++i) {
+    string observed = vocab.convertToSentence(word_ids[i]);
+    BOOST_CHECK_EQUAL(expected[i], observed);
   }
 }
 
