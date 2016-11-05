@@ -142,6 +142,19 @@ void initializeLogger(
   spdlog::register_logger(logger);
 }
 
+// TODO: This is a workaround for old Boost libraries. The function should
+//       return a smart pointer, but boost::scoped_ptr is not movable, and the
+//       serialization library does not support std::unique_ptr.
+nmtkit::Vocabulary * createVocabulary(
+    const string & corpus_filepath,
+    const string & vocab_type,
+    const unsigned vocab_size) {
+  if (vocab_type == "word") {
+    return new nmtkit::WordVocabulary(corpus_filepath, vocab_size);
+  }
+  NMTKIT_FATAL("Invalid vocabulary type: " + vocab_type);
+}
+
 template <class T>
 void saveArchive(const FS::path & filepath, const T & obj) {
   ofstream ofs(filepath.string());
@@ -190,12 +203,14 @@ int main(int argc, char * argv[]) {
 
     // Creates vocabularies.
     boost::scoped_ptr<nmtkit::Vocabulary> src_vocab(
-        new nmtkit::WordVocabulary(
+        ::createVocabulary(
             config.get<string>("Corpus.train_source"),
+            config.get<string>("Model.source_vocabulary_type"),
             config.get<unsigned>("Model.source_vocabulary_size")));
     boost::scoped_ptr<nmtkit::Vocabulary> trg_vocab(
-        new nmtkit::WordVocabulary(
+        ::createVocabulary(
             config.get<string>("Corpus.train_target"),
+            config.get<string>("Model.target_vocabulary_type"),
             config.get<unsigned>("Model.target_vocabulary_size")));
     ::saveArchive(model_dir / "source.vocab", src_vocab);
     ::saveArchive(model_dir / "target.vocab", trg_vocab);
