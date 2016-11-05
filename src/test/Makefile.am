@@ -16,6 +16,7 @@ LDADD = \
 check_PROGRAMS = \
   array_test \
   batch_converter_test \
+  character_vocabulary_test \
   corpus_test \
   inference_graph_test \
   monotone_sampler_test \
@@ -27,6 +28,7 @@ check_PROGRAMS = \
 TESTS = \
   array_test \
   batch_converter_test \
+  character_vocabulary_test \
   corpus_test \
   inference_graph_test \
   monotone_sampler_test \
@@ -37,6 +39,7 @@ TESTS = \
 
 array_test_SOURCES = array_test.cc
 batch_converter_test_SOURCES = batch_converter_test.cc
+character_vocabulary_test_SOURCES = character_vocabulary_test.cc
 corpus_test_SOURCES = corpus_test.cc
 inference_graph_test_SOURCES = inference_graph_test.cc
 monotone_sampler_test_SOURCES = monotone_sampler_test.cc

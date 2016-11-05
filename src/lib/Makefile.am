@@ -13,6 +13,7 @@ libnmtkit_la_SOURCES = \
   batch_converter.cc \
   bidirectional_encoder.cc \
   bilinear_attention.cc \
+  character_vocabulary.cc \
   encoder.cc \
   encoder_decoder.cc \
   html_formatter.cc \

@@ -19,6 +19,7 @@
 #include <dynet/tensor.h>
 #include <dynet/training.h>
 #include <nmtkit/batch_converter.h>
+#include <nmtkit/character_vocabulary.h>
 #include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
 #include <nmtkit/inference_graph.h>
@@ -149,7 +150,9 @@ nmtkit::Vocabulary * createVocabulary(
     const string & corpus_filepath,
     const string & vocab_type,
     const unsigned vocab_size) {
-  if (vocab_type == "word") {
+  if (vocab_type == "character") {
+    return new nmtkit::CharacterVocabulary(corpus_filepath, vocab_size);
+  } else if (vocab_type == "word") {
     return new nmtkit::WordVocabulary(corpus_filepath, vocab_size);
   }
   NMTKIT_FATAL("Invalid vocabulary type: " + vocab_type);
