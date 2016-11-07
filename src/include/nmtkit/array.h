@@ -106,28 +106,26 @@ public:
   // Arguments:
   //   arr: Target vector.
   //   num_results: Number of results to be obtained.
-  //   results: Placeholder of the k-best indices. Old values will be deleted
-  //            automatically before string new results.
+  // Returns:
+  //   K-best indices.
   template <typename T>
-  static void kbest(
+  static std::vector<unsigned> kbest(
       const std::vector<T> & arr,
-      const unsigned num_results,
-      std::vector<unsigned> * results) {
-    return kbest(arr, num_results, results, std::greater<T>());
+      const unsigned num_results) {
+    return kbest(arr, num_results, std::greater<T>());
   }
 
   // Retrieves k-best indices of given vector.
   // Arguments:
   //   arr: Target vector.
   //   num_results: Number of results to be obtained.
-  //   results: Placeholder of the k-best indices. Old values will be deleted
-  //            automatically before string new results.
   //   greater: Predicate indicating first-arg > second-arg.
+  // Returns:
+  //   K-best indices.
   template <typename T, typename P>
-  static void kbest(
+  static std::vector<unsigned> kbest(
       const std::vector<T> & arr,
       const unsigned num_results,
-      std::vector<unsigned> * results,
       P greater) {
     // Implementing based on heap sort
     const int n = arr.size();
@@ -154,10 +152,11 @@ public:
       std::swap(ids[0], ids[i]);
       downheap(0, i - 1);
     }
-    results->clear();
+    std::vector<unsigned> results;
     for (int i = n - 1; i >= border; --i) {
-      results->emplace_back(ids[i]);
+      results.emplace_back(ids[i]);
     }
+    return results;
   }
 };
 

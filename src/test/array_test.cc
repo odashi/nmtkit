@@ -193,18 +193,17 @@ BOOST_AUTO_TEST_CASE(CheckKBest) {
 
   for (unsigned i = 0; i < values.size(); ++i) {
     for (unsigned j = 0; j < values[i].size(); ++j) {
-      vector<unsigned> results;
-      nmtkit::Array::kbest(values[i], j + 1, &results);
+      vector<unsigned> results = nmtkit::Array::kbest(values[i], j + 1);
       BOOST_CHECK_EQUAL_COLLECTIONS(
           expected_greater[i][j].begin(), expected_greater[i][j].end(),
           results.begin(), results.end());
 
-      nmtkit::Array::kbest(values[i], j + 1, &results, less<int>());
+      results = nmtkit::Array::kbest(values[i], j + 1, less<int>());
       BOOST_CHECK_EQUAL_COLLECTIONS(
           expected_less[i][j].begin(), expected_less[i][j].end(),
           results.begin(), results.end());
 
-      nmtkit::Array::kbest(values[i], j + 1, &results, [](int a, int b) {
+      results = nmtkit::Array::kbest(values[i], j + 1, [](int a, int b) {
           return a*a > b*b;
       });
       BOOST_CHECK_EQUAL_COLLECTIONS(

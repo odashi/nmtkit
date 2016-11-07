@@ -78,6 +78,7 @@ public:
   //   bos_id: "<s>" ID in the target language.
   //   eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
+  //   beam_width: Beam width.
   //   cg: Target computation graph.
   //   ig: Placeholder of the output inference graph.
   void infer(
@@ -85,6 +86,7 @@ public:
       const unsigned bos_id,
       const unsigned eos_id,
       const unsigned max_length,
+      const unsigned beam_width,
       dynet::ComputationGraph * cg,
       InferenceGraph * ig);
 
@@ -125,6 +127,7 @@ private:
   //   bos_id: "<s>" ID in the target language.
   //   eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
+  //   beam_width: Beam width.
   //   cg: Target computation graph.
   //   ig: Placeholder of the output inference graph.
   void decodeForInference(
@@ -133,6 +136,7 @@ private:
       const unsigned bos_id,
       const unsigned eos_id,
       const unsigned max_length,
+      const unsigned beam_width,
       dynet::ComputationGraph * cg,
       InferenceGraph * ig);
 

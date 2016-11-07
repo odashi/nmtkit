@@ -44,6 +44,9 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
      "  text : One-best tokens in each line.\n"
      "  html : HTML document with detailed information.")
     ("force", "Force to run the command regardless the amount of the memory.")
+    ("beam-width",
+     PO::value<unsigned>()->default_value(1),
+     "Beam search width in the decoder inference.")
     ;
 
   PO::options_description opt;
@@ -69,7 +72,7 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
   }
 
   // Checks required arguments
-  const vector<string> required_args = {"format", "model"};
+  const vector<string> required_args = {"format", "model", "beam-width"};
   bool ok = true;
   for (const string & arg : required_args) {
     if (!args.count(arg)) {
@@ -141,8 +144,11 @@ int main(int argc, char * argv[]) {
     const unsigned bos_id = trg_vocab->getID("<s>");
     const unsigned eos_id = trg_vocab->getID("</s>");
 
-    // Maximum generation length
+    // Decoder settings
     const unsigned max_length = config.get<unsigned>("Train.max_length");
+    NMTKIT_CHECK(max_length > 0, "Train.max_length should be greater than 0.");
+    const unsigned beam_width = args["beam-width"].as<unsigned>();
+    NMTKIT_CHECK(beam_width > 0, "beam-width should be greater than 0.");
 
     // Loads EncoderDecoder model.
     nmtkit::EncoderDecoder encdec;
@@ -156,7 +162,7 @@ int main(int argc, char * argv[]) {
       vector<unsigned> input_ids = src_vocab->convertToIDs(input_line);
       dynet::ComputationGraph cg;
       nmtkit::InferenceGraph ig;
-      encdec.infer(input_ids, bos_id, eos_id, max_length, &cg, &ig);
+      encdec.infer(input_ids, bos_id, eos_id, max_length, beam_width, &cg, &ig);
       formatter->write(input_line, ig, *src_vocab, *trg_vocab, &cout);
     }
 

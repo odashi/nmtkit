@@ -11,9 +11,9 @@ using namespace std;
 namespace {
 
 vector<nmtkit::InferenceGraph::Label> labels {
-  {0, 0.0f},
-  {1, 1.0f},
-  {2, 2.0f},
+  {0, 0.0f, 10.0f, {}},
+  {1, 1.0f, 20.0f, {}},
+  {2, 2.0f, 30.0f, {}},
 };
 
 }  // namespace
@@ -23,14 +23,15 @@ BOOST_AUTO_TEST_SUITE(InferenceGraphTest)
 BOOST_AUTO_TEST_CASE(ChckLabels) {
   nmtkit::InferenceGraph graph;
   vector<nmtkit::InferenceGraph::Label> labels {
-    {0, 0.0f, {}},
-    {1, 2.0f, {3.0f, 4.0f, 5.0f}},
+    {0, 0.0f, 10.0f, {}},
+    {1, 2.0f, 20.0f, {3.0f, 4.0f, 5.0f}},
   };
-  
+
   // Checks the empty label.
   nmtkit::InferenceGraph::Node * empty_node = graph.addNode({});
   BOOST_CHECK_EQUAL(0, empty_node->label().word_id);
   BOOST_CHECK_EQUAL(0.0f, empty_node->label().word_log_prob);
+  BOOST_CHECK_EQUAL(0.0f, empty_node->label().accum_log_prob);
   BOOST_CHECK(empty_node->label().atten_probs.empty());
 
   // Checks usual cases.
@@ -38,6 +39,7 @@ BOOST_AUTO_TEST_CASE(ChckLabels) {
     nmtkit::InferenceGraph::Node * node = graph.addNode(label);
     BOOST_CHECK_EQUAL(label.word_id, node->label().word_id);
     BOOST_CHECK_EQUAL(label.word_log_prob, node->label().word_log_prob);
+    BOOST_CHECK_EQUAL(label.accum_log_prob, node->label().accum_log_prob);
     BOOST_CHECK_EQUAL_COLLECTIONS(
         label.atten_probs.begin(), label.atten_probs.end(),
         node->label().atten_probs.begin(), node->label().atten_probs.end());
@@ -147,37 +149,61 @@ BOOST_AUTO_TEST_CASE(CheckFinding) {
   graph.connect(nodes[1], nodes[2]);
   graph.connect(nodes[2], nodes[3]);
 
-  vector<const nmtkit::InferenceGraph::Node *> result;
-
-  graph.findNodes(&result, [](const nmtkit::InferenceGraph::Node & node) {
+  auto result = graph.findNodes([](const nmtkit::InferenceGraph::Node & node) {
       return node.label().word_id == 0;
   });
   BOOST_CHECK_EQUAL(2, result.size());
   BOOST_CHECK_EQUAL(nodes[0], result[0]);
   BOOST_CHECK_EQUAL(nodes[1], result[1]);
-  
-  graph.findNodes(&result, [](const nmtkit::InferenceGraph::Node & node) {
+
+  result = graph.findNodes([](const nmtkit::InferenceGraph::Node & node) {
       return node.label().word_log_prob == 2.0;
   });
   BOOST_CHECK_EQUAL(1, result.size());
   BOOST_CHECK_EQUAL(nodes[3], result[0]);
-  
-  graph.findNodes(&result, [](const nmtkit::InferenceGraph::Node & node) {
+
+  result = graph.findNodes([](const nmtkit::InferenceGraph::Node & node) {
       return node.prev().size() == 2 && node.next().size() == 1;
   });
   BOOST_CHECK_EQUAL(1, result.size());
   BOOST_CHECK_EQUAL(nodes[2], result[0]);
 
-  graph.findNodes(&result, [](const nmtkit::InferenceGraph::Node & node) {
+  result = graph.findNodes([](const nmtkit::InferenceGraph::Node & node) {
       return node.label().word_id == 100;
   });
   BOOST_CHECK_EQUAL(0, result.size());
 
   graph.clear();
-  graph.findNodes(&result, [](const nmtkit::InferenceGraph::Node & node) {
+  result = graph.findNodes([](const nmtkit::InferenceGraph::Node & node) {
       return node.label().word_id == 0;
   });
   BOOST_CHECK_EQUAL(0, result.size());
+}
+
+BOOST_AUTO_TEST_CASE(CheckFindingOneBestPath) {
+  nmtkit::InferenceGraph graph;
+  const vector<nmtkit::InferenceGraph::Node *> nodes {
+    graph.addNode({ 1,   0.0f,  0.0f, {}}),
+    graph.addNode({10,  -1.0f,  -1.0f, {}}),
+    graph.addNode({20,  -2.0f,  -2.0f, {}}),
+    graph.addNode({ 2, -10.0f, -11.0f, {}}),
+    graph.addNode({ 2,  -1.0f,  -3.0f, {}}),
+    graph.addNode({ 2, -20.0f, -22.0f, {}}),
+  };
+  graph.connect(nodes[0], nodes[1]);
+  graph.connect(nodes[0], nodes[2]);
+  graph.connect(nodes[1], nodes[3]);
+  graph.connect(nodes[2], nodes[4]);
+  graph.connect(nodes[2], nodes[5]);
+
+  const vector<nmtkit::InferenceGraph::Node *> expected {
+    nodes[0], nodes[2], nodes[4],
+  };
+
+  auto observed = graph.findOneBestPath(1, 2);
+  BOOST_CHECK_EQUAL_COLLECTIONS(
+      expected.begin(), expected.end(),
+      observed.begin(), observed.end());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

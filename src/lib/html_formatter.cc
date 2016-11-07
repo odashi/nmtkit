@@ -122,28 +122,7 @@ void HTMLFormatter::write(
   const unsigned eos_id = target_vocab.getID("</s>");
 
   // Note: this formatter outputs only the one-best result.
-  
-  // Finds the one-best path.
-  vector<const nmtkit::InferenceGraph::Node *> nodes;
-  ig.findNodes(&nodes, [&](const nmtkit::InferenceGraph::Node & node) {
-      return node.label().word_id == bos_id;
-  });
-  NMTKIT_CHECK_EQ(
-      1, nodes.size(), "No or multiple '<s>' nodes in the inference graph.");
-  while (nodes.back()->label().word_id != eos_id) {
-    // Finds the most accurate word.
-    const nmtkit::InferenceGraph::Node * cur_node = nodes.back();
-    NMTKIT_CHECK(!cur_node->next().empty(), "No next node of the current node");
-    const nmtkit::InferenceGraph::Node * best_node = nullptr;
-    float best_log_prob = -1e100;
-    for (const auto next_node : cur_node->next()) {
-      if (next_node->label().word_log_prob > best_log_prob) {
-        best_node = next_node;
-        best_log_prob = next_node->label().word_log_prob;
-      }
-    }
-    nodes.emplace_back(best_node);
-  }
+  auto nodes = ig.findOneBestPath(bos_id, eos_id);
 
   // Retrieves actual input words.
   vector<string> actual_source_words;
@@ -158,7 +137,7 @@ void HTMLFormatter::write(
   *os << "<p>Raw input line: <span class=\"word\">"
       << source_line
       << "</span></p>\n";
-  
+
   *os << "<p>Actual input words: ";
   for (const string & w : actual_source_words) {
     *os << "<span class=\"word\">" << ::escape(w) << "</span>";

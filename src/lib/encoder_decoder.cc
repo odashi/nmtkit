@@ -2,6 +2,8 @@
 
 #include <nmtkit/encoder_decoder.h>
 
+#include <algorithm>
+#include <nmtkit/array.h>
 #include <nmtkit/bidirectional_encoder.h>
 #include <nmtkit/bilinear_attention.h>
 #include <nmtkit/exception.h>
@@ -47,7 +49,7 @@ EncoderDecoder::EncoderDecoder(
   encoder_.reset(
       new BidirectionalEncoder(
           1, src_vocab_size, src_embed_size, enc_hidden_size, model));
-  
+
   const unsigned mem_size = encoder_->getStateSize();
   const unsigned enc_out_size = encoder_->getFinalStateSize();
   const unsigned dec_in_size = trg_embed_size + mem_size;
@@ -129,53 +131,106 @@ void EncoderDecoder::decodeForInference(
     const unsigned bos_id,
     const unsigned eos_id,
     const unsigned max_length,
+    const unsigned beam_width,
     dynet::ComputationGraph * cg,
     InferenceGraph * ig) {
+  const vector<Expression> dec2logit_params = dec2logit_->prepare(cg);
+
+  // Structure of the beam search candidates
+  struct Candidate {
+    InferenceGraph::Node * node;
+    Expression dec_h;
+  };
+
+  // Initialize the inference graph.
   ig->clear();
-  InferenceGraph::Node * prev_node = ig->addNode({bos_id, 0.0f, {}});
-  Expression dec_h = dec_init_h;
-  vector<Expression> dec2logit_params = dec2logit_->prepare(cg);
+  vector<Candidate> prev_cands {
+    // The "<s>" node
+    {ig->addNode({bos_id, 0.0f, 0.0f, {}}), dec_init_h},
+  };
+  float best_accum_log_prob = -1e10f;
 
-  for (unsigned generated = 0; ; ++generated) {
-    // Embedding
-    vector<unsigned> inputs {prev_node->label().word_id};
-    Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
+  for (unsigned length = 1; ; ++length) {
+    vector<Candidate> next_cands;
 
-    // Attention
-    Expression atten_probs, context;
-    attention_->compute(atten_info, dec_h, cg, &atten_probs, &context);
-    vector<dynet::real> atten_probs_values = dynet::as_vector(
-        cg->incremental_forward(atten_probs));
+    for (Candidate & prev : prev_cands) {
+      const auto & prev_label = prev.node->label();
 
-    // Decode
-    dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
-    Expression logit = dec2logit_->compute(dec2logit_params, dec_h, cg);
+      if (prev_label.word_id == eos_id) {
+        // Reached a "</s>" node.
+        // Try to replace the current best result.
+        if (prev_label.accum_log_prob > best_accum_log_prob) {
+          best_accum_log_prob = prev_label.accum_log_prob;
+        }
+      } else {
+        // Expands the node.
 
-    // Predict next words.
-    vector<Predictor::Result> next_words;
-    if (generated < max_length - 1) {
-      next_words = predictor_->predictKBest(logit, 1, cg);
-    } else {
-      next_words = predictor_->predictByIDs(logit, {eos_id}, cg);
-    }
+        // Embedding
+        const vector<unsigned> inputs {prev_label.word_id};
+        const Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
 
-    // Make attention matrix.
-    vector<float> out_atten_probs;
-    for (const dynet::real p : atten_probs_values) {
-      out_atten_probs.emplace_back(static_cast<float>(p));
-    }
+        // Attention
+        Expression atten_probs, context;
+        attention_->compute(atten_info, prev.dec_h, cg, &atten_probs, &context);
+        const vector<dynet::real> atten_probs_values = dynet::as_vector(
+            cg->incremental_forward(atten_probs));
+        vector<float> out_atten_probs;
+        for (const dynet::real p : atten_probs_values) {
+          out_atten_probs.emplace_back(static_cast<float>(p));
+        }
 
-    // Make new graph nodes.
-    InferenceGraph::Node * next_node = ig->addNode({
-        next_words[0].word_id, next_words[0].log_prob, out_atten_probs});
-    ig->connect(prev_node, next_node);
+        // Decode
+        const Expression dec_h = rnn_dec_->add_input(
+            DE::concatenate({embed, context}));
+        const Expression logit = dec2logit_->compute(
+            dec2logit_params, dec_h, cg);
 
-    // Go ahead or finish.
-    prev_node = next_node;
-    if (next_words[0].word_id == eos_id) {
+        // Predict next words.
+        const vector<Predictor::Result> kbest =
+            length < max_length ?
+            predictor_->predictKBest(logit, beam_width, cg) :  // k-best words
+            predictor_->predictByIDs(logit, {eos_id}, cg);  // only "</s>"
+
+        // Register next nodes.
+        for (const Predictor::Result & res : kbest) {
+          InferenceGraph::Node * node = ig->addNode({
+              res.word_id,
+              res.log_prob,
+              prev_label.accum_log_prob + res.log_prob,
+              out_atten_probs});
+          ig->connect(prev.node, node);
+          next_cands.emplace_back(Candidate {node, dec_h});
+        }
+      }
+    }  // for (Candidate & prev : prev_cands)
+
+    // If there is no next candidates, all of previous nodes are "</s>".
+    if (next_cands.empty()) {
       break;
     }
-  }
+
+    // Obtains top-k candidates.
+    vector<unsigned> kbest_ids = Array::kbest(
+        next_cands,
+        min(beam_width, static_cast<unsigned>(next_cands.size())),
+        [](const Candidate & a, const Candidate & b) {
+            return a.node->label().accum_log_prob
+                > b.node->label().accum_log_prob;
+        });
+
+    // Finish the decoding if the probability of the top candidate is lower than
+    // the best path.
+    if (next_cands[kbest_ids[0]].node->label().accum_log_prob
+        < best_accum_log_prob) {
+      break;
+    }
+
+    // Make new previous nodes.
+    prev_cands.clear();
+    for (const unsigned id : kbest_ids){
+      prev_cands.emplace_back(next_cands[id]);
+    }
+  }  // for (unsigned length = 1; ; ++length)
 }
 
 Expression EncoderDecoder::buildTrainGraph(
@@ -202,6 +257,7 @@ void EncoderDecoder::infer(
     const unsigned bos_id,
     const unsigned eos_id,
     const unsigned max_length,
+    const unsigned beam_width,
     dynet::ComputationGraph * cg,
     InferenceGraph * ig) {
 
@@ -217,14 +273,14 @@ void EncoderDecoder::infer(
   vector<Expression> enc_states;
   Expression enc_final_state;
   encoder_->build(source_ids_inner, cg, &enc_states, &enc_final_state);
-  
+
   // Initialize attention
   vector<Expression> atten_info = attention_->prepare(enc_states, cg);
 
   // Infer output words
   Expression dec_init_h = buildDecoderInitializerGraph(enc_final_state, cg);
   decodeForInference(
-      dec_init_h, atten_info, bos_id, eos_id, max_length, cg, ig);
+      dec_init_h, atten_info, bos_id, eos_id, max_length, beam_width, cg, ig);
 }
 
 }  // namespace nmtkit

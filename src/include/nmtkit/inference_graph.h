@@ -16,6 +16,7 @@ public:
   struct Label {
     unsigned word_id;
     float word_log_prob;
+    float accum_log_prob;
     std::vector<float> atten_probs;
   };
 
@@ -49,6 +50,7 @@ public:
   void clear();
 
   // Adds new node into the graph.
+  //
   // Arguments:
   //   label: Inner value of the node.
   //
@@ -57,21 +59,38 @@ public:
   Node * addNode(const Label & label);
 
   // Connects two nodes in directional order.
+  //
   // Arguments:
   //   prev: Pointer of the node in the previous side.
   //   next: Pointer of the node in the next side.
   void connect(Node * prev, Node * next);
 
-  // Finds nodes which satisfy the condition..
+  // Finds nodes which satisfy the condition.
+  //
   // Arguments:
   //   result: Placeholder of the result nodes. Old data would be deleted before
   //           storing new data.
   //   cond: Predicate of the condition.
-  void findNodes(
-      std::vector<const Node *> * result,
+  //
+  // Returns:
+  //   List of found nodes.
+  std::vector<const Node *> findNodes(
       std::function<bool(const Node &)> cond) const;
 
+  // Finds the one-best full setence path.
+  //
+  // Arguments:
+  //   bos_id: Word ID of "<s>".
+  //   eos_id: Word ID of "</s>".
+  //
+  // Returns:
+  //   List of nodes from "<s>" to "</s>" in the one-best path.
+  std::vector<const Node *> findOneBestPath(
+      const unsigned bos_id,
+      const unsigned eos_id) const;
+
   // Retrieves number of inner nodes.
+  //
   // Returns:
   //   Number of inner nodes.
   unsigned size() const { return nodes_.size(); }

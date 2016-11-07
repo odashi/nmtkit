@@ -43,11 +43,8 @@ vector<Predictor::Result> SoftmaxPredictor::predictKBest(
   vector<dynet::real> log_probs = dynet::as_vector(
       cg->incremental_forward(log_probs_expr));
 
-  vector<unsigned> kbest_ids;
-  Array::kbest(log_probs, num_results, &kbest_ids);
-
   vector<Predictor::Result> results;
-  for (const unsigned word_id : kbest_ids) {
+  for (const unsigned word_id : Array::kbest(log_probs, num_results)) {
     float log_prob = static_cast<float>(log_probs[word_id]);
     results.emplace_back(Predictor::Result {word_id, log_prob});
   }

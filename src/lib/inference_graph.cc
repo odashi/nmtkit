@@ -3,6 +3,8 @@
 #include <nmtkit/inference_graph.h>
 
 #include <algorithm>
+#include <set>
+#include <nmtkit/array.h>
 #include <nmtkit/exception.h>
 
 using namespace std;
@@ -42,15 +44,61 @@ void InferenceGraph::connect(Node * prev, Node * next) {
   }
 }
 
-void InferenceGraph::findNodes(
-    vector<const Node *> * result,
+vector<const InferenceGraph::Node *> InferenceGraph::findNodes(
     function<bool(const Node &)> cond) const {
-  result->clear();
+  vector<const Node *> results;
   for (const Node * node : nodes_) {
     if (cond(*node)) {
-      result->emplace_back(node);
+      results.emplace_back(node);
     }
   }
+  return results;
+}
+
+vector<const InferenceGraph::Node *> InferenceGraph::findOneBestPath(
+    const unsigned bos_id,
+    const unsigned eos_id) const {
+  // Finds <s> and </s> nodes.
+  auto bos_nodes = findNodes([&](const Node & node) {
+      return node.label().word_id == bos_id;
+  });
+  auto eos_nodes = findNodes([&](const Node & node) {
+      return node.label().word_id == eos_id;
+  });
+  NMTKIT_CHECK_EQ(
+      bos_nodes.size(), 1,
+      "Detected no or mulriple <s> nodes in the inference graph.");
+  NMTKIT_CHECK(
+      !eos_nodes.empty(),
+      "No </s> nodes found in the inference graph.");
+  const Node * bos_node = bos_nodes[0];
+
+  // Finds the </s> node which has the largest probability.
+  const Node * best_node = nullptr;
+  float best_accum_log_prob = -1e10f;
+  for (const Node * node : eos_nodes) {
+    if (node->label().accum_log_prob > best_accum_log_prob) {
+      best_node = node;
+      best_accum_log_prob = node->label().accum_log_prob;
+    }
+  }
+
+  // Traverses the path.
+  vector<const Node *> results {best_node};
+  set<const Node *> visited {best_node};
+  while (best_node != bos_node) {
+    NMTKIT_CHECK_EQ(
+        best_node->prev().size(), 1,
+        "Detected current node has no or multiple previous nodes.");
+    best_node = best_node->prev()[0];
+    NMTKIT_CHECK_EQ(
+        visited.find(best_node), visited.end(),
+        "Detected a loop in the inference graph.");
+    results.emplace_back(best_node);
+    visited.emplace(best_node);
+  }
+  Array::reverse(&results);
+  return results;
 }
 
 }  // namespace nmtkit
