@@ -55,8 +55,8 @@ void HTMLFormatter::initialize(std::ostream * os) {
   font-weight: normal;
 }
 section {
-  margin: 10px;
-  padding: 10px;
+  margin: 12px;
+  padding: 12px;
   background: #def;
   border: solid 1px #445;
 }
@@ -66,8 +66,16 @@ h1 {
   font-size: 32px;
 }
 h2 {
-  margin: 6px 0;
+  margin: 0;
+  padding: 8px;
+  border-bottom: solid 2px #556;
   font-size: 24px;
+}
+h3 {
+  margin: 16px 0 8px;
+  padding: 6px;
+  border-bottom: dotted 1px #889;
+  font-size: 18px;
 }
 p {
   margin: 4px 0;
@@ -77,7 +85,7 @@ table {
 }
 th {
   padding: 8px;
-  border: solid 1px #000;
+  border: none;
   text-align: center;
   vertical-align: middle;
 }
@@ -89,8 +97,9 @@ td {
 }
 .word {
   display: inline-block;
-  margin: 0 3px;
-  padding: 4px 6px;
+  margin: 2px 3px;
+  padding: 3px 6px;
+  line-height: 1.2em;
   background: #ddd;
   border: solid 1px #666;
   border-radius: 4px;
@@ -130,53 +139,69 @@ void HTMLFormatter::write(
     actual_source_words.emplace_back(source_vocab.getWord(id));
   }
 
+  // Retrieves output word IDs.
+  vector<unsigned> target_word_ids;
+  for (unsigned i = 1; i < nodes.size() - 1; ++i) {
+    target_word_ids.emplace_back(nodes[i]->label().word_id);
+  }
+
   // Outputs HTML.
   *os << "<section>\n";
   *os << "<h2>Sentence " << (num_output_ + 1) << "</h2>\n";
 
-  *os << "<p>Raw input line: <span class=\"word\">"
-      << source_line
+  *os << "<h3>Raw input line</h3>\n";
+  *os << "<p><span class=\"word\">"
+      << ::escape(source_line)
       << "</span></p>\n";
 
-  *os << "<p>Actual input words: ";
+  *os << "<h3>Actual input words</h3>\n";
+  *os << "<p>";
   for (const string & w : actual_source_words) {
     *os << "<span class=\"word\">" << ::escape(w) << "</span>";
   }
   *os << "</p>\n";
 
-  *os << "<p>Output words: ";
-  for (unsigned i = 1; i < nodes.size() - 1; ++i) {
-    const nmtkit::InferenceGraph::Label & label = nodes[i]->label();
+  *os << "<h3>Output words</h3>\n";
+  *os << "<p>";
+  for (const unsigned word_id : target_word_ids) {
     *os << "<span class=\"word\">"
-        << ::escape(target_vocab.getWord(label.word_id))
+        << ::escape(target_vocab.getWord(word_id))
         << "</span>";
   }
   *os << "</p>\n";
 
-  *os << "<p>Log probabilities:</p>\n";
+  *os << "<h3>Restored output line</h3>\n";
+  *os << "<p><span class=\"word\">"
+      << ::escape(target_vocab.convertToSentence(target_word_ids))
+      << "</span></p>\n";
+
+  *os << "<h3>Word probabilities</h3>\n";
   *os << "<table>\n";
+  *os << "<tr><th>Word</th><th>log P(word)</th><th>Accumulated log P(word)</th></tr>\n";
   for (unsigned i = 1; i < nodes.size(); ++i) {
     const nmtkit::InferenceGraph::Label & label = nodes[i]->label();
     *os << "<tr><td>"
         << ::escape(target_vocab.getWord(label.word_id))
         << "</td><td>"
         << label.word_log_prob
+        << "</td><td>"
+        << label.accum_log_prob
         << "</td></tr>\n";
   }
   *os << "</table>\n";
 
-  *os << "<p>Attention:</p>\n";
+  *os << "<h3>Attention</h3>\n";
   *os << "<table>\n";
-  *os << "<tr><td></td><td>&lt;s&gt;</td>";
+  *os << "<tr><th></th><th>&lt;s&gt;</th>";
   for (const string & w : actual_source_words) {
-    *os << "<td>" << ::escape(w) << "</td>";
+    *os << "<th>" << ::escape(w) << "</th>";
   }
-  *os << "<td>&lt;/s&gt;</td></tr>\n";
+  *os << "<th>&lt;/s&gt;</th></tr>\n";
   for (unsigned i = 1; i < nodes.size(); ++i) {
     const nmtkit::InferenceGraph::Label & label = nodes[i]->label();
-    *os << "<tr><td>"
+    *os << "<tr><th>"
         << ::escape(target_vocab.getWord(label.word_id))
-        << "</td>";
+        << "</th>";
     for (const float atten : label.atten_probs) {
       *os << "<td style=\"background: "
           << attenBGColor(atten)
