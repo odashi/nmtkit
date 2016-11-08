@@ -58,12 +58,30 @@ unsigned virtualHeight(const nmtkit::InferenceGraph::Node * node) {
 
 // Javascript utilities.
 
+string stroke_color_fmt(unsigned r, unsigned g, unsigned b, float a) {
+  return (boost::format(R"(
+ctx.strokeStyle = 'rgba(%1%, %2%, %3%, %4%)';
+)") % r % g % b % a).str();
+}
+
+string fill_color_fmt(unsigned r, unsigned g, unsigned b, float a) {
+  return (boost::format(R"(
+ctx.fillStyle = 'rgba(%1%, %2%, %3%, %4%)';
+)") % r % g % b % a).str();
+}
+
+string rect_fmt(float x, float y, float w, float h) {
+  return (boost::format(R"(
+ctx.fillRect(%1%, %2%, %3%, %4%);
+)") % x % y % w % h).str();
+}
+
 string circle_fmt(float x, float y, float r) {
   return (boost::format(R"(
 ctx.beginPath();
 ctx.arc(%1%, %2%, %3%, 0, 2 * Math.PI);
+ctx.closePath();
 ctx.fill();
-ctx.stroke();
 )") % x % y % r).str();
 }
 
@@ -272,8 +290,8 @@ void HTMLFormatter::write(
   }
   *os << "</table>";
 
-  const unsigned PADDING = 40;
-  const unsigned PATH_W = 50;
+  const unsigned PADDING = 32;
+  const unsigned PATH_W = 60;
   const unsigned PATH_H = 32;
   const unsigned lpl = ::longestPathLength(nodes[0]);
   const unsigned width =
@@ -287,10 +305,11 @@ void HTMLFormatter::write(
 ctx = document.getElementById("canvas-%1%").getContext("2d");
 ctx.font = "14px Sans-Serif";
 ctx.textAlign = "center";
-ctx.fillStyle = 'rgb(255, 255, 255)';
-ctx.fillRect(0, 0, %2%, %3%);
-ctx.fillStyle = 'rgb(0, 0, 0)';
 )") % (num_outputs_ + 1) % width % height);
+
+  // Background
+  *os << ::fill_color_fmt(255, 255, 255, 1.0);
+  *os << ::rect_fmt(0, 0, width, height);
 
   function<unsigned(float, float, const InferenceGraph::Node *)>
       write_subgraph =
@@ -299,18 +318,33 @@ ctx.fillStyle = 'rgb(0, 0, 0)';
     for (const auto next : node->next()) {
       const float nx = x + PATH_W;
       const float ny = y + PATH_H * vh;
+      if (find(nodes.begin(), nodes.end(), next) != nodes.end()) {
+        *os << ::stroke_color_fmt(230, 20, 40, 1.0);
+      } else {
+        *os << ::stroke_color_fmt(20, 60, 180, 0.4);
+      }
       *os << ::bezier_fmt(x, y, nx, ny);
+
       vh += write_subgraph(nx, ny, next);
     }
 
-    vh = max(vh, 1u);
+    const string word_str = target_vocab.getWord(node->label().word_id);
+    const unsigned y2 = y - 9;
+    if (find(nodes.begin(), nodes.end(), node) != nodes.end()) {
+      *os << ::fill_color_fmt(230, 20, 40, 1.0);
+      *os << ::circle_fmt(x, y, 4);
+      *os << ::fill_color_fmt(150, 10, 20, 1.0);
+      *os << ::text_fmt(x, y2, word_str);
+    } else {
+      *os << ::fill_color_fmt(20, 40, 100, 1.0);
+      *os << ::circle_fmt(x, y, 4);
+      *os << ::fill_color_fmt(0, 0, 0, 1.0);
+      *os << ::text_fmt(x, y2, word_str);
+    }
 
-    //const float cy = y + 0.5 * PATH_H * (vh - 1);
-    *os << ::circle_fmt(x, y, 5);
-    *os << ::text_fmt(x, y - 8, target_vocab.getWord(node->label().word_id));
-
-    return vh;
+    return max(vh, 1u);
   };
+
   write_subgraph(PADDING, PADDING, nodes[0]);
 
   *os << "</script>\n";
