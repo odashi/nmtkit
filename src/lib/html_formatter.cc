@@ -3,6 +3,7 @@
 #include <nmtkit/html_formatter.h>
 
 #include <algorithm>
+#include <functional>
 #include <regex>
 #include <boost/format.hpp>
 #include <nmtkit/exception.h>
@@ -19,6 +20,10 @@ string escape(const string & text) {
   return regex_replace(result, regex(R"(")"), "&quot;");
 }
 
+string js_escape(const string & text) {
+  return regex_replace(text, regex(R"(")"), R"(\")");
+}
+
 // Computes background color of the attention matrix.
 string attenBGColor(float prob) {
   const int col = min(255, max(0, static_cast<int>(256.0 * prob)));
@@ -30,11 +35,59 @@ string attenFGColor(float prob) {
   return ::attenBGColor(prob >= 0.5f ? 0.0f : prob + 0.5f);
 }
 
+// Retrieves the length of the longest path.
+unsigned longestPathLength(const nmtkit::InferenceGraph::Node * node) {
+  unsigned longest = 0;
+  for (const auto next : node->next()) {
+    unsigned len = ::longestPathLength(next);
+    if (len > longest) {
+      longest = len;
+    }
+  }
+  return longest + 1;
+}
+
+// Retrieves the virtual height of the subgraph.
+unsigned virtualHeight(const nmtkit::InferenceGraph::Node * node) {
+  unsigned height = 0;
+  for (const auto next : node->next()) {
+    height += virtualHeight(next);
+  }
+  return max(height, 1u);
+}
+
+// Javascript utilities.
+
+string circle_fmt(float x, float y, float r) {
+  return (boost::format(R"(
+ctx.beginPath();
+ctx.arc(%1%, %2%, %3%, 0, 2 * Math.PI);
+ctx.fill();
+ctx.stroke();
+)") % x % y % r).str();
+}
+
+string bezier_fmt(float x1, float y1, float x2, float y2) {
+  const float xm = (x1 + x2) / 2.0f;
+  return (boost::format(R"(
+ctx.beginPath();
+ctx.moveTo(%1%, %4%);
+ctx.bezierCurveTo(%2%, %4%, %2%, %5%, %3%, %5%);
+ctx.stroke();
+)") % x1 % xm % x2 % y1 % y2).str();
+}
+
+string text_fmt(float x, float y, const string & text) {
+  return (boost::format(R"(
+ctx.fillText("%3%", %1%, %2%);
+)") % x % y % js_escape(text)).str();
+}
+
 }  // namespace
 
 namespace nmtkit {
 
-HTMLFormatter::HTMLFormatter() : num_output_(0) {}
+HTMLFormatter::HTMLFormatter() : num_outputs_(0) {}
 
 void HTMLFormatter::initialize(std::ostream * os) {
   *os << R"(
@@ -95,6 +148,10 @@ td {
   text-align: center;
   vertical-align: middle;
 }
+canvas {
+  background: transparent;
+  border: solid 1px #89a;
+}
 .word {
   display: inline-block;
   margin: 2px 3px;
@@ -147,7 +204,7 @@ void HTMLFormatter::write(
 
   // Outputs HTML.
   *os << "<section>\n";
-  *os << "<h2>Sentence " << (num_output_ + 1) << "</h2>\n";
+  *os << "<h2>Sentence " << (num_outputs_ + 1) << "</h2>\n";
 
   *os << "<h3>Raw input line</h3>\n";
   *os << "<p><span class=\"word\">"
@@ -215,9 +272,52 @@ void HTMLFormatter::write(
   }
   *os << "</table>";
 
+  const unsigned PADDING = 40;
+  const unsigned PATH_W = 50;
+  const unsigned PATH_H = 32;
+  const unsigned lpl = ::longestPathLength(nodes[0]);
+  const unsigned width =
+      2 * PADDING + PATH_W * (lpl - 1);
+  const unsigned height =
+      2 * PADDING + PATH_H * (::virtualHeight(nodes[0]) - 1);
+  *os << (boost::format(R"(
+<h3>Inference graph</h3>
+<canvas id="canvas-%1%" width="%2%" height="%3%"></canvas>
+<script type="text/javascript">
+ctx = document.getElementById("canvas-%1%").getContext("2d");
+ctx.font = "14px Sans-Serif";
+ctx.textAlign = "center";
+ctx.fillStyle = 'rgb(255, 255, 255)';
+ctx.fillRect(0, 0, %2%, %3%);
+ctx.fillStyle = 'rgb(0, 0, 0)';
+)") % (num_outputs_ + 1) % width % height);
+
+  function<unsigned(float, float, const InferenceGraph::Node *)>
+      write_subgraph =
+      [&](float x, float y, const InferenceGraph::Node * node) {
+    unsigned vh = 0;
+    for (const auto next : node->next()) {
+      const float nx = x + PATH_W;
+      const float ny = y + PATH_H * vh;
+      *os << ::bezier_fmt(x, y, nx, ny);
+      vh += write_subgraph(nx, ny, next);
+    }
+
+    vh = max(vh, 1u);
+
+    //const float cy = y + 0.5 * PATH_H * (vh - 1);
+    *os << ::circle_fmt(x, y, 5);
+    *os << ::text_fmt(x, y - 8, target_vocab.getWord(node->label().word_id));
+
+    return vh;
+  };
+  write_subgraph(PADDING, PADDING, nodes[0]);
+
+  *os << "</script>\n";
+
   *os << "</section>\n";
 
-  ++num_output_;
+  ++num_outputs_;
 }
 
 }  // namespace nmtkit

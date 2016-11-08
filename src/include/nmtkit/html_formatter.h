@@ -28,7 +28,7 @@ public:
       std::ostream * os) override;
 
 private:
-  unsigned num_output_;
+  unsigned num_outputs_;
 };
 
 }  // namespace nmtkit
