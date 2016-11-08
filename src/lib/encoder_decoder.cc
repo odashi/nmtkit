@@ -136,37 +136,42 @@ void EncoderDecoder::decodeForInference(
     InferenceGraph * ig) {
   const vector<Expression> dec2logit_params = dec2logit_->prepare(cg);
 
-  // Structure of the beam search candidates
+  // Candidates of new nodes.
   struct Candidate {
-    InferenceGraph::Node * node;
+    InferenceGraph::Node * prev;
+    InferenceGraph::Label label;
     Expression dec_h;
   };
 
   // Initialize the inference graph.
   ig->clear();
-  vector<Candidate> prev_cands {
+  vector<Candidate> history {
     // The "<s>" node
-    {ig->addNode({bos_id, 0.0f, 0.0f, {}}), dec_init_h},
+    {nullptr, {bos_id, 0.0f, 0.0f, {}}, dec_init_h},
   };
   float best_accum_log_prob = -1e10f;
 
   for (unsigned length = 1; ; ++length) {
     vector<Candidate> next_cands;
 
-    for (Candidate & prev : prev_cands) {
-      const auto & prev_label = prev.node->label();
+    for (Candidate & prev : history) {
+      // Add a new node using a history.
+      auto prev_node = ig->addNode(prev.label);
+      if (prev.prev != nullptr) {
+        ig->connect(prev.prev, prev_node);
+      }
 
-      if (prev_label.word_id == eos_id) {
+      if (prev.label.word_id == eos_id) {
         // Reached a "</s>" node.
         // Try to replace the current best result.
-        if (prev_label.accum_log_prob > best_accum_log_prob) {
-          best_accum_log_prob = prev_label.accum_log_prob;
+        if (prev.label.accum_log_prob > best_accum_log_prob) {
+          best_accum_log_prob = prev.label.accum_log_prob;
         }
       } else {
         // Expands the node.
 
         // Embedding
-        const vector<unsigned> inputs {prev_label.word_id};
+        const vector<unsigned> inputs {prev.label.word_id};
         const Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
 
         // Attention
@@ -193,16 +198,17 @@ void EncoderDecoder::decodeForInference(
 
         // Register next nodes.
         for (const Predictor::Result & res : kbest) {
-          InferenceGraph::Node * node = ig->addNode({
-              res.word_id,
-              res.log_prob,
-              prev_label.accum_log_prob + res.log_prob,
-              out_atten_probs});
-          ig->connect(prev.node, node);
-          next_cands.emplace_back(Candidate {node, dec_h});
+          next_cands.emplace_back(Candidate {
+              prev_node,
+              {res.word_id,
+               res.log_prob,
+               prev.label.accum_log_prob + res.log_prob,
+               out_atten_probs},
+              dec_h,
+          });
         }
       }
-    }  // for (Candidate & prev : prev_cands)
+    }  // for (History & prev : history)
 
     // If there is no next candidates, all of previous nodes are "</s>".
     if (next_cands.empty()) {
@@ -214,21 +220,19 @@ void EncoderDecoder::decodeForInference(
         next_cands,
         min(beam_width, static_cast<unsigned>(next_cands.size())),
         [](const Candidate & a, const Candidate & b) {
-            return a.node->label().accum_log_prob
-                > b.node->label().accum_log_prob;
+            return a.label.accum_log_prob > b.label.accum_log_prob;
         });
 
     // Finish the decoding if the probability of the top candidate is lower than
     // the best path.
-    if (next_cands[kbest_ids[0]].node->label().accum_log_prob
-        < best_accum_log_prob) {
+    if (next_cands[kbest_ids[0]].label.accum_log_prob < best_accum_log_prob) {
       break;
     }
 
     // Make new previous nodes.
-    prev_cands.clear();
+    history.clear();
     for (const unsigned id : kbest_ids){
-      prev_cands.emplace_back(next_cands[id]);
+      history.emplace_back(next_cands[id]);
     }
   }  // for (unsigned length = 1; ; ++length)
 }
