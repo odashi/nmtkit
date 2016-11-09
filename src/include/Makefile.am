@@ -1,6 +1,7 @@
 nobase_include_HEADERS = \
   nmtkit/array.h \
   nmtkit/attention.h \
+  nmtkit/backward_encoder.h \
   nmtkit/batch_converter.h \
   nmtkit/basic_types.h \
   nmtkit/bidirectional_encoder.h \
@@ -11,6 +12,7 @@ nobase_include_HEADERS = \
   nmtkit/encoder_decoder.h \
   nmtkit/exception.h \
   nmtkit/formatter.h \
+  nmtkit/forward_encoder.h \
   nmtkit/html_formatter.h \
   nmtkit/inference_graph.h \
   nmtkit/init.h \

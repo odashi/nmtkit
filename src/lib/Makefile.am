@@ -10,12 +10,14 @@ AM_CXXFLAGS = \
 libnmtkit_la_SOURCES = \
   attention.cc \
   corpus.cc \
+  backward_encoder.cc \
   batch_converter.cc \
   bidirectional_encoder.cc \
   bilinear_attention.cc \
   character_vocabulary.cc \
   encoder.cc \
   encoder_decoder.cc \
+  forward_encoder.cc \
   html_formatter.cc \
   inference_graph.cc \
   init.cc \

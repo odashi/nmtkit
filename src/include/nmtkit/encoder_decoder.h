@@ -29,12 +29,17 @@ class EncoderDecoder {
 public:
   // Constructs an empty encoder-decoder model.
   EncoderDecoder() {}
-  
+
   // Constructs a new encoder-decoder model.
   //
   // Arguments:
   //   src_vocab_size: Source vocabulary size.
   //   trg_vocab_size: Target vocabulary size.
+  //   encoder_type: Name of the encoder.
+  //                 Available values:
+  //                   "bidirectional": Bidirectional RNN.
+  //                   "forward": Forward RNN.
+  //                   "backward": Backward RNN.
   //   src_embed_size: Number of units in source embedding layer.
   //   trg_embed_size: Number of units in target embedding layer.
   //   enc_hidden_size: Number of units in encoder states.
@@ -51,6 +56,7 @@ public:
   EncoderDecoder(
       unsigned src_vocab_size,
       unsigned trg_vocab_size,
+      const std::string & encoder_type,
       unsigned src_embed_size,
       unsigned trg_embed_size,
       unsigned enc_hidden_size,

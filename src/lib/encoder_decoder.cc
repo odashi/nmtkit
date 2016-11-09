@@ -4,9 +4,11 @@
 
 #include <algorithm>
 #include <nmtkit/array.h>
+#include <nmtkit/backward_encoder.h>
 #include <nmtkit/bidirectional_encoder.h>
 #include <nmtkit/bilinear_attention.h>
 #include <nmtkit/exception.h>
+#include <nmtkit/forward_encoder.h>
 #include <nmtkit/mlp_attention.h>
 #include <nmtkit/softmax_predictor.h>
 
@@ -29,6 +31,7 @@ namespace nmtkit {
 EncoderDecoder::EncoderDecoder(
     unsigned src_vocab_size,
     unsigned trg_vocab_size,
+    const string & encoder_type,
     unsigned src_embed_size,
     unsigned trg_embed_size,
     unsigned enc_hidden_size,
@@ -46,9 +49,21 @@ EncoderDecoder::EncoderDecoder(
       dec_hidden_size > 0, "dec_hidden_size should be greater than 0.");
   // NOTE: atten_size would be checked in the attention selection section.
 
-  encoder_.reset(
-      new BidirectionalEncoder(
-          1, src_vocab_size, src_embed_size, enc_hidden_size, model));
+  if (encoder_type == "bidirectional") {
+    encoder_.reset(
+        new BidirectionalEncoder(
+            1, src_vocab_size, src_embed_size, enc_hidden_size, model));
+  } else if (encoder_type == "forward") {
+    encoder_.reset(
+        new ForwardEncoder(
+            1, src_vocab_size, src_embed_size, enc_hidden_size, model));
+  } else if (encoder_type == "backward") {
+    encoder_.reset(
+        new BackwardEncoder(
+            1, src_vocab_size, src_embed_size, enc_hidden_size, model));
+  } else {
+    NMTKIT_FATAL("Invalid encoder type: " + encoder_type);
+  }
 
   const unsigned mem_size = encoder_->getStateSize();
   const unsigned enc_out_size = encoder_->getFinalStateSize();
