@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 #include <boost/algorithm/string.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
@@ -98,12 +99,20 @@ unique_ptr<nmtkit::Formatter> getFormatter(const std::string & name) {
 }
 
 template <class T>
-void loadArchive(const FS::path & filepath, T * obj) {
+void loadArchive(
+    const FS::path & filepath,
+    const string & archive_format,
+    T * obj) {
   ifstream ifs(filepath.string());
   NMTKIT_CHECK(
       ifs.is_open(), "Could not open file to read: " + filepath.string());
-  boost::archive::text_iarchive iar(ifs);
-  iar >> *obj;
+  if (archive_format == "binary") {
+    boost::archive::binary_iarchive iar(ifs);
+    iar >> *obj;
+  } else if (archive_format == "text") {
+    boost::archive::text_iarchive iar(ifs);
+    iar >> *obj;
+  }
 }
 
 }  // namespace
@@ -118,6 +127,9 @@ int main(int argc, char * argv[]) {
     // Parses config file.
     PT::ptree config;
     PT::read_ini((model_dir / "config.ini").string(), config);
+
+    // Archive format to load models.
+    const string archive_format = config.get<string>("Global.archive_format");
 
     // Initializes NMTKit.
     nmtkit::GlobalConfig global_config;
@@ -137,8 +149,8 @@ int main(int argc, char * argv[]) {
 
     // Loads vocabularies.
     boost::scoped_ptr<nmtkit::Vocabulary> src_vocab, trg_vocab;
-    ::loadArchive(model_dir / "source.vocab", &src_vocab);
-    ::loadArchive(model_dir / "target.vocab", &trg_vocab);
+    ::loadArchive(model_dir / "source.vocab", archive_format, &src_vocab);
+    ::loadArchive(model_dir / "target.vocab", archive_format, &trg_vocab);
 
     // "<s>" and "</s>" IDs
     const unsigned bos_id = trg_vocab->getID("<s>");
@@ -152,7 +164,9 @@ int main(int argc, char * argv[]) {
 
     // Loads EncoderDecoder model.
     nmtkit::EncoderDecoder encdec;
-    ::loadArchive(model_dir / "best_dev_log_ppl.model.params", &encdec);
+    ::loadArchive(
+        model_dir / "best_dev_log_ppl.model.params",
+        archive_format, &encdec);
 
     formatter->initialize(&cout);
 

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
@@ -159,12 +160,22 @@ nmtkit::Vocabulary * createVocabulary(
 }
 
 template <class T>
-void saveArchive(const FS::path & filepath, const T & obj) {
+void saveArchive(
+    const FS::path & filepath,
+    const string & archive_format,
+    const T & obj) {
   ofstream ofs(filepath.string());
   NMTKIT_CHECK(
       ofs.is_open(), "Could not open file to write: " + filepath.string());
-  boost::archive::text_oarchive oar(ofs);
-  oar << obj;
+  if (archive_format == "binary") {
+    boost::archive::binary_oarchive oar(ofs);
+    oar << obj;
+  } else if (archive_format == "text") {
+    boost::archive::text_oarchive oar(ofs);
+    oar << obj;
+  } else {
+    NMTKIT_FATAL("Invalid archive format: " + archive_format);
+  }
 }
 
 }  // namespace
@@ -191,6 +202,9 @@ int main(int argc, char * argv[]) {
     PT::ptree config;
     PT::read_ini(cfg_filepath.string(), config);
 
+    // Archive format to save models.
+    const string archive_format = config.get<string>("Global.archive_format");
+
     // Initializes NMTKit.
     nmtkit::GlobalConfig global_config;
     global_config.backend_random_seed = config.get<unsigned>(
@@ -215,8 +229,8 @@ int main(int argc, char * argv[]) {
             config.get<string>("Corpus.train_target"),
             config.get<string>("Model.target_vocabulary_type"),
             config.get<unsigned>("Model.target_vocabulary_size")));
-    ::saveArchive(model_dir / "source.vocab", src_vocab);
-    ::saveArchive(model_dir / "target.vocab", trg_vocab);
+    ::saveArchive(model_dir / "source.vocab", archive_format, src_vocab);
+    ::saveArchive(model_dir / "target.vocab", archive_format, trg_vocab);
 
     // Maximum lengths
     const unsigned train_max_length = config.get<unsigned>("Train.max_length");
@@ -346,13 +360,20 @@ int main(int argc, char * argv[]) {
             % iteration % num_trained_samples % dev_log_ppl % test_log_ppl;
         logger->info(fmt.str());
 
-        ::saveArchive(model_dir / "latest.trainer.params", trainer);
-        ::saveArchive(model_dir / "latest.model.params", encdec);
+        ::saveArchive(
+            model_dir / "latest.trainer.params", archive_format, trainer);
+        ::saveArchive(
+            model_dir / "latest.model.params", archive_format, encdec);
         logger->info("Saved 'latest' model.");
 
         if (dev_log_ppl < best_dev_log_ppl) {
           best_dev_log_ppl = dev_log_ppl;
-          ::saveArchive(model_dir / "best_dev_log_ppl.model.params", encdec);
+          FS::path trainer_path = model_dir / "best_dev_log_ppl.trainer.params";
+          FS::path model_path = model_dir / "best_dev_log_ppl.model.params";
+          FS::remove(trainer_path);
+          FS::remove(model_path);
+          FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
+          FS::copy_file(model_dir / "latest.model.params", model_path);
           logger->info("Saved 'best_dev_log_ppl' model.");
         }
       }
