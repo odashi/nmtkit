@@ -36,8 +36,11 @@ SortedRandomSampler::SortedRandomSampler(
   // Shuffles samples at first to avoid biases due to the original order.
   Array::shuffle(&samples_, &rnd_);
 
-  // Sorts corpus by target lengths.
+  // Sorts corpus by target/source lengths.
   Array::sort(&samples_, [](const Sample & a, const Sample & b) {
+      if (a.target.size() == b.target.size()) {
+        return a.source.size() < b.source.size();
+      }
       return a.target.size() < b.target.size();
   });
 
