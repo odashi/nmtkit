@@ -113,7 +113,6 @@ private:
   //
   // Arguments:
   //   dec_init_h: Initial output value of the decoder.
-  //   atten_info: Precomputed values for the attention estimator.
   //   target_ids: Target word IDs for this step.
   //   cg: Target computation graph.
   //
@@ -121,7 +120,6 @@ private:
   //   List of expression objects representing logit values.
   std::vector<dynet::expr::Expression> buildDecoderGraph(
       const dynet::expr::Expression & dec_init_h,
-      const std::vector<dynet::expr::Expression> & atten_info,
       const std::vector<std::vector<unsigned>> & target_ids,
       dynet::ComputationGraph * cg);
 
@@ -129,7 +127,6 @@ private:
   //
   // Arguments:
   //   dec_init_h: Initial output value of the decoder.
-  //   atten_info: Precomputed values for the attention estimator.
   //   bos_id: "<s>" ID in the target language.
   //   eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
@@ -138,7 +135,6 @@ private:
   //   ig: Placeholder of the output inference graph.
   void decodeForInference(
       const dynet::expr::Expression & dec_init_h,
-      const std::vector<dynet::expr::Expression> & atten_info,
       const unsigned bos_id,
       const unsigned eos_id,
       const unsigned max_length,

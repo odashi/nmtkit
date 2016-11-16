@@ -35,16 +35,13 @@ public:
 
   ~MLPAttention() override {}
 
-  std::vector<dynet::expr::Expression> prepare(
+  void prepare(
       const std::vector<dynet::expr::Expression> & memories,
       dynet::ComputationGraph * cg) override;
 
-  void compute(
-      const std::vector<dynet::expr::Expression> & precomputed,
+  std::vector<dynet::expr::Expression> compute(
       const dynet::expr::Expression & controller,
-      dynet::ComputationGraph * cg,
-      dynet::expr::Expression * atten_probs,
-      dynet::expr::Expression * context) override;
+      dynet::ComputationGraph * cg) override;
 
 private:
   // Boost serialization interface.
@@ -60,6 +57,11 @@ private:
   dynet::Parameter p_mem2h_;
   dynet::Parameter p_ctrl2h_;
   dynet::Parameter p_h2logit_;
+  dynet::expr::Expression i_concat_mem_;
+  dynet::expr::Expression i_h_mem_;
+  dynet::expr::Expression i_broadcast_;
+  dynet::expr::Expression i_ctrl2h_;
+  dynet::expr::Expression i_h2logit_;
 };
 
 }  // namespace nmtkit

@@ -19,16 +19,16 @@ BilinearAttention::BilinearAttention(
       memory_size > 0, "memory_size should be greater than 0.");
   NMTKIT_CHECK(
       controller_size > 0, "controller_size should be greater than 0.");
-  
+
   p_interaction_ = model->add_parameters({controller_size, memory_size});
 }
 
-vector<DE::Expression> BilinearAttention::prepare(
+void BilinearAttention::prepare(
     const vector<DE::Expression> & memories,
     dynet::ComputationGraph * cg) {
   // Concatenated memory matrix.
   // Shape: {memory_size, seq_length}
-  DE::Expression concat_mem = DE::concatenate_cols(memories);
+  i_concat_mem_ = DE::concatenate_cols(memories);
 
   // Interaction coefficients between the memory and the controller.
   // Shape: {controller_size, memory_size}
@@ -36,39 +36,21 @@ vector<DE::Expression> BilinearAttention::prepare(
 
   // Precomputes conversion of the memory matrix.
   // Shape: {seq_length, controller_size}
-  DE::Expression converted_mem = DE::transpose(interaction * concat_mem);
-
-  return {concat_mem, converted_mem};
+  i_converted_mem_ = DE::transpose(interaction * i_concat_mem_);
 }
 
-void BilinearAttention::compute(
-    const vector<DE::Expression> & precomputed,
+vector<DE::Expression> BilinearAttention::compute(
     const DE::Expression & controller,
-    dynet::ComputationGraph * cg,
-    DE::Expression * atten_probs,
-    DE::Expression * context) {
-  NMTKIT_CHECK_EQ(
-      2, precomputed.size(), "Invalid number of precomputed values.");
-
-  // Aliases
-  const DE::Expression & concat_mem = precomputed[0];
-  const DE::Expression & converted_mem = precomputed[1];
-
+    dynet::ComputationGraph * cg) {
   // Computes attention.
   // Shape: {seq_length, 1}
-  DE::Expression atten_probs_inner = DE::softmax(converted_mem * controller);
+  DE::Expression atten_probs_inner = DE::softmax(i_converted_mem_ * controller);
 
   // Computes the context vector.
   // Shape: {memory_size, 1}
-  DE::Expression context_inner = concat_mem * atten_probs_inner;
+  DE::Expression context_inner = i_concat_mem_ * atten_probs_inner;
 
-  // Copies results.
-  if (atten_probs != nullptr) {
-    *atten_probs = std::move(atten_probs_inner);
-  }
-  if (context != nullptr) {
-    *context = std::move(context_inner);
-  }
+  return {atten_probs_inner, context_inner};
 }
 
 }  // namespace nmtkit

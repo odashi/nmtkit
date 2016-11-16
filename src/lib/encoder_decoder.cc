@@ -115,7 +115,6 @@ Expression EncoderDecoder::buildDecoderInitializerGraph(
 
 vector<Expression> EncoderDecoder::buildDecoderGraph(
     const Expression & dec_init_h,
-    const vector<Expression> & atten_info,
     const vector<vector<unsigned>> & target_ids,
     dynet::ComputationGraph * cg) {
   const unsigned tl = target_ids.size() - 1;
@@ -125,11 +124,10 @@ vector<Expression> EncoderDecoder::buildDecoderGraph(
 
   for (unsigned i = 0; i < tl; ++i) {
     // Embedding
-    Expression embed = DE::lookup(*cg, p_dec_lookup_, target_ids[i]);
+    const Expression embed = DE::lookup(*cg, p_dec_lookup_, target_ids[i]);
 
     // Attention
-    Expression context;
-    attention_->compute(atten_info, dec_h, cg, nullptr, &context);
+    const Expression context = attention_->compute(dec_h, cg)[1];
 
     // Decode
     dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
@@ -142,7 +140,6 @@ vector<Expression> EncoderDecoder::buildDecoderGraph(
 
 void EncoderDecoder::decodeForInference(
     const Expression & dec_init_h,
-    const vector<Expression> & atten_info,
     const unsigned bos_id,
     const unsigned eos_id,
     const unsigned max_length,
@@ -190,10 +187,10 @@ void EncoderDecoder::decodeForInference(
         const Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
 
         // Attention
-        Expression atten_probs, context;
-        attention_->compute(atten_info, prev.dec_h, cg, &atten_probs, &context);
+        const vector<Expression> atten_info = attention_->compute(
+            prev.dec_h, cg);
         const vector<dynet::real> atten_probs_values = dynet::as_vector(
-            cg->incremental_forward(atten_probs));
+            cg->incremental_forward(atten_info[0]));
         vector<float> out_atten_probs;
         for (const dynet::real p : atten_probs_values) {
           out_atten_probs.emplace_back(static_cast<float>(p));
@@ -201,7 +198,7 @@ void EncoderDecoder::decodeForInference(
 
         // Decode
         const Expression dec_h = rnn_dec_->add_input(
-            DE::concatenate({embed, context}));
+            DE::concatenate({embed, atten_info[1]}));
         const Expression logit = dec2logit_->compute(
             dec2logit_params, dec_h, cg);
 
@@ -261,12 +258,12 @@ Expression EncoderDecoder::buildTrainGraph(
   encoder_->build(batch.source_ids, cg, &enc_states, &enc_final_state);
 
   // Initialize attention
-  vector<Expression> atten_info = attention_->prepare(enc_states, cg);
+  attention_->prepare(enc_states, cg);
 
   // Decode
   Expression dec_init_h = buildDecoderInitializerGraph(enc_final_state, cg);
   vector<Expression> logits = buildDecoderGraph(
-      dec_init_h, atten_info, batch.target_ids, cg);
+      dec_init_h, batch.target_ids, cg);
 
   return predictor_->computeLoss(batch.target_ids, logits);
 }
@@ -294,12 +291,12 @@ void EncoderDecoder::infer(
   encoder_->build(source_ids_inner, cg, &enc_states, &enc_final_state);
 
   // Initialize attention
-  vector<Expression> atten_info = attention_->prepare(enc_states, cg);
+  attention_->prepare(enc_states, cg);
 
   // Infer output words
   Expression dec_init_h = buildDecoderInitializerGraph(enc_final_state, cg);
   decodeForInference(
-      dec_init_h, atten_info, bos_id, eos_id, max_length, beam_width, cg, ig);
+      dec_init_h, bos_id, eos_id, max_length, beam_width, cg, ig);
 }
 
 }  // namespace nmtkit
