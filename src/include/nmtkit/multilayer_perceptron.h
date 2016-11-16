@@ -42,22 +42,17 @@ public:
   //
   // Arguments:
   //   cg: Target computation graph.
-  //
-  // Returns:
-  //   List of expressions representing precomputed values.
-  std::vector<dynet::expr::Expression> prepare(dynet::ComputationGraph * cg);
+  void prepare(dynet::ComputationGraph * cg);
 
   // Constructs computation graph.
-  // 
+  //
   // Arguments:
-  //   precomputed: List of expressions returned by prepare().
   //   input: input expression.
   //   cg: Target computation graph.
-  // 
+  //
   // Returns:
   //   Output expression.
   dynet::expr::Expression compute(
-      const std::vector<dynet::expr::Expression> & precomputed,
       const dynet::expr::Expression & input,
       dynet::ComputationGraph * cg);
 
@@ -72,6 +67,8 @@ private:
   std::vector<unsigned> spec_;
   std::vector<dynet::Parameter> w_;
   std::vector<dynet::Parameter> b_;
+  std::vector<dynet::expr::Expression> i_w_;
+  std::vector<dynet::expr::Expression> i_b_;
 };
 
 }  // namespace nmtkit

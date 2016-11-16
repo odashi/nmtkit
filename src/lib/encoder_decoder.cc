@@ -105,9 +105,9 @@ Expression EncoderDecoder::buildDecoderInitializerGraph(
   //       layout:
   //         {c1, c2, ..., cn, h1, h2, ..., hn}
   //       where cx is the initial cell states and hx is the initial outputs.
-  Expression dec_init_c = enc2dec_->compute(
-      enc2dec_->prepare(cg), enc_final_state, cg);
-  Expression dec_init_h = DE::tanh(dec_init_c);
+  enc2dec_->prepare(cg);
+  const Expression dec_init_c = enc2dec_->compute(enc_final_state, cg);
+  const Expression dec_init_h = DE::tanh(dec_init_c);
   rnn_dec_->new_graph(*cg);
   rnn_dec_->start_new_sequence({dec_init_c, dec_init_h});
   return dec_init_h;
@@ -119,8 +119,8 @@ vector<Expression> EncoderDecoder::buildDecoderGraph(
     dynet::ComputationGraph * cg) {
   const unsigned tl = target_ids.size() - 1;
   Expression dec_h = dec_init_h;
-  vector<Expression> dec2logit_params = dec2logit_->prepare(cg);
   vector<Expression> logits;
+  dec2logit_->prepare(cg);
 
   for (unsigned i = 0; i < tl; ++i) {
     // Embedding
@@ -131,7 +131,7 @@ vector<Expression> EncoderDecoder::buildDecoderGraph(
 
     // Decode
     dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
-    Expression logit = dec2logit_->compute(dec2logit_params, dec_h, cg);
+    const Expression logit = dec2logit_->compute(dec_h, cg);
     logits.emplace_back(logit);
   }
 
@@ -146,7 +146,7 @@ void EncoderDecoder::decodeForInference(
     const unsigned beam_width,
     dynet::ComputationGraph * cg,
     InferenceGraph * ig) {
-  const vector<Expression> dec2logit_params = dec2logit_->prepare(cg);
+  dec2logit_->prepare(cg);
 
   // Candidates of new nodes.
   struct Candidate {
@@ -199,8 +199,7 @@ void EncoderDecoder::decodeForInference(
         // Decode
         const Expression dec_h = rnn_dec_->add_input(
             DE::concatenate({embed, atten_info[1]}));
-        const Expression logit = dec2logit_->compute(
-            dec2logit_params, dec_h, cg);
+        const Expression logit = dec2logit_->compute(dec_h, cg);
 
         // Predict next words.
         const vector<Predictor::Result> kbest =

@@ -26,36 +26,27 @@ MultilayerPerceptron::MultilayerPerceptron(
   }
 }
 
-vector<DE::Expression> MultilayerPerceptron::prepare(
-    dynet::ComputationGraph * cg) {
-  vector<DE::Expression> params;
-  // Note: params[2*i]: i-th matrix
-  //       params[2*i+1]: i-th bias
+void MultilayerPerceptron::prepare(dynet::ComputationGraph * cg) {
+  i_w_.clear();
+  i_b_.clear();
   for (unsigned i = 0; i < w_.size(); ++i) {
-    params.emplace_back(DE::parameter(*cg, w_[i]));
-    params.emplace_back(DE::parameter(*cg, b_[i]));
+    i_w_.emplace_back(DE::parameter(*cg, w_[i]));
+    i_b_.emplace_back(DE::parameter(*cg, b_[i]));
   }
-  return params;
 }
 
 DE::Expression MultilayerPerceptron::compute(
-    const vector<DE::Expression> & precomputed,
     const DE::Expression & input,
     dynet::ComputationGraph * cg) {
-  vector<DE::Expression> hidden {input};
+  DE::Expression h = input;
   for (unsigned i = 0; i < w_.size(); ++i) {
-    const DE::Expression & w = precomputed[2 * i];
-    const DE::Expression & b = precomputed[2 * i + 1];
-    DE::Expression u = DE::affine_transform({b, w, hidden.back()});
-    if (i == w_.size() - 1) {
-      // Last (output) layer does not be nonliniarized.
-      hidden.emplace_back(u);
-    } else {
-      // Hidden layers are nonliniarized by ReLU.
-      hidden.emplace_back(DE::rectify(u));
+    h = DE::affine_transform({i_b_[i], i_w_[i], h});
+    if (i < w_.size() - 1) {
+      // Hidden layers except the last one are nonliniarized by ReLU.
+      h = DE::rectify(h);
     }
   }
-  return hidden.back();
+  return h;
 }
 
 }  // namespace nmtkit
