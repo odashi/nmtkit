@@ -33,6 +33,7 @@ EncoderDecoder::EncoderDecoder(
     unsigned src_vocab_size,
     unsigned trg_vocab_size,
     const string & encoder_type,
+    const string & decoder_type,
     unsigned src_embed_size,
     unsigned trg_embed_size,
     unsigned enc_hidden_size,
@@ -83,10 +84,14 @@ EncoderDecoder::EncoderDecoder(
   }
 
   // Decoder selection.
-  decoder_.reset(
-      new DefaultDecoder(
-          trg_vocab_size, trg_embed_size, dec_hidden_size,
-          enc_out_size, context_size, model));
+  if (decoder_type == "default") {
+    decoder_.reset(
+        new DefaultDecoder(
+            trg_vocab_size, trg_embed_size, dec_hidden_size,
+            enc_out_size, context_size, model));
+  } else {
+    NMTKIT_FATAL("Invalid decoder type: " + decoder_type);
+  }
 
   const unsigned dec_out_size = decoder_->getOutputSize();
 
@@ -121,6 +126,7 @@ void EncoderDecoder::decodeForInference(
     const unsigned eos_id,
     const unsigned max_length,
     const unsigned beam_width,
+    const float word_penalty,
     dynet::ComputationGraph * cg,
     InferenceGraph * ig) {
   // Candidates of new nodes.
@@ -182,8 +188,8 @@ void EncoderDecoder::decodeForInference(
           next_cands.emplace_back(Candidate {
               prev_node,
               {res.word_id,
-               res.log_prob,
-               prev.label.accum_log_prob + res.log_prob,
+               res.log_prob + word_penalty,
+               prev.label.accum_log_prob + res.log_prob + word_penalty,
                out_atten_probs},
               next_state,
           });
@@ -241,6 +247,7 @@ void EncoderDecoder::infer(
     const unsigned eos_id,
     const unsigned max_length,
     const unsigned beam_width,
+    const float word_penalty,
     dynet::ComputationGraph * cg,
     InferenceGraph * ig) {
 
@@ -261,7 +268,9 @@ void EncoderDecoder::infer(
   attention_->prepare(enc_states, cg);
   dec2logit_->prepare(cg);
   decodeForInference(
-      enc_final_state, bos_id, eos_id, max_length, beam_width, cg, ig);
+      enc_final_state, bos_id, eos_id,
+      max_length, beam_width, word_penalty,
+      cg, ig);
 }
 
 }  // namespace nmtkit

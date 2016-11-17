@@ -41,6 +41,9 @@ public:
   //                   "bidirectional": Bidirectional RNN.
   //                   "forward": Forward RNN.
   //                   "backward": Backward RNN.
+  //   decoder_type: Name of the decoder.
+  //                 Available values:
+  //                   "default": Default RNN decoder.
   //   src_embed_size: Number of units in source embedding layer.
   //   trg_embed_size: Number of units in target embedding layer.
   //   enc_hidden_size: Number of units in encoder states.
@@ -58,6 +61,7 @@ public:
       unsigned src_vocab_size,
       unsigned trg_vocab_size,
       const std::string & encoder_type,
+      const std::string & decoder_type,
       unsigned src_embed_size,
       unsigned trg_embed_size,
       unsigned enc_hidden_size,
@@ -86,6 +90,7 @@ public:
   //   eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
   //   beam_width: Beam width.
+  //   word_penalty: Word penalty.
   //   cg: Target computation graph.
   //   ig: Placeholder of the output inference graph.
   void infer(
@@ -94,6 +99,7 @@ public:
       const unsigned eos_id,
       const unsigned max_length,
       const unsigned beam_width,
+      const float word_penalty,
       dynet::ComputationGraph * cg,
       InferenceGraph * ig);
 
@@ -120,6 +126,7 @@ private:
   //   eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
   //   beam_width: Beam width.
+  //   word_penalty: Word penalty.
   //   cg: Target computation graph.
   //   ig: Placeholder of the output inference graph.
   void decodeForInference(
@@ -128,6 +135,7 @@ private:
       const unsigned eos_id,
       const unsigned max_length,
       const unsigned beam_width,
+      const float word_penalty,
       dynet::ComputationGraph * cg,
       InferenceGraph * ig);
 

@@ -48,6 +48,9 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     ("beam-width",
      PO::value<unsigned>()->default_value(1),
      "Beam search width in the decoder inference.")
+    ("word-penalty",
+     PO::value<float>()->default_value(0.0f),
+     "Positive bias value of the log word probability.")
     ;
 
   PO::options_description opt;
@@ -161,6 +164,7 @@ int main(int argc, char * argv[]) {
     NMTKIT_CHECK(max_length > 0, "Train.max_length should be greater than 0.");
     const unsigned beam_width = args["beam-width"].as<unsigned>();
     NMTKIT_CHECK(beam_width > 0, "beam-width should be greater than 0.");
+    const float word_penalty = args["word-penalty"].as<float>();
 
     // Loads EncoderDecoder model.
     nmtkit::EncoderDecoder encdec;
@@ -176,7 +180,10 @@ int main(int argc, char * argv[]) {
       vector<unsigned> input_ids = src_vocab->convertToIDs(input_line);
       dynet::ComputationGraph cg;
       nmtkit::InferenceGraph ig;
-      encdec.infer(input_ids, bos_id, eos_id, max_length, beam_width, &cg, &ig);
+      encdec.infer(
+          input_ids, bos_id, eos_id,
+          max_length, beam_width, word_penalty,
+          &cg, &ig);
       formatter->write(input_line, ig, *src_vocab, *trg_vocab, &cout);
     }
 

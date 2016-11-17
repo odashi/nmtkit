@@ -272,6 +272,7 @@ int main(int argc, char * argv[]) {
         config.get<unsigned>("Model.source_vocabulary_size"),
         config.get<unsigned>("Model.target_vocabulary_size"),
         config.get<string>("Model.encoder_type"),
+        config.get<string>("Model.decoder_type"),
         config.get<unsigned>("Model.source_embedding_size"),
         config.get<unsigned>("Model.target_embedding_size"),
         config.get<unsigned>("Model.encoder_hidden_size"),
