@@ -7,6 +7,7 @@
 #include <nmtkit/backward_encoder.h>
 #include <nmtkit/bidirectional_encoder.h>
 #include <nmtkit/bilinear_attention.h>
+#include <nmtkit/default_decoder.h>
 #include <nmtkit/exception.h>
 #include <nmtkit/forward_encoder.h>
 #include <nmtkit/mlp_attention.h>
@@ -49,6 +50,7 @@ EncoderDecoder::EncoderDecoder(
       dec_hidden_size > 0, "dec_hidden_size should be greater than 0.");
   // NOTE: atten_size would be checked in the attention selection section.
 
+  // Encoder selection.
   if (encoder_type == "bidirectional") {
     encoder_.reset(
         new BidirectionalEncoder(
@@ -65,101 +67,74 @@ EncoderDecoder::EncoderDecoder(
     NMTKIT_FATAL("Invalid encoder type: " + encoder_type);
   }
 
-  const unsigned mem_size = encoder_->getStateSize();
+  const unsigned context_size = encoder_->getStateSize();
   const unsigned enc_out_size = encoder_->getFinalStateSize();
-  const unsigned dec_in_size = trg_embed_size + mem_size;
-  const unsigned dec_out_size = dec_hidden_size;
-  // Note: In this implementation, encoder and decoder are connected through one
-  //       nonlinear intermediate embedding layer. The size of this layer is
-  //       determined using the average of both modules.
-  const unsigned ie_size = (enc_out_size + dec_out_size) / 2;
-
-  enc2dec_.reset(
-      new MultilayerPerceptron({enc_out_size, ie_size, dec_out_size}, model));
-  dec2logit_.reset(
-      new MultilayerPerceptron({dec_out_size, trg_vocab_size}, model));
 
   // Attention selection.
   if (atten_type == "mlp") {
     NMTKIT_CHECK(atten_size > 0, "atten_size should be greater than 0.");
     attention_.reset(
-        new MLPAttention(mem_size, dec_out_size, atten_size, model));
+        new MLPAttention(context_size, dec_hidden_size, atten_size, model));
   } else if (atten_type == "bilinear") {
-    attention_.reset(new BilinearAttention(mem_size, dec_out_size, model));
+    attention_.reset(
+        new BilinearAttention(context_size, dec_hidden_size, model));
   } else {
     NMTKIT_FATAL("Invalid attention type: " + atten_type);
   }
 
-  rnn_dec_.reset(new dynet::LSTMBuilder(1, dec_in_size, dec_out_size, model));
+  // Decoder selection.
+  decoder_.reset(
+      new DefaultDecoder(
+          trg_vocab_size, trg_embed_size, dec_hidden_size,
+          enc_out_size, context_size, model));
+
+  const unsigned dec_out_size = decoder_->getOutputSize();
+
+  // Output projection.
+  dec2logit_.reset(
+      new MultilayerPerceptron({dec_out_size, trg_vocab_size}, model));
 
   predictor_.reset(new SoftmaxPredictor(trg_vocab_size));
-
-  p_dec_lookup_ = model->add_lookup_parameters(
-      trg_vocab_size, {trg_embed_size});
-};
-
-Expression EncoderDecoder::buildDecoderInitializerGraph(
-    const Expression & enc_final_state,
-    dynet::ComputationGraph * cg) {
-  // NOTE: LSTMBuilder::start_new_sequence() takes initial states with below
-  //       layout:
-  //         {c1, c2, ..., cn, h1, h2, ..., hn}
-  //       where cx is the initial cell states and hx is the initial outputs.
-  enc2dec_->prepare(cg);
-  const Expression dec_init_c = enc2dec_->compute(enc_final_state, cg);
-  const Expression dec_init_h = DE::tanh(dec_init_c);
-  rnn_dec_->new_graph(*cg);
-  rnn_dec_->start_new_sequence({dec_init_c, dec_init_h});
-  return dec_init_h;
 }
 
 vector<Expression> EncoderDecoder::buildDecoderGraph(
-    const Expression & dec_init_h,
+    const Expression & seed,
     const vector<vector<unsigned>> & target_ids,
     dynet::ComputationGraph * cg) {
   const unsigned tl = target_ids.size() - 1;
-  Expression dec_h = dec_init_h;
   vector<Expression> logits;
-  dec2logit_->prepare(cg);
+  vector<Expression> states = decoder_->prepare(seed, cg);
 
   for (unsigned i = 0; i < tl; ++i) {
-    // Embedding
-    const Expression embed = DE::lookup(*cg, p_dec_lookup_, target_ids[i]);
-
-    // Attention
-    const Expression context = attention_->compute(dec_h, cg)[1];
-
-    // Decode
-    dec_h = rnn_dec_->add_input(DE::concatenate({embed, context}));
-    const Expression logit = dec2logit_->compute(dec_h, cg);
-    logits.emplace_back(logit);
+    Expression out_embed;
+    states = decoder_->oneStep(
+        states, target_ids[i], attention_.get(), cg, nullptr, &out_embed);
+    logits.emplace_back(dec2logit_->compute(out_embed, cg));
   }
 
   return logits;
 }
 
 void EncoderDecoder::decodeForInference(
-    const Expression & dec_init_h,
+    const Expression & seed,
     const unsigned bos_id,
     const unsigned eos_id,
     const unsigned max_length,
     const unsigned beam_width,
     dynet::ComputationGraph * cg,
     InferenceGraph * ig) {
-  dec2logit_->prepare(cg);
-
   // Candidates of new nodes.
   struct Candidate {
     InferenceGraph::Node * prev;
     InferenceGraph::Label label;
-    Expression dec_h;
+    vector<Expression> states;
   };
 
   // Initialize the inference graph.
   ig->clear();
   vector<Candidate> history {
     // The "<s>" node
-    {nullptr, {bos_id, 0.0f, 0.0f, {}}, dec_init_h},
+    {nullptr, {bos_id, 0.0f, 0.0f, {}}, decoder_->prepare(seed, cg)},
   };
   float best_accum_log_prob = -1e10f;
 
@@ -181,33 +156,28 @@ void EncoderDecoder::decodeForInference(
         }
       } else {
         // Expands the node.
-
-        // Embedding
         const vector<unsigned> inputs {prev.label.word_id};
-        const Expression embed = DE::lookup(*cg, p_dec_lookup_, inputs);
+        Expression atten_probs;
+        Expression output;
+        vector<Expression> next_states = decoder_->oneStep(
+            prev.states, inputs, attention_.get(), cg, &atten_probs, &output);
 
-        // Attention
-        const vector<Expression> atten_info = attention_->compute(
-            prev.dec_h, cg);
+        // Obtains attention probabilities.
         const vector<dynet::real> atten_probs_values = dynet::as_vector(
-            cg->incremental_forward(atten_info[0]));
+            cg->incremental_forward(atten_probs));
         vector<float> out_atten_probs;
         for (const dynet::real p : atten_probs_values) {
           out_atten_probs.emplace_back(static_cast<float>(p));
         }
 
-        // Decode
-        const Expression dec_h = rnn_dec_->add_input(
-            DE::concatenate({embed, atten_info[1]}));
-        const Expression logit = dec2logit_->compute(dec_h, cg);
-
         // Predict next words.
+        const Expression logit = dec2logit_->compute(output, cg);
         const vector<Predictor::Result> kbest =
             length < max_length ?
             predictor_->predictKBest(logit, beam_width, cg) :  // k-best words
             predictor_->predictByIDs(logit, {eos_id}, cg);  // only "</s>"
 
-        // Register next nodes.
+        // Make next candidates.
         for (const Predictor::Result & res : kbest) {
           next_cands.emplace_back(Candidate {
               prev_node,
@@ -215,7 +185,7 @@ void EncoderDecoder::decodeForInference(
                res.log_prob,
                prev.label.accum_log_prob + res.log_prob,
                out_atten_probs},
-              dec_h,
+              next_states,
           });
         }
       }
@@ -256,13 +226,11 @@ Expression EncoderDecoder::buildTrainGraph(
   Expression enc_final_state;
   encoder_->build(batch.source_ids, cg, &enc_states, &enc_final_state);
 
-  // Initialize attention
-  attention_->prepare(enc_states, cg);
-
   // Decode
-  Expression dec_init_h = buildDecoderInitializerGraph(enc_final_state, cg);
+  attention_->prepare(enc_states, cg);
+  dec2logit_->prepare(cg);
   vector<Expression> logits = buildDecoderGraph(
-      dec_init_h, batch.target_ids, cg);
+      enc_final_state, batch.target_ids, cg);
 
   return predictor_->computeLoss(batch.target_ids, logits);
 }
@@ -289,13 +257,11 @@ void EncoderDecoder::infer(
   Expression enc_final_state;
   encoder_->build(source_ids_inner, cg, &enc_states, &enc_final_state);
 
-  // Initialize attention
-  attention_->prepare(enc_states, cg);
-
   // Infer output words
-  Expression dec_init_h = buildDecoderInitializerGraph(enc_final_state, cg);
+  attention_->prepare(enc_states, cg);
+  dec2logit_->prepare(cg);
   decodeForInference(
-      dec_init_h, bos_id, eos_id, max_length, beam_width, cg, ig);
+      enc_final_state, bos_id, eos_id, max_length, beam_width, cg, ig);
 }
 
 }  // namespace nmtkit

@@ -12,6 +12,7 @@
 #include <dynet/model.h>
 #include <nmtkit/attention.h>
 #include <nmtkit/basic_types.h>
+#include <nmtkit/decoder.h>
 #include <nmtkit/encoder.h>
 #include <nmtkit/inference_graph.h>
 #include <nmtkit/multilayer_perceptron.h>
@@ -97,36 +98,24 @@ public:
       InferenceGraph * ig);
 
 private:
-  // Constructs decoder initializer graph.
-  //
-  // Arguments:
-  //   enc_final_state: Final state of the encoder.
-  //   cg: Target computation graph.
-  //
-  // Returns:
-  //   Initial output value of the decoder.
-  dynet::expr::Expression buildDecoderInitializerGraph(
-      const dynet::expr::Expression & enc_final_state,
-      dynet::ComputationGraph * cg);
-
   // Constructs decoder graph for training.
   //
   // Arguments:
-  //   dec_init_h: Initial output value of the decoder.
+  //   seed: seed value of the decoder.
   //   target_ids: Target word IDs for this step.
   //   cg: Target computation graph.
   //
   // Returns:
   //   List of expression objects representing logit values.
   std::vector<dynet::expr::Expression> buildDecoderGraph(
-      const dynet::expr::Expression & dec_init_h,
+      const dynet::expr::Expression & seed,
       const std::vector<std::vector<unsigned>> & target_ids,
       dynet::ComputationGraph * cg);
 
   // Generates output sequence using encoder results.
   //
   // Arguments:
-  //   dec_init_h: Initial output value of the decoder.
+  //   seed: seed value of the decoder.
   //   bos_id: "<s>" ID in the target language.
   //   eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
@@ -134,7 +123,7 @@ private:
   //   cg: Target computation graph.
   //   ig: Placeholder of the output inference graph.
   void decodeForInference(
-      const dynet::expr::Expression & dec_init_h,
+      const dynet::expr::Expression & seed,
       const unsigned bos_id,
       const unsigned eos_id,
       const unsigned max_length,
@@ -150,18 +139,16 @@ private:
     ar & enc2dec_;
     ar & dec2logit_;
     ar & attention_;
-    ar & rnn_dec_;
+    ar & decoder_;
     ar & predictor_;
-    ar & p_dec_lookup_;
   }
 
   boost::scoped_ptr<nmtkit::Encoder> encoder_;
   boost::scoped_ptr<nmtkit::MultilayerPerceptron> enc2dec_;
   boost::scoped_ptr<nmtkit::MultilayerPerceptron> dec2logit_;
   boost::scoped_ptr<nmtkit::Attention> attention_;
-  boost::scoped_ptr<dynet::LSTMBuilder> rnn_dec_;
+  boost::scoped_ptr<nmtkit::Decoder> decoder_;
   boost::scoped_ptr<nmtkit::Predictor> predictor_;
-  dynet::LookupParameter p_dec_lookup_;
 };
 
 }  // namespace nmtkit

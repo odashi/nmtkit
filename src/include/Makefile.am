@@ -9,6 +9,7 @@ nobase_include_HEADERS = \
   nmtkit/character_vocabulary.h \
   nmtkit/corpus.h \
   nmtkit/decoder.h \
+  nmtkit/default_decoder.h \
   nmtkit/encoder.h \
   nmtkit/encoder_decoder.h \
   nmtkit/exception.h \

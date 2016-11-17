@@ -16,6 +16,7 @@ libnmtkit_la_SOURCES = \
   bilinear_attention.cc \
   character_vocabulary.cc \
   decoder.cc \
+  default_decoder.cc \
   encoder.cc \
   encoder_decoder.cc \
   forward_encoder.cc \

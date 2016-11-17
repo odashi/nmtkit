@@ -24,47 +24,35 @@ public:
   // Prepares internal parameters.
   //
   // Arguments:
-  //   cg; Target computation graph.
-  //
-  // Returns:
-  //   List of parameters.
-  virtual std::vector<dynet::expr::Expression> prepare(
-      dynet::ComputationGraph * cg) = 0;
-
-  // Obtains initial decoder states.
-  //
-  // Arguments:
   //   seed: Seed values of initial states, e.g., final encoder states.
   //   cg: Target computation graph.
   //
   // Returns:
   //   Initial states of the decoder.
-  virtual std::vector<dynet::expr::Expression> initialize(
+  virtual std::vector<dynet::expr::Expression> prepare(
       const dynet::expr::Expression & seed,
       dynet::ComputationGraph * cg) = 0;
 
   // Proceeds one decoding step.
   //
   // Arguments:
+  //   states: Previous states.
   //   input_ids: List of input symbols in the current step.
-  //   states: Previous decoder states.
-  //   dec_params: List of decoder parameters returned by prepare().
-  //   atten_params: List of attention parameters returned by
-  //                 Attention::prepare().
-  //   atten: Attention object.
+  //   attention: Attention object.
   //   cg: Target computation graph.
-  //   output: Placeholder of the output embedding. This argument would be
-  //           ignored if the value is nullptr.
+  //   atten_probs: Placeholder of the attention probability vector. If the
+  //                value is nullptr, this argument would be ignored.
+  //   output: Placeholder of the output embedding. If the value is nullptr,
+  //           this argument would be ignored.
   //
   // Returns:
   //   Next states of the decoder.
   virtual std::vector<dynet::expr::Expression> oneStep(
-      const std::vector<unsigned> & input_ids,
       const std::vector<dynet::expr::Expression> & states,
-      const std::vector<dynet::expr::Expression> & dec_params,
-      const std::vector<dynet::expr::Expression> & atten_params,
+      const std::vector<unsigned> & input_ids,
       Attention * attention,
       dynet::ComputationGraph * cg,
+      dynet::expr::Expression * atten_probs,
       dynet::expr::Expression * output) = 0;
 
   // Returns the number of units in the output embedding.
