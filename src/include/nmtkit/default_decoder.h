@@ -40,12 +40,12 @@ public:
 
   ~DefaultDecoder() override {}
 
-  std::vector<dynet::expr::Expression> prepare(
+  Decoder::State prepare(
       const dynet::expr::Expression & seed,
       dynet::ComputationGraph * cg) override;
 
-  std::vector<dynet::expr::Expression> oneStep(
-      const std::vector<dynet::expr::Expression> & states,
+  Decoder::State oneStep(
+      const Decoder::State & state,
       const std::vector<unsigned> & input_ids,
       Attention * attention,
       dynet::ComputationGraph * cg,

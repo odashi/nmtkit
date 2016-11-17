@@ -103,12 +103,12 @@ vector<Expression> EncoderDecoder::buildDecoderGraph(
     dynet::ComputationGraph * cg) {
   const unsigned tl = target_ids.size() - 1;
   vector<Expression> logits;
-  vector<Expression> states = decoder_->prepare(seed, cg);
+  Decoder::State state = decoder_->prepare(seed, cg);
 
   for (unsigned i = 0; i < tl; ++i) {
     Expression out_embed;
-    states = decoder_->oneStep(
-        states, target_ids[i], attention_.get(), cg, nullptr, &out_embed);
+    state = decoder_->oneStep(
+        state, target_ids[i], attention_.get(), cg, nullptr, &out_embed);
     logits.emplace_back(dec2logit_->compute(out_embed, cg));
   }
 
@@ -127,7 +127,7 @@ void EncoderDecoder::decodeForInference(
   struct Candidate {
     InferenceGraph::Node * prev;
     InferenceGraph::Label label;
-    vector<Expression> states;
+    Decoder::State state;
   };
 
   // Initialize the inference graph.
@@ -159,8 +159,8 @@ void EncoderDecoder::decodeForInference(
         const vector<unsigned> inputs {prev.label.word_id};
         Expression atten_probs;
         Expression output;
-        vector<Expression> next_states = decoder_->oneStep(
-            prev.states, inputs, attention_.get(), cg, &atten_probs, &output);
+        Decoder::State next_state = decoder_->oneStep(
+            prev.state, inputs, attention_.get(), cg, &atten_probs, &output);
 
         // Obtains attention probabilities.
         const vector<dynet::real> atten_probs_values = dynet::as_vector(
@@ -185,7 +185,7 @@ void EncoderDecoder::decodeForInference(
                res.log_prob,
                prev.label.accum_log_prob + res.log_prob,
                out_atten_probs},
-              next_states,
+              next_state,
           });
         }
       }

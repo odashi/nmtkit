@@ -27,7 +27,7 @@ DefaultDecoder::DefaultDecoder(
 , p_lookup_(model->add_lookup_parameters(vocab_size, {embed_size}))
 {}
 
-vector<DE::Expression> DefaultDecoder::prepare(
+Decoder::State DefaultDecoder::prepare(
     const DE::Expression & seed,
     dynet::ComputationGraph * cg) {
   // NOTE: LSTMBuilder::start_new_sequence() takes initial states with below
@@ -39,25 +39,30 @@ vector<DE::Expression> DefaultDecoder::prepare(
   const DE::Expression init_h = DE::tanh(init_c);
   rnn_.new_graph(*cg);
   rnn_.start_new_sequence({init_c, init_h});
-  return {init_h};
+  return {{rnn_.state()}, {init_h}};
 }
 
-vector<DE::Expression> DefaultDecoder::oneStep(
-    const vector<DE::Expression> & states,
+Decoder::State DefaultDecoder::oneStep(
+    const Decoder::State & state,
     const vector<unsigned> & input_ids,
     Attention * attention,
     dynet::ComputationGraph * cg,
     dynet::expr::Expression * atten_probs,
     dynet::expr::Expression * output) {
+  NMTKIT_CHECK_EQ(
+      1, state.positions.size(), "Invalid number of RNN positions.");
+  NMTKIT_CHECK_EQ(
+      1, state.params.size(), "Invalid number of state parameters.");
+
   // Aliases
-  NMTKIT_CHECK_EQ(1, states.size(), "Invalid number of states.");
-  const DE::Expression & prev_h = states[0];
+  const dynet::RNNPointer & prev_pos = state.positions[0];
+  const DE::Expression & prev_h = state.params[0];
 
   // Calculation
   const DE::Expression embed = DE::lookup(*cg, p_lookup_, input_ids);
   const vector<DE::Expression> atten_info = attention->compute(prev_h, cg);
-  const DE::Expression next_h = rnn_.add_input(DE::concatenate(
-        {embed, atten_info[1]}));
+  const DE::Expression next_h = rnn_.add_input(
+      prev_pos, DE::concatenate({embed, atten_info[1]}));
 
   // Store outputs.
   if (atten_probs != nullptr) {
@@ -67,7 +72,7 @@ vector<DE::Expression> DefaultDecoder::oneStep(
     *output = next_h;
   }
 
-  return {next_h};
+  return {{rnn_.state()}, {next_h}};
 }
 
 }  // namespace nmtkit

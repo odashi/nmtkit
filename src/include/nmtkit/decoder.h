@@ -5,6 +5,7 @@
 #include <boost/serialization/access.hpp>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
+#include <dynet/rnn.h>
 #include <nmtkit/attention.h>
 #include <nmtkit/serialization_utils.h>
 
@@ -18,6 +19,12 @@ class Decoder {
   Decoder & operator=(Decoder &&) = delete;
 
 public:
+  // Structure to represent a decoder state.
+  struct State {
+    std::vector<dynet::RNNPointer> positions;
+    std::vector<dynet::expr::Expression> params;
+  };
+
   Decoder() {}
   virtual ~Decoder() {}
 
@@ -28,15 +35,15 @@ public:
   //   cg: Target computation graph.
   //
   // Returns:
-  //   Initial states of the decoder.
-  virtual std::vector<dynet::expr::Expression> prepare(
+  //   Initial state of the decoder.
+  virtual State prepare(
       const dynet::expr::Expression & seed,
       dynet::ComputationGraph * cg) = 0;
 
   // Proceeds one decoding step.
   //
   // Arguments:
-  //   states: Previous states.
+  //   state: Previous decoder state.
   //   input_ids: List of input symbols in the current step.
   //   attention: Attention object.
   //   cg: Target computation graph.
@@ -46,9 +53,9 @@ public:
   //           this argument would be ignored.
   //
   // Returns:
-  //   Next states of the decoder.
-  virtual std::vector<dynet::expr::Expression> oneStep(
-      const std::vector<dynet::expr::Expression> & states,
+  //   Next state of the decoder.
+  virtual State oneStep(
+      const State & state,
       const std::vector<unsigned> & input_ids,
       Attention * attention,
       dynet::ComputationGraph * cg,
