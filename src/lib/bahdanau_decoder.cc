@@ -24,6 +24,8 @@ BahdanauDecoder::BahdanauDecoder(
 , seed_size_(seed_size)
 , context_size_(context_size)
 // 3-layer conversion between encoder and decoder.
+// Note: In the original implementation, there is no conversion between encoder
+//       and decoder.
 , enc2dec_({seed_size, (seed_size + hidden_size) / 2, hidden_size}, model)
 , dec2out_({in_embed_size + context_size + hidden_size, out_embed_size}, model)
 , rnn_(1, in_embed_size + context_size, hidden_size, model)
@@ -67,6 +69,8 @@ Decoder::State BahdanauDecoder::oneStep(
   const vector<DE::Expression> atten_info = attention->compute(prev_h, cg);
   const DE::Expression next_h = rnn_.add_input(
       prev_pos, DE::concatenate({in_embed, atten_info[1]}));
+  // Note: In the original implementation, the MaxOut function is used for the
+  //       output nonlinearization, not ReLU.
   const DE::Expression out_embed = DE::rectify(
       dec2out_.compute(
           DE::concatenate({in_embed, atten_info[1], next_h}), cg));
