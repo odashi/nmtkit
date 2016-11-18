@@ -4,8 +4,10 @@
 #include <string>
 #include <vector>
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/scoped_ptr.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
 #include <dynet/lstm.h>
@@ -34,40 +36,16 @@ public:
   // Constructs a new encoder-decoder model.
   //
   // Arguments:
-  //   src_vocab_size: Source vocabulary size.
+  //   encoder: Pointer to the Encoder object.
+  //   decoder: Pointer to the Decoder object.
+  //   attention: Pointer to the Attention object.
   //   trg_vocab_size: Target vocabulary size.
-  //   encoder_type: Name of the encoder.
-  //                 Available values:
-  //                   "bidirectional": Bidirectional RNN.
-  //                   "forward": Forward RNN.
-  //                   "backward": Backward RNN.
-  //   decoder_type: Name of the decoder.
-  //                 Available values:
-  //                   "default": Default RNN decoder.
-  //   src_embed_size: Number of units in source embedding layer.
-  //   trg_embed_size: Number of units in target embedding layer.
-  //   enc_hidden_size: Number of units in encoder states.
-  //   dec_hidden_size: Number of units in decoder states.
-  //   atten_type: Name of the attention estimator.
-  //               Available values:
-  //                 "mlp": Multilayer perceptron-based attention
-  //                        (similar to [Bahdanau+14])
-  //                 "bilinear": Bilinear attention
-  //                             ("general" method in [Luong+15])
-  //   atten_size: Number of units in attention hidden layer.
-  //               This parameter is used only in "mlp" attention.
   //   model: Model object for training.
   EncoderDecoder(
-      unsigned src_vocab_size,
+      boost::shared_ptr<Encoder> & encoder,
+      boost::shared_ptr<Decoder> & decoder,
+      boost::shared_ptr<Attention> & attention,
       unsigned trg_vocab_size,
-      const std::string & encoder_type,
-      const std::string & decoder_type,
-      unsigned src_embed_size,
-      unsigned trg_embed_size,
-      unsigned enc_hidden_size,
-      unsigned dec_hidden_size,
-      const std::string & atten_type,
-      unsigned atten_size,
       dynet::Model * model);
 
   // Constructs computation graph for the batch data.
@@ -144,19 +122,17 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & encoder_;
-    ar & enc2dec_;
-    ar & dec2logit_;
-    ar & attention_;
     ar & decoder_;
+    ar & attention_;
+    ar & dec2logit_;
     ar & predictor_;
   }
 
-  boost::scoped_ptr<nmtkit::Encoder> encoder_;
-  boost::scoped_ptr<nmtkit::MultilayerPerceptron> enc2dec_;
-  boost::scoped_ptr<nmtkit::MultilayerPerceptron> dec2logit_;
-  boost::scoped_ptr<nmtkit::Attention> attention_;
-  boost::scoped_ptr<nmtkit::Decoder> decoder_;
-  boost::scoped_ptr<nmtkit::Predictor> predictor_;
+  boost::shared_ptr<Encoder> encoder_;
+  boost::shared_ptr<Decoder> decoder_;
+  boost::shared_ptr<Attention> attention_;
+  boost::scoped_ptr<MultilayerPerceptron> dec2logit_;
+  boost::scoped_ptr<Predictor> predictor_;
 };
 
 }  // namespace nmtkit

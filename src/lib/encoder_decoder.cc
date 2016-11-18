@@ -4,13 +4,7 @@
 
 #include <algorithm>
 #include <nmtkit/array.h>
-#include <nmtkit/backward_encoder.h>
-#include <nmtkit/bidirectional_encoder.h>
-#include <nmtkit/bilinear_attention.h>
-#include <nmtkit/default_decoder.h>
 #include <nmtkit/exception.h>
-#include <nmtkit/forward_encoder.h>
-#include <nmtkit/mlp_attention.h>
 #include <nmtkit/softmax_predictor.h>
 
 /* Input/output mapping for training/force decoding:
@@ -30,68 +24,15 @@ namespace DE = dynet::expr;
 namespace nmtkit {
 
 EncoderDecoder::EncoderDecoder(
-    unsigned src_vocab_size,
+    boost::shared_ptr<Encoder> & encoder,
+    boost::shared_ptr<Decoder> & decoder,
+    boost::shared_ptr<Attention> & attention,
     unsigned trg_vocab_size,
-    const string & encoder_type,
-    const string & decoder_type,
-    unsigned src_embed_size,
-    unsigned trg_embed_size,
-    unsigned enc_hidden_size,
-    unsigned dec_hidden_size,
-    const string & atten_type,
-    unsigned atten_size,
-    dynet::Model * model) {
-  NMTKIT_CHECK(src_vocab_size > 0, "src_vocab_size should be greater than 0.");
+    dynet::Model * model)
+: encoder_(encoder)
+, decoder_(decoder)
+, attention_(attention) {
   NMTKIT_CHECK(trg_vocab_size > 0, "trg_vocab_size should be greater than 0.");
-  NMTKIT_CHECK(src_embed_size > 0, "src_embed_size should be greater than 0.");
-  NMTKIT_CHECK(trg_embed_size > 0, "trg_embed_size should be greater than 0.");
-  NMTKIT_CHECK(
-      enc_hidden_size > 0, "enc_hidden_size should be greater than 0.");
-  NMTKIT_CHECK(
-      dec_hidden_size > 0, "dec_hidden_size should be greater than 0.");
-  // NOTE: atten_size would be checked in the attention selection section.
-
-  // Encoder selection.
-  if (encoder_type == "bidirectional") {
-    encoder_.reset(
-        new BidirectionalEncoder(
-            1, src_vocab_size, src_embed_size, enc_hidden_size, model));
-  } else if (encoder_type == "forward") {
-    encoder_.reset(
-        new ForwardEncoder(
-            1, src_vocab_size, src_embed_size, enc_hidden_size, model));
-  } else if (encoder_type == "backward") {
-    encoder_.reset(
-        new BackwardEncoder(
-            1, src_vocab_size, src_embed_size, enc_hidden_size, model));
-  } else {
-    NMTKIT_FATAL("Invalid encoder type: " + encoder_type);
-  }
-
-  const unsigned context_size = encoder_->getStateSize();
-  const unsigned enc_out_size = encoder_->getFinalStateSize();
-
-  // Attention selection.
-  if (atten_type == "mlp") {
-    NMTKIT_CHECK(atten_size > 0, "atten_size should be greater than 0.");
-    attention_.reset(
-        new MLPAttention(context_size, dec_hidden_size, atten_size, model));
-  } else if (atten_type == "bilinear") {
-    attention_.reset(
-        new BilinearAttention(context_size, dec_hidden_size, model));
-  } else {
-    NMTKIT_FATAL("Invalid attention type: " + atten_type);
-  }
-
-  // Decoder selection.
-  if (decoder_type == "default") {
-    decoder_.reset(
-        new DefaultDecoder(
-            trg_vocab_size, trg_embed_size, dec_hidden_size,
-            enc_out_size, context_size, model));
-  } else {
-    NMTKIT_FATAL("Invalid decoder type: " + decoder_type);
-  }
 
   const unsigned dec_out_size = decoder_->getOutputSize();
 

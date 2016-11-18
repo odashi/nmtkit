@@ -23,6 +23,7 @@
 #include <nmtkit/character_vocabulary.h>
 #include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
+#include <nmtkit/factories.h>
 #include <nmtkit/inference_graph.h>
 #include <nmtkit/init.h>
 #include <nmtkit/monotone_sampler.h>
@@ -268,17 +269,30 @@ int main(int argc, char * argv[]) {
         config.get<float>("Train.adam_beta2"),
         config.get<float>("Train.adam_eps"));
     logger->info("Created new trainer.");
-    nmtkit::EncoderDecoder encdec(
-        config.get<unsigned>("Model.source_vocabulary_size"),
-        config.get<unsigned>("Model.target_vocabulary_size"),
+    auto encoder = nmtkit::Factory::createEncoder(
         config.get<string>("Model.encoder_type"),
-        config.get<string>("Model.decoder_type"),
+        config.get<unsigned>("Model.source_vocabulary_size"),
         config.get<unsigned>("Model.source_embedding_size"),
-        config.get<unsigned>("Model.target_embedding_size"),
         config.get<unsigned>("Model.encoder_hidden_size"),
-        config.get<unsigned>("Model.decoder_hidden_size"),
+        &model);
+    auto attention = nmtkit::Factory::createAttention(
         config.get<string>("Model.attention_type"),
+        encoder->getStateSize(),
+        config.get<unsigned>("Model.decoder_hidden_size"),
         config.get<unsigned>("Model.attention_hidden_size"),
+        &model);
+    auto decoder = nmtkit::Factory::createDecoder(
+        config.get<string>("Model.decoder_type"),
+        config.get<unsigned>("Model.target_vocabulary_size"),
+        config.get<unsigned>("Model.target_embedding_size"),
+        config.get<unsigned>("Model.output_embedding_size"),
+        config.get<unsigned>("Model.decoder_hidden_size"),
+        encoder->getFinalStateSize(),
+        encoder->getStateSize(),
+        &model);
+    nmtkit::EncoderDecoder encdec(
+        encoder, decoder, attention,
+        config.get<unsigned>("Model.target_vocabulary_size"),
         &model);
     logger->info("Created new encoder-decoder model.");
 
