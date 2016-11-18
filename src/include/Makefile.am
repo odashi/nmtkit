@@ -2,6 +2,7 @@ nobase_include_HEADERS = \
   nmtkit/array.h \
   nmtkit/attention.h \
   nmtkit/backward_encoder.h \
+  nmtkit/bahdanau_decoder.h \
   nmtkit/batch_converter.h \
   nmtkit/basic_types.h \
   nmtkit/bidirectional_encoder.h \

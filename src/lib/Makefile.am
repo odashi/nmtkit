@@ -11,6 +11,7 @@ libnmtkit_la_SOURCES = \
   attention.cc \
   corpus.cc \
   backward_encoder.cc \
+  bahdanau_decoder.cc \
   batch_converter.cc \
   bidirectional_encoder.cc \
   bilinear_attention.cc \

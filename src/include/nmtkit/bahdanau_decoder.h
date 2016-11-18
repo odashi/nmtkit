@@ -1,5 +1,5 @@
-#ifndef NMTKIT_DEFAULT_DECODER_H_
-#define NMTKIT_DEFAULT_DECODER_H_
+#ifndef NMTKIT_BAHDANAU_DECODER_H_
+#define NMTKIT_BAHDANAU_DECODER_H_
 
 #include <boost/serialization/base_object.hpp>
 #include <dynet/lstm.h>
@@ -10,35 +10,38 @@
 
 namespace nmtkit {
 
-// Simple decoder implementation.
-class DefaultDecoder : public Decoder {
-  DefaultDecoder(const DefaultDecoder &) = delete;
-  DefaultDecoder(DefaultDecoder &&) = delete;
-  DefaultDecoder & operator=(const DefaultDecoder &) = delete;
-  DefaultDecoder & operator=(DefaultDecoder &&) = delete;
+// Decoder implementation proposed by Bahdanau et al., 2014.
+// https://arxiv.org/abs/1409.0473
+class BahdanauDecoder : public Decoder {
+  BahdanauDecoder(const BahdanauDecoder &) = delete;
+  BahdanauDecoder(BahdanauDecoder &&) = delete;
+  BahdanauDecoder & operator=(const BahdanauDecoder &) = delete;
+  BahdanauDecoder & operator=(BahdanauDecoder &&) = delete;
 
 public:
   // Initializes an empty decoder.
-  DefaultDecoder() {}
+  BahdanauDecoder() {}
 
   // Initializes a decoder.
   //
   // Arguments:
   //   vocab_size: Vocabulary size of the input sequences.
-  //   embed_size: Number of units in the embedding layer.
+  //   in_embed_size: Number of units in the input embedding layer.
+  //   out_embed_size: Number of units in the output embedding layer.
   //   hidden_size: Number of units in each RNN hidden layer.
   //   seed_size: Number of units in the seed vector.
   //   context_size: Number of units in the context vector.
   //   model: Model object for training.
-  DefaultDecoder(
+  BahdanauDecoder(
       unsigned vocab_size,
-      unsigned embed_size,
+      unsigned in_embed_size,
+      unsigned out_embed_size,
       unsigned hidden_size,
       unsigned seed_size,
       unsigned context_size,
       dynet::Model * model);
 
-  ~DefaultDecoder() override {}
+  ~BahdanauDecoder() override {}
 
   Decoder::State prepare(
       const dynet::expr::Expression & seed,
@@ -52,7 +55,7 @@ public:
       dynet::expr::Expression * atten_probs,
       dynet::expr::Expression * output) override;
 
-  unsigned getOutputSize() const override { return hidden_size_; }
+  unsigned getOutputSize() const override { return out_embed_size_; }
 
 private:
   // Boost serialization interface.
@@ -61,27 +64,31 @@ private:
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Decoder>(*this);
     ar & vocab_size_;
-    ar & embed_size_;
+    ar & in_embed_size_;
+    ar & out_embed_size_;
     ar & hidden_size_;
     ar & seed_size_;
     ar & context_size_;
     ar & enc2dec_;
+    ar & dec2out_;
     ar & rnn_;
     ar & p_lookup_;
   }
 
   unsigned vocab_size_;
-  unsigned embed_size_;
+  unsigned in_embed_size_;
+  unsigned out_embed_size_;
   unsigned hidden_size_;
   unsigned seed_size_;
   unsigned context_size_;
   MultilayerPerceptron enc2dec_;
+  MultilayerPerceptron dec2out_;
   dynet::LSTMBuilder rnn_;
   dynet::LookupParameter p_lookup_;
 };
 
 }  // namespace nmtkit
 
-NMTKIT_SERIALIZATION_DECL(nmtkit::DefaultDecoder);
+NMTKIT_SERIALIZATION_DECL(nmtkit::BahdanauDecoder);
 
-#endif  // NMTKIT_DEFAULT_DECODER_H_
+#endif  // NMTKIT_BAHDANAU_DECODER_H_

@@ -105,9 +105,9 @@ void EncoderDecoder::decodeForInference(
         // Expands the node.
         const vector<unsigned> inputs {prev.label.word_id};
         Expression atten_probs;
-        Expression output;
+        Expression out_embed;
         Decoder::State next_state = decoder_->oneStep(
-            prev.state, inputs, attention_.get(), cg, &atten_probs, &output);
+            prev.state, inputs, attention_.get(), cg, &atten_probs, &out_embed);
 
         // Obtains attention probabilities.
         const vector<dynet::real> atten_probs_values = dynet::as_vector(
@@ -118,7 +118,7 @@ void EncoderDecoder::decodeForInference(
         }
 
         // Predict next words.
-        const Expression logit = dec2logit_->compute(output, cg);
+        const Expression logit = dec2logit_->compute(out_embed, cg);
         const vector<Predictor::Result> kbest =
             length < max_length ?
             predictor_->predictKBest(logit, beam_width, cg) :  // k-best words

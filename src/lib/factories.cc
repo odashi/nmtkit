@@ -7,6 +7,7 @@
 #include <nmtkit/bidirectional_encoder.h>
 #include <nmtkit/forward_encoder.h>
 
+#include <nmtkit/bahdanau_decoder.h>
 #include <nmtkit/default_decoder.h>
 
 #include <nmtkit/bilinear_attention.h>
@@ -47,7 +48,12 @@ boost::shared_ptr<Decoder> Factory::createDecoder(
     const unsigned seed_size,
     const unsigned context_size,
     dynet::Model * model) {
-  if (name == "default") {
+  if (name == "bahdanau") {
+    return boost::shared_ptr<Decoder>(
+        new BahdanauDecoder(
+            vocab_size, in_embed_size, out_embed_size, hidden_size,
+            seed_size, context_size, model));
+  } else if (name == "default") {
     return boost::shared_ptr<Decoder>(
         new DefaultDecoder(
             vocab_size, in_embed_size, hidden_size,
