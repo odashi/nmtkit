@@ -19,6 +19,7 @@ libnmtkit_la_SOURCES = \
   default_decoder.cc \
   encoder.cc \
   encoder_decoder.cc \
+  factories.cc \
   forward_encoder.cc \
   html_formatter.cc \
   inference_graph.cc \

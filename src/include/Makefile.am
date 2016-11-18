@@ -13,6 +13,7 @@ nobase_include_HEADERS = \
   nmtkit/encoder.h \
   nmtkit/encoder_decoder.h \
   nmtkit/exception.h \
+  nmtkit/factories.h \
   nmtkit/formatter.h \
   nmtkit/forward_encoder.h \
   nmtkit/html_formatter.h \

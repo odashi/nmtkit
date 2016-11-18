@@ -5,7 +5,6 @@
 #include <dynet/lstm.h>
 #include <dynet/model.h>
 #include <nmtkit/decoder.h>
-#include <nmtkit/encoder.h>
 #include <nmtkit/multilayer_perceptron.h>
 #include <nmtkit/serialization_utils.h>
 
