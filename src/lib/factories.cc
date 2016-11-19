@@ -9,6 +9,7 @@
 
 #include <nmtkit/bahdanau_decoder.h>
 #include <nmtkit/default_decoder.h>
+#include <nmtkit/luong_decoder.h>
 
 #include <nmtkit/bilinear_attention.h>
 #include <nmtkit/mlp_attention.h>
@@ -57,6 +58,11 @@ boost::shared_ptr<Decoder> Factory::createDecoder(
     return boost::shared_ptr<Decoder>(
         new DefaultDecoder(
             vocab_size, in_embed_size, hidden_size,
+            seed_size, context_size, model));
+  } else if (name == "luong") {
+    return boost::shared_ptr<Decoder>(
+        new LuongDecoder(
+            vocab_size, in_embed_size, out_embed_size, hidden_size,
             seed_size, context_size, model));
   }
   NMTKIT_FATAL("Invalid decoder name: " + name);
