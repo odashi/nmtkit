@@ -38,7 +38,8 @@ void ForwardEncoder::build(
 
   // Make the final state.
   if (final_state != nullptr) {
-    *final_state = outputs.back();
+    // Note: Use only the internal cell.
+    *final_state = rnn_.final_s()[0];
   }
 
   // Make output states.

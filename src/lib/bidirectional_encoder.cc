@@ -66,7 +66,9 @@ void BidirectionalEncoder::build(
 
   // Make the final state.
   if (final_state != nullptr) {
-    *final_state = DE::concatenate({fw_outputs.back(), bw_outputs.front()});
+    // Note: Use only ianternal cells.
+    *final_state = DE::concatenate(
+        {rnn_fw_.final_s()[0], rnn_bw_.final_s()[0]});
   }
 }
 
