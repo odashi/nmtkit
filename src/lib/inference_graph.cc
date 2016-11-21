@@ -65,9 +65,12 @@ vector<const InferenceGraph::Node *> InferenceGraph::findOneBestPath(
   auto eos_nodes = findNodes([&](const Node & node) {
       return node.label().word_id == eos_id;
   });
+  NMTKIT_CHECK_NE(
+      0, bos_nodes.size(),
+      "Detected no <s> nodes in the inference graph.");
   NMTKIT_CHECK_EQ(
-      bos_nodes.size(), 1,
-      "Detected no or mulriple <s> nodes in the inference graph.");
+      1, bos_nodes.size(),
+      "Detected mulriple <s> nodes in the inference graph.");
   NMTKIT_CHECK(
       !eos_nodes.empty(),
       "No </s> nodes found in the inference graph.");
