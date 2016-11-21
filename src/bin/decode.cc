@@ -160,8 +160,8 @@ int main(int argc, char * argv[]) {
     const unsigned eos_id = trg_vocab->getID("</s>");
 
     // Decoder settings
-    const unsigned max_length = config.get<unsigned>("Train.max_length");
-    NMTKIT_CHECK(max_length > 0, "Train.max_length should be greater than 0.");
+    const unsigned max_length = config.get<unsigned>("Batch.max_length");
+    NMTKIT_CHECK(max_length > 0, "Batch.max_length should be greater than 0.");
     const unsigned beam_width = args["beam-width"].as<unsigned>();
     NMTKIT_CHECK(beam_width > 0, "beam-width should be greater than 0.");
     const float word_penalty = args["word-penalty"].as<float>();

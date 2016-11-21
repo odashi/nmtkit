@@ -234,18 +234,21 @@ int main(int argc, char * argv[]) {
     ::saveArchive(model_dir / "target.vocab", archive_format, trg_vocab);
 
     // Maximum lengths
-    const unsigned train_max_length = config.get<unsigned>("Train.max_length");
+    const unsigned train_max_length = config.get<unsigned>("Batch.max_length");
     const unsigned test_max_length = 1024;
     const float train_max_length_ratio = config.get<float>(
-        "Train.max_length_ratio");
+        "Batch.max_length_ratio");
     const float test_max_length_ratio = 1e10;
 
     // Creates samplers and batch converter.
     nmtkit::SortedRandomSampler train_sampler(
         config.get<string>("Corpus.train_source"),
         config.get<string>("Corpus.train_target"),
-        *src_vocab, *trg_vocab, train_max_length, train_max_length_ratio,
-        config.get<unsigned>("Train.num_words_in_batch"),
+        *src_vocab, *trg_vocab,
+        config.get<string>("Batch.batch_method"),
+        config.get<string>("Batch.sort_method"),
+        config.get<unsigned>("Batch.batch_size"),
+        train_max_length, train_max_length_ratio,
         config.get<unsigned>("Global.random_seed"));
     logger->info("Loaded 'train' corpus.");
     nmtkit::MonotoneSampler dev_sampler(

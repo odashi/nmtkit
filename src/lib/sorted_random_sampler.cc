@@ -16,9 +16,11 @@ SortedRandomSampler::SortedRandomSampler(
     const string & trg_filepath,
     const Vocabulary & src_vocab,
     const Vocabulary & trg_vocab,
+    const string & batch_method,
+    const string & sort_method,
+    unsigned batch_size,
     unsigned max_length,
     float max_length_ratio,
-    unsigned num_words_in_batch,
     unsigned random_seed) {
   Corpus::loadParallelSentences(
       src_filepath, trg_filepath,
@@ -26,41 +28,51 @@ SortedRandomSampler::SortedRandomSampler(
       &samples_);
   NMTKIT_CHECK(samples_.size() > 0, "Corpus files are empty.");
   NMTKIT_CHECK(
-      num_words_in_batch > 0, "num_words_in_batch should be greater than 0.");
-  NMTKIT_CHECK(
-      num_words_in_batch >= max_length,
-      "num_words_in_batch should be greater than or equal to max_length.");
+      batch_size > 0, "batch_size should be greater than 0.");
 
   rnd_.reset(random_seed);
 
   // Shuffles samples at first to avoid biases due to the original order.
   Array::shuffle(&samples_, &rnd_);
 
-  // Sorts corpus by target/source lengths.
-  Array::sort(&samples_, [](const Sample & a, const Sample & b) {
-      if (a.target.size() == b.target.size()) {
-        return a.source.size() < b.source.size();
-      }
-      return a.target.size() < b.target.size();
-  });
+  // Sorts corpus by selected method.
+  if (sort_method == "target_source") {
+    // Sorts corpus by target/source lengths.
+    Array::sort(&samples_, [](const Sample & a, const Sample & b) {
+        if (a.target.size() == b.target.size()) {
+          return a.source.size() < b.source.size();
+        }
+        return a.target.size() < b.target.size();
+    });
+  } else {
+    NMTKIT_FATAL("Invalid name of the sorting strategy: " + sort_method);
+  }
 
   // Searches all batch positions.
-  unsigned prev_head = 0;
-  unsigned prev_trg_length = 0;
-  for (unsigned i = 0; i < samples_.size(); ++i) {
-    const Sample & sample = samples_[i];
-    unsigned trg_length = max(
-        prev_trg_length, static_cast<unsigned>(sample.target.size()));
-    // NOTE: Each target outputs in actual batch data has at least one
-    //       additional "</s>" tag.
-    if ((trg_length + 1) * (i + 1 - prev_head) > num_words_in_batch) {
-      positions_.emplace_back(Position {prev_head, i});
-      prev_head = i;
+  if (batch_method == "target_word") {
+    NMTKIT_CHECK(
+        batch_size >= max_length,
+        "batch_size should be greater than or equal to max_length.");
+
+    unsigned prev_head = 0;
+    unsigned prev_trg_length = 0;
+    for (unsigned i = 0; i < samples_.size(); ++i) {
+      const Sample & sample = samples_[i];
+      unsigned trg_length = max(
+          prev_trg_length, static_cast<unsigned>(sample.target.size()));
+      // NOTE: Each target outputs in actual batch data has at least one
+      //       additional "</s>" tag.
+      if ((trg_length + 1) * (i + 1 - prev_head) > batch_size) {
+        positions_.emplace_back(Position {prev_head, i});
+        prev_head = i;
+      }
+      prev_trg_length = trg_length;
     }
-    prev_trg_length = trg_length;
+    positions_.emplace_back(
+        Position {prev_head, static_cast<unsigned>(samples_.size())});
+  } else {
+    NMTKIT_FATAL("Invalid name of the strategy to make batch: " + batch_method);
   }
-  positions_.emplace_back(
-      Position {prev_head, static_cast<unsigned>(samples_.size())});
 
   rewind();
 }
