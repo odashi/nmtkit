@@ -87,8 +87,9 @@ BOOST_AUTO_TEST_CASE(CheckIteration) {
   ::loadArchive(::trg_vocab_filename, &trg_vocab);
   nmtkit::SortedRandomSampler sampler(
       ::src_tok_filename, ::trg_tok_filename,
-      src_vocab, trg_vocab, ::max_length, ::max_length_ratio,
-      ::num_words_in_batch, ::random_seed);
+      src_vocab, trg_vocab,
+      "target_word", "target_source",
+      ::num_words_in_batch, ::max_length, ::max_length_ratio, ::random_seed);
 
   BOOST_CHECK(sampler.hasSamples());
 
