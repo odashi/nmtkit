@@ -3,6 +3,7 @@
 #include <nmtkit/sorted_random_sampler.h>
 
 #include <algorithm>
+#include <tuple>
 #include <nmtkit/array.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
@@ -36,13 +37,27 @@ SortedRandomSampler::SortedRandomSampler(
   Array::shuffle(&samples_, &rnd_);
 
   // Sorts corpus by selected method.
-  if (sort_method == "target_source") {
-    // Sorts corpus by target/source lengths.
+  if (sort_method == "source") {
+    // Use (srclen)
     Array::sort(&samples_, [](const Sample & a, const Sample & b) {
-        if (a.target.size() == b.target.size()) {
-          return a.source.size() < b.source.size();
-        }
+        return a.source.size() < b.source.size();
+    });
+  } else if (sort_method == "target") {
+    // Use (trglen)
+    Array::sort(&samples_, [](const Sample & a, const Sample & b) {
         return a.target.size() < b.target.size();
+    });
+  } else if (sort_method == "source_target") {
+    // Use (srclen, trglen)
+    Array::sort(&samples_, [](const Sample & a, const Sample & b) {
+        return make_tuple(a.source.size(), a.target.size())
+            < make_tuple(b.source.size(), b.target.size());
+    });
+  } else if (sort_method == "target_source") {
+    // Use (trglen, srclen)
+    Array::sort(&samples_, [](const Sample & a, const Sample & b) {
+        return make_tuple(a.target.size(), a.source.size())
+            < make_tuple(b.target.size(), b.source.size());
     });
   } else {
     NMTKIT_FATAL("Invalid name of the sorting strategy: " + sort_method);

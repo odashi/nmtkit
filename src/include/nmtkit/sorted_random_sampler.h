@@ -28,6 +28,11 @@ public:
   //                                   of target words.
   //   sort_method: Name of the strategy to sort source/target corpus.
   //                Available values:
+  //                  "source" : Sort by source lengths.
+  //                  "target" : Sort by target lengths.
+  //                  "source_target" : First sort by source lengths, then sort
+  //                                    by target lengths with maintaining the
+  //                                    order of source lengths.
   //                  "target_source" : First sort by target lengths, then sort
   //                                    by source lengths with maintaining the
   //                                    order of target lengths.
