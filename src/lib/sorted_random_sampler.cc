@@ -3,12 +3,53 @@
 #include <nmtkit/sorted_random_sampler.h>
 
 #include <algorithm>
+#include <functional>
 #include <tuple>
 #include <nmtkit/array.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
 
 using namespace std;
+
+namespace {
+
+// Utility function to make all batch positions according to the number of
+// words.
+//
+// Arguments:
+//   samples: List of samples.
+//   batch_size: Batch size.
+//   length_func: Function object which takes a Sample object and returns its
+//                length.
+//
+// Returns:
+//   List of batch positions.
+vector<nmtkit::SortedRandomSampler::Position> makePositionsByWords(
+    const vector<nmtkit::Sample> & samples,
+    const unsigned batch_size,
+    function<unsigned(const nmtkit::Sample &)> length_func) {
+  unsigned prev_head = 0;
+  unsigned prev_len = length_func(samples[0]);
+  vector<nmtkit::SortedRandomSampler::Position> positions;
+  for (unsigned i = 1; i < samples.size(); ++i) {
+    const unsigned cur_len = length_func(samples[i]);
+    const unsigned max_len = max(prev_len, cur_len);
+    if (max_len * (i + 1 - prev_head) > batch_size) {
+      positions.emplace_back(
+          nmtkit::SortedRandomSampler::Position {prev_head, i});
+      prev_head = i;
+      prev_len = cur_len;
+    } else {
+      prev_len = max_len;
+    }
+  }
+  positions.emplace_back(
+      nmtkit::SortedRandomSampler::Position {
+          prev_head, static_cast<unsigned>(samples.size())});
+  return positions;
+}
+
+}  // namespace
 
 namespace nmtkit {
 
@@ -64,26 +105,30 @@ SortedRandomSampler::SortedRandomSampler(
   }
 
   // Searches all batch positions.
-  if (batch_method == "target_word") {
+  if (batch_method == "both_word") {
+    NMTKIT_CHECK(
+        batch_size >= 2 * max_length,
+        "If batch_method == \"both_word\", "
+        "batch_size should be greater than or equal to (2 * max_length).");
+    positions_ = ::makePositionsByWords(
+        samples_, batch_size,
+        [](const Sample & s) { return s.source.size() + s.target.size(); });
+  } else if (batch_method == "source_word") {
     NMTKIT_CHECK(
         batch_size >= max_length,
+        "If batch_method == \"source_word\", "
         "batch_size should be greater than or equal to max_length.");
-
-    unsigned prev_head = 0;
-    unsigned prev_len = samples_[0].target.size();
-    for (unsigned i = 1; i < samples_.size(); ++i) {
-      const unsigned cur_len = samples_[i].target.size();
-      const unsigned max_len = max(prev_len, cur_len);
-      if (max_len * (i + 1 - prev_head) > batch_size) {
-        positions_.emplace_back(Position {prev_head, i});
-        prev_head = i;
-        prev_len = cur_len;
-      } else {
-        prev_len = max_len;
-      }
-    }
-    positions_.emplace_back(
-        Position {prev_head, static_cast<unsigned>(samples_.size())});
+    positions_ = ::makePositionsByWords(
+        samples_, batch_size,
+        [](const Sample & s) { return s.source.size(); });
+  } else if (batch_method == "target_word") {
+    NMTKIT_CHECK(
+        batch_size >= max_length,
+        "If batch_method == \"target_word\", "
+        "batch_size should be greater than or equal to max_length.");
+    positions_ = ::makePositionsByWords(
+        samples_, batch_size,
+        [](const Sample & s) { return s.target.size(); });
   } else {
     NMTKIT_FATAL("Invalid name of the strategy to make batch: " + batch_method);
   }

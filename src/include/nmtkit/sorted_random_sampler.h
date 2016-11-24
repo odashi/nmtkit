@@ -15,6 +15,12 @@ class SortedRandomSampler : public Sampler {
   SortedRandomSampler & operator=(SortedRandomSampler &&) = delete;
 
 public:
+  // Range of each batch data in the internal array.
+  struct Position {
+    unsigned head;
+    unsigned tail;
+  };
+
   // Creates sampler.
   //
   // Arguments:
@@ -22,8 +28,11 @@ public:
   //   trg_filepath: Location of the target corpus.
   //   src_vocab: Vocabulary object for the source language.
   //   trg_vocab: Vocabulary object for the target language.
-  //   batch_method: Name of the strategy to make batch.
+  //   batch_method: Name of the strategy to make batches.
   //                 Available values:
+  //                   "both_word" : Accotding to the number of source and
+  //                                 target words.
+  //                   "source_word" : Accotding to the number of source words.
   //                   "target_word" : According to the number of target words.
   //   sort_method: Name of the strategy to sort source/target corpus.
   //                Available values:
@@ -60,11 +69,6 @@ public:
   bool hasSamples() const override;
 
 private:
-  struct Position {
-    unsigned head;
-    unsigned tail;
-  };
-
   std::vector<Sample> samples_;
 
   Random rnd_;

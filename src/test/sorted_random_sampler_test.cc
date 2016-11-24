@@ -3,6 +3,7 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
+#include <algorithm>
 #include <fstream>
 #include <vector>
 #include <boost/archive/text_iarchive.hpp>
@@ -11,7 +12,15 @@
 
 using namespace std;
 
-namespace {
+namespace globals {
+
+const string src_tok_filename = "data/small.en.tok";
+const string trg_tok_filename = "data/small.ja.tok";
+const string src_vocab_filename = "data/small.en.vocab";
+const string trg_vocab_filename = "data/small.ja.vocab";
+const unsigned max_length = 100;
+const float max_length_ratio = 3.0;
+const unsigned random_seed = 12345;
 
 template <class T>
 void loadArchive(const string & filepath, T * obj) {
@@ -24,16 +33,7 @@ void loadArchive(const string & filepath, T * obj) {
 
 BOOST_AUTO_TEST_SUITE(SortedRandomSamplerTest)
 
-BOOST_AUTO_TEST_CASE(CheckIteration) {
-  const string src_tok_filename = "data/small.en.tok";
-  const string trg_tok_filename = "data/small.ja.tok";
-  const string src_vocab_filename = "data/small.en.vocab";
-  const string trg_vocab_filename = "data/small.ja.vocab";
-  const unsigned corpus_size = 500;
-  const unsigned max_length = 100;
-  const float max_length_ratio = 3.0;
-  const unsigned num_words_in_batch = 256;
-  const unsigned random_seed = 12345;
+BOOST_AUTO_TEST_CASE(CheckRewinding) {
   const vector<vector<unsigned>> expected_src {
     {  6, 13,  5, 40, 64,119,  0,  3},
     { 21,351, 65, 60,  0, 15,193,  3},
@@ -58,48 +58,22 @@ BOOST_AUTO_TEST_CASE(CheckIteration) {
     {  0,  4, 74,216,  9, 83,  6,139,  8,  9, 12,  4, 11,  5,  3},
     { 14,  4,134,  7,  0, 17,122, 37, 12, 32, 15,  8,  9,  6,  3},
   };
-  const vector<unsigned> expected_batch_sizes {
-    21,28,21,18,18,16,32,17,19,19,
-    36,23,15,25,25,17,23,18,16,21,
-    28,19,25, // sum = 500
-  };
-  const vector<unsigned> expected_lengths {
-    12, 9,12,14,14,16, 8,15,13,13,
-     7,11,16,10,10,15,11,14,16,12,
-     9,13,10,
-  };
-
-  // Prechecks test data.
-  BOOST_REQUIRE_EQUAL(expected_batch_sizes.size(), expected_lengths.size());
-  unsigned total_num_samples = 0;
-  for (unsigned i = 0; i < expected_batch_sizes.size(); ++i) {
-    total_num_samples += expected_batch_sizes[i];
-    BOOST_REQUIRE_LE(
-        expected_batch_sizes[i] * expected_lengths[i],
-        num_words_in_batch);
-  }
-  BOOST_REQUIRE_EQUAL(corpus_size, total_num_samples);
 
   nmtkit::WordVocabulary src_vocab, trg_vocab;
-  loadArchive(src_vocab_filename, &src_vocab);
-  loadArchive(trg_vocab_filename, &trg_vocab);
+  globals::loadArchive(globals::src_vocab_filename, &src_vocab);
+  globals::loadArchive(globals::trg_vocab_filename, &trg_vocab);
   nmtkit::SortedRandomSampler sampler(
-      src_tok_filename, trg_tok_filename,
+      globals::src_tok_filename, globals::trg_tok_filename,
       src_vocab, trg_vocab,
-      "target_word", "target_source",
-      num_words_in_batch, max_length, max_length_ratio, random_seed);
+      "target_word", "target_source", 256,
+      globals::max_length, globals::max_length_ratio, globals::random_seed);
 
   BOOST_CHECK(sampler.hasSamples());
 
   vector<nmtkit::Sample> samples;
-  vector<unsigned> batch_sizes;
-  vector<unsigned> lengths;
 
   // Checks head samples.
   sampler.getSamples(&samples);
-  batch_sizes.emplace_back(samples.size());
-  lengths.emplace_back(samples.back().target.size());
-  BOOST_CHECK_LE(samples.front().target.size(), samples.back().target.size());
 
   for (unsigned i = 0; i < expected_src.size(); ++i) {
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -113,16 +87,7 @@ BOOST_AUTO_TEST_CASE(CheckIteration) {
   // Checks all iterations.
   while (sampler.hasSamples()) {
     sampler.getSamples(&samples);
-    batch_sizes.emplace_back(samples.size());
-    lengths.emplace_back(samples.back().target.size());
-    BOOST_CHECK_LE(samples.front().target.size(), samples.back().target.size());
   }
-  BOOST_CHECK_EQUAL_COLLECTIONS(
-      expected_batch_sizes.begin(), expected_batch_sizes.end(),
-      batch_sizes.begin(), batch_sizes.end());
-  BOOST_CHECK_EQUAL_COLLECTIONS(
-      expected_lengths.begin(), expected_lengths.end(),
-      lengths.begin(), lengths.end());
 
   // Checks rewinding.
   sampler.rewind();
@@ -143,15 +108,7 @@ BOOST_AUTO_TEST_CASE(CheckIteration) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckSorting) {
-  const string src_tok_filename = "data/small.en.tok";
-  const string trg_tok_filename = "data/small.ja.tok";
-  const string src_vocab_filename = "data/small.en.vocab";
-  const string trg_vocab_filename = "data/small.ja.vocab";
-  const unsigned max_length = 100;
-  const float max_length_ratio = 3.0;
-  const unsigned num_words_in_batch = 256;
-  const unsigned random_seed = 12345;
-  const vector<string> methods {
+  const vector<string> sort_methods {
     "none",
     "source",
     "target",
@@ -214,15 +171,16 @@ BOOST_AUTO_TEST_CASE(CheckSorting) {
   };
 
   nmtkit::WordVocabulary src_vocab, trg_vocab;
-  loadArchive(src_vocab_filename, &src_vocab);
-  loadArchive(trg_vocab_filename, &trg_vocab);
+  globals::loadArchive(globals::src_vocab_filename, &src_vocab);
+  globals::loadArchive(globals::trg_vocab_filename, &trg_vocab);
 
-  for (unsigned i = 0; i < methods.size(); ++i) {
+  for (unsigned i = 0; i < sort_methods.size(); ++i) {
     nmtkit::SortedRandomSampler sampler(
-        src_tok_filename, trg_tok_filename,
+        globals::src_tok_filename, globals::trg_tok_filename,
         src_vocab, trg_vocab,
-        "target_word", methods[i],
-        num_words_in_batch, max_length, max_length_ratio, random_seed);
+        "target_word", sort_methods[i], 256,
+        globals::max_length, globals::max_length_ratio, globals::random_seed);
+
     BOOST_CHECK(sampler.hasSamples());
 
     // Checks only head samples.
@@ -237,7 +195,139 @@ BOOST_AUTO_TEST_CASE(CheckSorting) {
           samples[j].target.begin(), samples[j].target.end());
     }
   }
+}
 
+BOOST_AUTO_TEST_CASE(CheckBatch_BothWord) {
+  const vector<unsigned> expected_batch_sizes {
+    22,28,26,20,20,17,26,18,22,25,
+    22,34, 4,21,23,24,25,28,32,19,
+    23,21,
+    // sum = 500
+  };
+  const vector<unsigned> expected_lengths {
+    23,18,19,25,25,29,19,27,22,20,
+    23,15,31,24,22,21,20,18,16,26,
+    22,24,
+  };
+
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  globals::loadArchive(globals::src_vocab_filename, &src_vocab);
+  globals::loadArchive(globals::trg_vocab_filename, &trg_vocab);
+
+  nmtkit::SortedRandomSampler sampler(
+      globals::src_tok_filename, globals::trg_tok_filename,
+      src_vocab, trg_vocab,
+      "both_word", "source_target", 512,
+      globals::max_length, globals::max_length_ratio, globals::random_seed);
+
+  vector<nmtkit::Sample> samples;
+  vector<unsigned> batch_sizes;
+  vector<unsigned> lengths;
+
+  while (sampler.hasSamples()) {
+    sampler.getSamples(&samples);
+    batch_sizes.emplace_back(samples.size());
+    unsigned max_length = 0;
+    for (auto sample : samples) {
+      const unsigned cur_length = sample.source.size() + sample.target.size();
+      max_length = max(max_length, cur_length);
+    }
+    lengths.emplace_back(max_length);
+  }
+  BOOST_CHECK_EQUAL_COLLECTIONS(
+      expected_batch_sizes.begin(), expected_batch_sizes.end(),
+      batch_sizes.begin(), batch_sizes.end());
+  BOOST_CHECK_EQUAL_COLLECTIONS(
+      expected_lengths.begin(), expected_lengths.end(),
+      lengths.begin(), lengths.end());
+}
+
+BOOST_AUTO_TEST_CASE(CheckBatch_SourceWord) {
+  const vector<unsigned> expected_batch_sizes {
+    32,42,28,25,25,15,36,21,36,42,
+    28,51,36,32,23,28,
+    // sum = 500
+  };
+  const vector<unsigned> expected_lengths {
+     8, 6, 9,10,10,16, 7,12, 7, 6,
+     9, 5, 7, 8,11, 9,
+  };
+
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  globals::loadArchive(globals::src_vocab_filename, &src_vocab);
+  globals::loadArchive(globals::trg_vocab_filename, &trg_vocab);
+
+  nmtkit::SortedRandomSampler sampler(
+      globals::src_tok_filename, globals::trg_tok_filename,
+      src_vocab, trg_vocab,
+      "source_word", "source_target", 256,
+      globals::max_length, globals::max_length_ratio, globals::random_seed);
+
+  vector<nmtkit::Sample> samples;
+  vector<unsigned> batch_sizes;
+  vector<unsigned> lengths;
+
+  while (sampler.hasSamples()) {
+    sampler.getSamples(&samples);
+    batch_sizes.emplace_back(samples.size());
+    unsigned max_length = 0;
+    for (auto sample : samples) {
+      const unsigned cur_length = sample.source.size();
+      max_length = max(max_length, cur_length);
+    }
+    lengths.emplace_back(max_length);
+  }
+  BOOST_CHECK_EQUAL_COLLECTIONS(
+      expected_batch_sizes.begin(), expected_batch_sizes.end(),
+      batch_sizes.begin(), batch_sizes.end());
+  BOOST_CHECK_EQUAL_COLLECTIONS(
+      expected_lengths.begin(), expected_lengths.end(),
+      lengths.begin(), lengths.end());
+}
+
+BOOST_AUTO_TEST_CASE(CheckBatch_TargetWord) {
+  const vector<unsigned> expected_batch_sizes {
+    21,28,21,18,18,16,32,17,19,19,
+    36,23,15,25,25,17,23,18,16,21,
+    28,19,25,
+    // sum = 500
+  };
+  const vector<unsigned> expected_lengths {
+    12, 9,12,14,14,16, 8,15,13,13,
+     7,11,16,10,10,15,11,14,16,12,
+     9,13,10,
+  };
+
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  globals::loadArchive(globals::src_vocab_filename, &src_vocab);
+  globals::loadArchive(globals::trg_vocab_filename, &trg_vocab);
+
+  nmtkit::SortedRandomSampler sampler(
+      globals::src_tok_filename, globals::trg_tok_filename,
+      src_vocab, trg_vocab,
+      "target_word", "target_source", 256,
+      globals::max_length, globals::max_length_ratio, globals::random_seed);
+
+  vector<nmtkit::Sample> samples;
+  vector<unsigned> batch_sizes;
+  vector<unsigned> lengths;
+
+  while (sampler.hasSamples()) {
+    sampler.getSamples(&samples);
+    batch_sizes.emplace_back(samples.size());
+    unsigned max_length = 0;
+    for (auto sample : samples) {
+      const unsigned cur_length = sample.target.size();
+      max_length = max(max_length, cur_length);
+    }
+    lengths.emplace_back(max_length);
+  }
+  BOOST_CHECK_EQUAL_COLLECTIONS(
+      expected_batch_sizes.begin(), expected_batch_sizes.end(),
+      batch_sizes.begin(), batch_sizes.end());
+  BOOST_CHECK_EQUAL_COLLECTIONS(
+      expected_lengths.begin(), expected_lengths.end(),
+      lengths.begin(), lengths.end());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
