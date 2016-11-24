@@ -69,21 +69,18 @@ SortedRandomSampler::SortedRandomSampler(
         batch_size >= max_length,
         "batch_size should be greater than or equal to max_length.");
 
-    // TODO: NEED DEBUG FOR SENTENCE LENGTH
-
     unsigned prev_head = 0;
-    unsigned prev_trg_length = 0;
-    for (unsigned i = 0; i < samples_.size(); ++i) {
-      const Sample & sample = samples_[i];
-      unsigned trg_length = max(
-          prev_trg_length, static_cast<unsigned>(sample.target.size()));
-      // NOTE: Each target outputs in actual batch data has at least one
-      //       additional "</s>" tag.
-      if ((trg_length + 1) * (i + 1 - prev_head) > batch_size) {
+    unsigned prev_len = samples_[0].target.size();
+    for (unsigned i = 1; i < samples_.size(); ++i) {
+      const unsigned cur_len = samples_[i].target.size();
+      const unsigned max_len = max(prev_len, cur_len);
+      if (max_len * (i + 1 - prev_head) > batch_size) {
         positions_.emplace_back(Position {prev_head, i});
         prev_head = i;
+        prev_len = cur_len;
+      } else {
+        prev_len = max_len;
       }
-      prev_trg_length = trg_length;
     }
     positions_.emplace_back(
         Position {prev_head, static_cast<unsigned>(samples_.size())});
