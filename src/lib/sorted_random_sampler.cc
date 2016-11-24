@@ -59,7 +59,7 @@ SortedRandomSampler::SortedRandomSampler(
         return make_tuple(a.target.size(), a.source.size())
             < make_tuple(b.target.size(), b.source.size());
     });
-  } else {
+  } else if (sort_method != "none") {
     NMTKIT_FATAL("Invalid name of the sorting strategy: " + sort_method);
   }
 
@@ -68,6 +68,8 @@ SortedRandomSampler::SortedRandomSampler(
     NMTKIT_CHECK(
         batch_size >= max_length,
         "batch_size should be greater than or equal to max_length.");
+
+    // TODO: NEED DEBUG FOR SENTENCE LENGTH
 
     unsigned prev_head = 0;
     unsigned prev_trg_length = 0;

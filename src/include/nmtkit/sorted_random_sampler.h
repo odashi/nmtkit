@@ -24,10 +24,10 @@ public:
   //   trg_vocab: Vocabulary object for the target language.
   //   batch_method: Name of the strategy to make batch.
   //                 Available values:
-  //                   "target_word" : Make batch data according to the number
-  //                                   of target words.
+  //                   "target_word" : According to the number of target words.
   //   sort_method: Name of the strategy to sort source/target corpus.
   //                Available values:
+  //                  "none" : Never sort the corpus.
   //                  "source" : Sort by source lengths.
   //                  "target" : Sort by target lengths.
   //                  "source_target" : First sort by source lengths, then sort
