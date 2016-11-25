@@ -19,7 +19,12 @@ Random::Random() : gen_() {
 }
 
 void Random::reset(unsigned seed) {
-  gen_.seed(seed);
+  if (seed == 0) {
+    random_device rd;
+    gen_.seed(rd());
+  } else {
+    gen_.seed(seed);
+  }
 }
 
 int Random::uniform(int minval, int maxval) {

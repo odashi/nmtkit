@@ -109,13 +109,12 @@ BOOST_AUTO_TEST_CASE(CheckSortingVectors) {
 BOOST_AUTO_TEST_CASE(CheckShufflingPermutations) {
   nmtkit::Random rnd;
   const vector<unsigned> lengths {1, 2, 4, 8};
-  const vector<unsigned> seeds {0, 1, 10, 100};
+  const vector<unsigned> seeds {1, 10, 100};
   const vector<vector<vector<unsigned>>> expected_list {
-    {{0}, {0}, {0}, {0}},
-    {{1, 0}, {0, 1}, {1, 0}, {1, 0}},
-    {{2, 0, 3, 1}, {1, 3, 0, 2}, {3, 1, 2, 0}, {2, 3, 0, 1}},
-    {{4, 5, 6, 7, 2, 3, 1, 0}, {3, 7, 6, 1, 4, 5, 2, 0},
-     {6, 3, 2, 5, 0, 4, 7, 1}, {4, 5, 3, 1, 2, 6, 7, 0}},
+    {{0}, {0}, {0}},
+    {{0,1}, {1,0}, {1,0}},
+    {{1,3,0,2}, {3,1,2,0}, {2,3,0,1}},
+    {{3,7,6,1,4,5,2,0}, {6,3,2,5,0,4,7,1}, {4,5,3,1,2,6,7,0}},
   };
 
   for (unsigned l = 0; l < lengths.size(); ++l) {
@@ -135,7 +134,7 @@ BOOST_AUTO_TEST_CASE(CheckShufflingDistributions) {
   nmtkit::Random rnd;
   const unsigned N = 100000;
   const vector<unsigned> lengths {1, 2, 4, 8};
-  const vector<unsigned> seeds {0, 1, 10, 100};
+  const vector<unsigned> seeds {1, 10, 100};
 
   for (const unsigned l : lengths) {
     for (const unsigned s : seeds) {
