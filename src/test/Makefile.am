@@ -21,7 +21,6 @@ check_PROGRAMS = \
   inference_graph_test \
   monotone_sampler_test \
   random_test \
-  random_sampler_test \
   sorted_random_sampler_test \
 	word_vocabulary_test
 
@@ -33,7 +32,6 @@ TESTS = \
   inference_graph_test \
   monotone_sampler_test \
   random_test \
-  random_sampler_test \
   sorted_random_sampler_test \
 	word_vocabulary_test
 
@@ -44,6 +42,5 @@ corpus_test_SOURCES = corpus_test.cc
 inference_graph_test_SOURCES = inference_graph_test.cc
 monotone_sampler_test_SOURCES = monotone_sampler_test.cc
 random_test_SOURCES = random_test.cc
-random_sampler_test_SOURCES = random_sampler_test.cc
 sorted_random_sampler_test_SOURCES = sorted_random_sampler_test.cc
 word_vocabulary_test_SOURCES = word_vocabulary_test.cc

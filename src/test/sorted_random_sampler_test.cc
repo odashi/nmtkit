@@ -197,6 +197,40 @@ BOOST_AUTO_TEST_CASE(CheckSorting) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(CheckBatch_Sentence) {
+  const vector<unsigned> batch_sizes {
+    1, 2, 3, 5, 7, 10, 100, 200, 300, 500, 700,
+  };
+
+  nmtkit::WordVocabulary src_vocab, trg_vocab;
+  globals::loadArchive(globals::src_vocab_filename, &src_vocab);
+  globals::loadArchive(globals::trg_vocab_filename, &trg_vocab);
+
+  for (const unsigned batch_size : batch_sizes) {
+    nmtkit::SortedRandomSampler sampler(
+        globals::src_tok_filename, globals::trg_tok_filename,
+        src_vocab, trg_vocab,
+        "sentence", "none", batch_size,
+        globals::max_length, globals::max_length_ratio, globals::random_seed);
+
+    vector<nmtkit::Sample> samples;
+    unsigned num_data = 0;
+    bool tail_sample = false;
+
+    while (sampler.hasSamples()) {
+      sampler.getSamples(&samples);
+      num_data += samples.size();
+      if (samples.size() != batch_size) {
+        BOOST_CHECK(!tail_sample);
+        BOOST_CHECK_EQUAL(500 % batch_size, samples.size());
+        tail_sample = true;
+      }
+    }
+    BOOST_CHECK_EQUAL(500, num_data);
+    BOOST_CHECK_EQUAL(500 % batch_size != 0, tail_sample);
+  }
+}
+
 BOOST_AUTO_TEST_CASE(CheckBatch_BothWord) {
   const vector<unsigned> expected_batch_sizes {
     22,28,26,20,20,17,26,18,22,25,

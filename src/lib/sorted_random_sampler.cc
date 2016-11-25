@@ -105,7 +105,12 @@ SortedRandomSampler::SortedRandomSampler(
   }
 
   // Searches all batch positions.
-  if (batch_method == "both_word") {
+  if (batch_method == "sentence") {
+    const unsigned num_samples = samples_.size();
+    for (unsigned i = 0; i < num_samples; i += batch_size) {
+      positions_.emplace_back(Position {i, min(i + batch_size, num_samples)});
+    }
+  } else if (batch_method == "both_word") {
     NMTKIT_CHECK(
         batch_size >= 2 * max_length,
         "If batch_method == \"both_word\", "

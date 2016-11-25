@@ -30,6 +30,7 @@ public:
   //   trg_vocab: Vocabulary object for the target language.
   //   batch_method: Name of the strategy to make batches.
   //                 Available values:
+  //                   "sentence" : According to the number of sentences.
   //                   "both_word" : Accotding to the number of source and
   //                                 target words.
   //                   "source_word" : Accotding to the number of source words.

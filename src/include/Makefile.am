@@ -26,7 +26,6 @@ nobase_include_HEADERS = \
   nmtkit/multilayer_perceptron.h \
   nmtkit/predictor.h \
   nmtkit/random.h \
-  nmtkit/random_sampler.h \
   nmtkit/sampler.h \
   nmtkit/serialization_utils.h \
   nmtkit/single_text_formatter.h \

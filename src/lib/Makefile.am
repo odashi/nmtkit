@@ -31,7 +31,6 @@ libnmtkit_la_SOURCES = \
   multilayer_perceptron.cc \
   predictor.cc \
   random.cc \
-  random_sampler.cc \
   single_text_formatter.cc \
   softmax_predictor.cc \
   sorted_random_sampler.cc \
