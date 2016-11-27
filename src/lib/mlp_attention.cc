@@ -52,8 +52,7 @@ void MLPAttention::prepare(
 }
 
 vector<DE::Expression> MLPAttention::compute(
-    const DE::Expression & controller,
-    dynet::ComputationGraph * cg) {
+    const DE::Expression & controller) {
   // Computes the attention distribution.
   // Shape: {hidden_size, 1}
   DE::Expression h_ctrl = i_ctrl2h_ * controller;

@@ -35,15 +35,13 @@ public:
   // Arguments:
   //   controller: An input vector expression to compute the attention
   //               distribution.
-  //   cg: Target computation graph.
   //
   // Returns:
   //   2 expression objects:
   //     [0]: Expression object representing the attention probability vector.
   //     [1]: Expression object representing the context vector.
   virtual std::vector<dynet::expr::Expression> compute(
-      const dynet::expr::Expression & controller,
-      dynet::ComputationGraph * cg) = 0;
+      const dynet::expr::Expression & controller) = 0;
 
 private:
   // Boost serialization interface.

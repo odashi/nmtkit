@@ -40,8 +40,7 @@ void BilinearAttention::prepare(
 }
 
 vector<DE::Expression> BilinearAttention::compute(
-    const DE::Expression & controller,
-    dynet::ComputationGraph * cg) {
+    const DE::Expression & controller) {
   // Computes attention.
   // Shape: {seq_length, 1}
   DE::Expression atten_probs_inner = DE::softmax(i_converted_mem_ * controller);

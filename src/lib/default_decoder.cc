@@ -62,7 +62,7 @@ Decoder::State DefaultDecoder::oneStep(
 
   // Calculation
   const DE::Expression embed = DE::lookup(*cg, p_lookup_, input_ids);
-  const vector<DE::Expression> atten_info = attention->compute(prev_h, cg);
+  const vector<DE::Expression> atten_info = attention->compute(prev_h);
   const DE::Expression next_h = rnn_.add_input(
       prev_pos, DE::concatenate({embed, atten_info[1]}));
 

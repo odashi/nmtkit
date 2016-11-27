@@ -38,8 +38,7 @@ public:
       dynet::ComputationGraph * cg) override;
 
   std::vector<dynet::expr::Expression> compute(
-      const dynet::expr::Expression & controller,
-      dynet::ComputationGraph * cg) override;
+      const dynet::expr::Expression & controller) override;
 
 private:
   // Boost serialization interface.
