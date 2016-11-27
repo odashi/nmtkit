@@ -2,6 +2,7 @@
 #define NMTKIT_LUONG_DECODER_H_
 
 #include <boost/serialization/base_object.hpp>
+#include <boost/serialization/vector.hpp>
 #include <dynet/lstm.h>
 #include <dynet/model.h>
 #include <nmtkit/decoder.h>
@@ -44,7 +45,7 @@ public:
   ~LuongDecoder() override {}
 
   Decoder::State prepare(
-      const dynet::expr::Expression & seed,
+      const std::vector<dynet::expr::Expression> & seed,
       dynet::ComputationGraph * cg) override;
 
   Decoder::State oneStep(
@@ -81,7 +82,7 @@ private:
   unsigned hidden_size_;
   unsigned seed_size_;
   unsigned context_size_;
-  MultilayerPerceptron enc2dec_;
+  std::vector<MultilayerPerceptron> enc2dec_;
   MultilayerPerceptron dec2out_;
   dynet::LSTMBuilder rnn_;
   dynet::LookupParameter p_lookup_;

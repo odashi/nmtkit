@@ -20,31 +20,36 @@ public:
   Encoder() {}
   virtual ~Encoder() {}
 
-  // Constructs computation graph.
+  // Initializes internal states.
+  //
+  // Arguments:
+  //   cg: Computation graph.
+  virtual void prepare(dynet::ComputationGraph * cg) = 0;
+
+  // Calculates outputs of all inputs.
+  //
   // Arguments:
   //   input_ids: List of input symbols as following format:
   //     { { sample_1[0], sample_2[0], ..., sample_n[0] },
   //       { sample_1[1], sample_2[1], ..., sample_n[1] },
   //       ...,
   //       { sample_1[m], sample_2[m], ..., sample_n[m] } }
-  //   cg: Target computation graph.
-  //   output_states: Placeholder of the output hidden states for each inputs.
-  //                  This argument could be ignored by passing nullptr.
-  //   final_state: Placeholder of the last states of the inner network.
-  //                This argument could be ignored by passing nullptr.
-  virtual void build(
-      const std::vector<std::vector<unsigned>> & input_ids,
-      dynet::ComputationGraph * cg,
-      std::vector<dynet::expr::Expression> * output_states,
-      dynet::expr::Expression * final_state) = 0;
-
-  // Retrieves the number of units in each state node.
+  //   cg: Computation graph.
+  //
   // Returns:
-  //   Nubmer of units.
-  virtual unsigned getStateSize() const = 0;
+  //   List of expressions representing the output of each input.
+  virtual std::vector<dynet::expr::Expression> compute(
+      const std::vector<std::vector<unsigned>> & input_ids,
+      dynet::ComputationGraph * cg) = 0;
+
+  // Retrieves the list of final states.
+  virtual std::vector<dynet::expr::Expression> getStates() const = 0;
+
+  // Retrieves the number of units in each output node.
+  virtual unsigned getOutputSize() const = 0;
 
   // Retrieves the number of units in the final state node.
-  virtual unsigned getFinalStateSize() const = 0;
+  virtual unsigned getStateSize() const = 0;
 
 private:
   // Boost serialization interface.

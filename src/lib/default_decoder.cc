@@ -21,25 +21,27 @@ DefaultDecoder::DefaultDecoder(
 , hidden_size_(hidden_size)
 , seed_size_(seed_size)
 , context_size_(context_size)
-// 3-layer conversion between encoder and decoder.
-, enc2dec_({seed_size, (seed_size + hidden_size) / 2, hidden_size}, model)
 , rnn_(1, embed_size + context_size, hidden_size, model)
 , p_lookup_(model->add_lookup_parameters(vocab_size, {embed_size}))
-{}
+{
+  for (unsigned i = 0; i < 2; ++i) {
+    enc2dec_.emplace_back(
+        MultilayerPerceptron({seed_size, hidden_size}, model));
+  }
+}
 
 Decoder::State DefaultDecoder::prepare(
-    const DE::Expression & seed,
+    const vector<DE::Expression> & seed,
     dynet::ComputationGraph * cg) {
-  // NOTE: LSTMBuilder::start_new_sequence() takes initial states with below
-  //       layout:
-  //         {c1, c2, ..., cn, h1, h2, ..., hn}
-  //       where cx is the initial cell states and hx is the initial outputs.
-  enc2dec_.prepare(cg);
-  const DE::Expression init_c = enc2dec_.compute(seed, cg);
-  const DE::Expression init_h = DE::tanh(init_c);
+  NMTKIT_CHECK_EQ(2, seed.size(), "Invalid number of initial states.");
+  vector<DE::Expression> states;
+  for (unsigned i = 0; i < 2; ++i) {
+    enc2dec_[i].prepare(cg);
+    states.emplace_back(enc2dec_[i].compute(seed[i]));
+  }
   rnn_.new_graph(*cg);
-  rnn_.start_new_sequence({init_c, init_h});
-  return {{rnn_.state()}, {init_h}};
+  rnn_.start_new_sequence(states);
+  return {{rnn_.state()}, {rnn_.back()}};
 }
 
 Decoder::State DefaultDecoder::oneStep(

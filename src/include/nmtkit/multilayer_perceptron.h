@@ -13,11 +13,6 @@ namespace nmtkit {
 
 // Utility class of the multilayer perceptron with ReLU hidden activation.
 class MultilayerPerceptron {
-  MultilayerPerceptron(const MultilayerPerceptron &) = delete;
-  MultilayerPerceptron(MultilayerPerceptron &&) = delete;
-  MultilayerPerceptron & operator=(const MultilayerPerceptron &) = delete;
-  MultilayerPerceptron & operator=(MultilayerPerceptron &&) = delete;
-
 public:
   // Constructs an empty perceptron.
   MultilayerPerceptron() {}
@@ -48,13 +43,10 @@ public:
   //
   // Arguments:
   //   input: input expression.
-  //   cg: Target computation graph.
   //
   // Returns:
   //   Output expression.
-  dynet::expr::Expression compute(
-      const dynet::expr::Expression & input,
-      dynet::ComputationGraph * cg);
+  dynet::expr::Expression compute(const dynet::expr::Expression & input);
 
 private:
   // Boost serialization interface.

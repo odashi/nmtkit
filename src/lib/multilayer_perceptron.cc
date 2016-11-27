@@ -35,9 +35,7 @@ void MultilayerPerceptron::prepare(dynet::ComputationGraph * cg) {
   }
 }
 
-DE::Expression MultilayerPerceptron::compute(
-    const DE::Expression & input,
-    dynet::ComputationGraph * cg) {
+DE::Expression MultilayerPerceptron::compute(const DE::Expression & input) {
   DE::Expression h = input;
   for (unsigned i = 0; i < w_.size(); ++i) {
     h = DE::affine_transform({i_b_[i], i_w_[i], h});

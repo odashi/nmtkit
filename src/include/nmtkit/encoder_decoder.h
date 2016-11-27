@@ -85,21 +85,18 @@ private:
   // Constructs decoder graph for training.
   //
   // Arguments:
-  //   seed: seed value of the decoder.
   //   target_ids: Target word IDs for this step.
   //   cg: Target computation graph.
   //
   // Returns:
   //   List of expression objects representing logit values.
   std::vector<dynet::expr::Expression> buildDecoderGraph(
-      const dynet::expr::Expression & seed,
       const std::vector<std::vector<unsigned>> & target_ids,
       dynet::ComputationGraph * cg);
 
   // Generates output sequence using encoder results.
   //
   // Arguments:
-  //   seed: seed value of the decoder.
   //   bos_id: "<s>" ID in the target language.
   //   eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
@@ -107,8 +104,7 @@ private:
   //   word_penalty: Word penalty.
   //   cg: Target computation graph.
   //   ig: Placeholder of the output inference graph.
-  void decodeForInference(
-      const dynet::expr::Expression & seed,
+  void beamSearch(
       const unsigned bos_id,
       const unsigned eos_id,
       const unsigned max_length,

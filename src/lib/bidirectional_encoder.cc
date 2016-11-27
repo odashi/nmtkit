@@ -25,11 +25,16 @@ BidirectionalEncoder::BidirectionalEncoder(
   p_lookup_ = model->add_lookup_parameters(vocab_size_, {embed_size_});
 }
 
-void BidirectionalEncoder::build(
+void BidirectionalEncoder::prepare(dynet::ComputationGraph * cg) {
+  rnn_fw_.new_graph(*cg);
+  rnn_bw_.new_graph(*cg);
+  rnn_fw_.start_new_sequence();
+  rnn_bw_.start_new_sequence();
+}
+
+vector<DE::Expression> BidirectionalEncoder::compute(
     const vector<vector<unsigned>> & input_ids,
-    dynet::ComputationGraph * cg,
-    std::vector<DE::Expression> * output_states,
-    DE::Expression * final_state) {
+    dynet::ComputationGraph * cg) {
   const int input_len = input_ids.size();
 
   // Embedding lookup
@@ -39,37 +44,35 @@ void BidirectionalEncoder::build(
   }
 
   // Forward encoding
-  rnn_fw_.new_graph(*cg);
-  rnn_fw_.start_new_sequence();
   vector<DE::Expression> fw_outputs;
   for (int i = 0; i < input_len; ++i) {
     fw_outputs.emplace_back(rnn_fw_.add_input(embeds[i]));
   }
 
   // Backward encoding
-  rnn_bw_.new_graph(*cg);
-  rnn_bw_.start_new_sequence();
   vector<DE::Expression> bw_outputs;
   for (int i = input_len - 1; i >= 0; --i) {
     bw_outputs.emplace_back(rnn_bw_.add_input(embeds[i]));
   }
   Array::reverse(&bw_outputs);
 
-  // Make output states.
-  if (output_states != nullptr) {
-    output_states->clear();
-    for (int i = 0; i < input_len; ++i) {
-      output_states->emplace_back(
-          DE::concatenate({fw_outputs[i], bw_outputs[i]}));
-    }
+  // Make outputs.
+  vector<DE::Expression> outputs;
+  for (int i = 0; i < input_len; ++i) {
+    outputs.emplace_back(DE::concatenate({fw_outputs[i], bw_outputs[i]}));
   }
+  return outputs;
+}
 
-  // Make the final state.
-  if (final_state != nullptr) {
-    // Note: Use only ianternal cells.
-    *final_state = DE::concatenate(
-        {rnn_fw_.final_s()[0], rnn_bw_.final_s()[0]});
+vector<DE::Expression> BidirectionalEncoder::getStates() const {
+  // Make new states by concatenating forward/backward states.
+  const vector<DE::Expression> fw_states = rnn_fw_.final_s();
+  const vector<DE::Expression> bw_states = rnn_bw_.final_s();
+  vector<DE::Expression> states;
+  for (unsigned i = 0; i < fw_states.size(); ++i) {
+    states.emplace_back(DE::concatenate({fw_states[i], bw_states[i]}));
   }
+  return states;
 }
 
 }  // namespace nmtkit

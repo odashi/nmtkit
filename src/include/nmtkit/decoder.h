@@ -37,7 +37,7 @@ public:
   // Returns:
   //   Initial state of the decoder.
   virtual State prepare(
-      const dynet::expr::Expression & seed,
+      const std::vector<dynet::expr::Expression> & seed,
       dynet::ComputationGraph * cg) = 0;
 
   // Proceeds one decoding step.

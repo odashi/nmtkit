@@ -36,14 +36,14 @@ public:
 
   ~BackwardEncoder() override {}
 
-  void build(
+  void prepare(dynet::ComputationGraph * cg) override;
+  std::vector<dynet::expr::Expression> compute(
       const std::vector<std::vector<unsigned>> & input_ids,
-      dynet::ComputationGraph * cg,
-      std::vector<dynet::expr::Expression> * output_states,
-      dynet::expr::Expression * final_state) override;
+      dynet::ComputationGraph * cg) override;
 
-  unsigned getStateSize() const { return hidden_size_; }
-  unsigned getFinalStateSize() const { return hidden_size_; }
+  std::vector<dynet::expr::Expression> getStates() const override;
+  unsigned getOutputSize() const override { return hidden_size_; }
+  unsigned getStateSize() const override { return hidden_size_; }
 
 private:
   // Boost serialization interface.

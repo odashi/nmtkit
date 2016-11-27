@@ -280,7 +280,7 @@ int main(int argc, char * argv[]) {
         &model);
     auto attention = nmtkit::Factory::createAttention(
         config.get<string>("Model.attention_type"),
-        encoder->getStateSize(),
+        encoder->getOutputSize(),
         config.get<unsigned>("Model.decoder_hidden_size"),
         config.get<unsigned>("Model.attention_hidden_size"),
         &model);
@@ -290,8 +290,8 @@ int main(int argc, char * argv[]) {
         config.get<unsigned>("Model.target_embedding_size"),
         config.get<unsigned>("Model.output_embedding_size"),
         config.get<unsigned>("Model.decoder_hidden_size"),
-        encoder->getFinalStateSize(),
         encoder->getStateSize(),
+        encoder->getOutputSize(),
         &model);
     nmtkit::EncoderDecoder encdec(
         encoder, decoder, attention,

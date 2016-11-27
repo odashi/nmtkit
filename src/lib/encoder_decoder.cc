@@ -44,25 +44,23 @@ EncoderDecoder::EncoderDecoder(
 }
 
 vector<Expression> EncoderDecoder::buildDecoderGraph(
-    const Expression & seed,
     const vector<vector<unsigned>> & target_ids,
     dynet::ComputationGraph * cg) {
   const unsigned tl = target_ids.size() - 1;
+  Decoder::State state = decoder_->prepare(encoder_->getStates(), cg);
   vector<Expression> logits;
-  Decoder::State state = decoder_->prepare(seed, cg);
 
   for (unsigned i = 0; i < tl; ++i) {
     Expression out_embed;
     state = decoder_->oneStep(
         state, target_ids[i], attention_.get(), cg, nullptr, &out_embed);
-    logits.emplace_back(dec2logit_->compute(out_embed, cg));
+    logits.emplace_back(dec2logit_->compute(out_embed));
   }
 
   return logits;
 }
 
-void EncoderDecoder::decodeForInference(
-    const Expression & seed,
+void EncoderDecoder::beamSearch(
     const unsigned bos_id,
     const unsigned eos_id,
     const unsigned max_length,
@@ -81,7 +79,9 @@ void EncoderDecoder::decodeForInference(
   ig->clear();
   vector<Candidate> history {
     // The "<s>" node
-    {nullptr, {bos_id, 0.0f, 0.0f, {}}, decoder_->prepare(seed, cg)},
+    {nullptr,
+     {bos_id, 0.0f, 0.0f, {}},
+     decoder_->prepare(encoder_->getStates(), cg)},
   };
   float best_accum_log_prob = -1e10f;
 
@@ -118,7 +118,7 @@ void EncoderDecoder::decodeForInference(
         }
 
         // Predict next words.
-        const Expression logit = dec2logit_->compute(out_embed, cg);
+        const Expression logit = dec2logit_->compute(out_embed);
         const vector<Predictor::Result> kbest =
             length < max_length ?
             predictor_->predictKBest(logit, beam_width, cg) :  // k-best words
@@ -169,15 +169,14 @@ Expression EncoderDecoder::buildTrainGraph(
     const Batch & batch,
     dynet::ComputationGraph * cg) {
   // Encode
-  vector<Expression> enc_states;
-  Expression enc_final_state;
-  encoder_->build(batch.source_ids, cg, &enc_states, &enc_final_state);
+  encoder_->prepare(cg);
+  const vector<Expression> enc_outputs = encoder_->compute(
+      batch.source_ids, cg);
 
   // Decode
-  attention_->prepare(enc_states, cg);
+  attention_->prepare(enc_outputs, cg);
   dec2logit_->prepare(cg);
-  vector<Expression> logits = buildDecoderGraph(
-      enc_final_state, batch.target_ids, cg);
+  const vector<Expression> logits = buildDecoderGraph(batch.target_ids, cg);
 
   return predictor_->computeLoss(batch.target_ids, logits);
 }
@@ -201,17 +200,14 @@ void EncoderDecoder::infer(
   source_ids_inner.emplace_back(vector<unsigned> {eos_id});
 
   // Encode
-  vector<Expression> enc_states;
-  Expression enc_final_state;
-  encoder_->build(source_ids_inner, cg, &enc_states, &enc_final_state);
+  encoder_->prepare(cg);
+  const vector<Expression> enc_outputs = encoder_->compute(
+      source_ids_inner, cg);
 
   // Infer output words
-  attention_->prepare(enc_states, cg);
+  attention_->prepare(enc_outputs, cg);
   dec2logit_->prepare(cg);
-  decodeForInference(
-      enc_final_state, bos_id, eos_id,
-      max_length, beam_width, word_penalty,
-      cg, ig);
+  beamSearch(bos_id, eos_id, max_length, beam_width, word_penalty, cg, ig);
 }
 
 }  // namespace nmtkit
