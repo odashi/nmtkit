@@ -12,6 +12,8 @@
 namespace nmtkit {
 
 // Simple decoder implementation.
+// This implementation is similar to the Stanford's decoder in IWSLT2015:
+// http://nlp.stanford.edu/pubs/luong-manning-iwslt15.pdf
 class DefaultDecoder : public Decoder {
   DefaultDecoder(const DefaultDecoder &) = delete;
   DefaultDecoder(DefaultDecoder &&) = delete;
