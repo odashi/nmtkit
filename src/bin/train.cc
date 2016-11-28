@@ -301,6 +301,25 @@ int main(int argc, char * argv[]) {
         &model);
     logger->info("Created new encoder-decoder model.");
 
+    // Selects the policy of the learning rate decaying.
+    const string lr_decay_type = config.get<string>("Train.lr_decay_type");
+    bool do_lr_decay_batch = false;
+    bool do_lr_decay_eval = false;
+    bool do_lr_decay_logppl = false;
+    if (lr_decay_type == "batch") {
+      do_lr_decay_batch = true;
+    } else if (lr_decay_type == "eval") {
+      do_lr_decay_eval = true;
+    } else if (lr_decay_type == "logppl") {
+      do_lr_decay_logppl = true;
+    } else if (lr_decay_type != "none") {
+      NMTKIT_FATAL("Invalid lr_decay_type: " + lr_decay_type);
+    }
+
+    // Decaying factors
+    float lr_decay = 1.0f;
+    const float lr_decay_ratio = config.get<float>("Train.lr_decay_ratio");
+
     // Train/dev/test loop
     const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
     const unsigned eval_interval = config.get<unsigned>(
@@ -321,16 +340,27 @@ int main(int argc, char * argv[]) {
             batch, &cg);
         cg.forward(total_loss_expr);
         cg.backward(total_loss_expr);
-        trainer.update();
+        trainer.update(lr_decay);
 
         num_trained_samples += batch.source_ids[0].size();
         if (!train_sampler.hasSamples()) {
           train_sampler.rewind();
         }
+
+        const string fmt_str = "Trained: batch=%d samples=%d lr-decay=%.6e";
+        const auto fmt = boost::format(fmt_str)
+            % iteration % num_trained_samples % lr_decay;
+        logger->info(fmt.str());
+      }
+
+      if (do_lr_decay_batch) {
+        lr_decay *= lr_decay_ratio;
       }
 
       if (iteration % eval_interval == 0) {
         float dev_log_ppl, test_log_ppl;
+
+        logger->info("Evaluating...");
 
         // Devtest
         {
@@ -374,8 +404,13 @@ int main(int argc, char * argv[]) {
           test_sampler.rewind();
         }
 
+        if (do_lr_decay_eval) {
+          lr_decay *= lr_decay_ratio;
+        }
+
         const string fmt_str =
-            "iteration=%d samples=%d dev-log-ppl=%.6e test-log-ppl=%.6e";
+            "Evaluated: batch=%d samples=%d "
+            "dev-log-ppl=%.6e test-log-ppl=%.6e";
         const auto fmt = boost::format(fmt_str)
             % iteration % num_trained_samples % dev_log_ppl % test_log_ppl;
         logger->info(fmt.str());
@@ -395,7 +430,12 @@ int main(int argc, char * argv[]) {
           FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
           FS::copy_file(model_dir / "latest.model.params", model_path);
           logger->info("Saved 'best_dev_log_ppl' model.");
+        } else {
+          if (do_lr_decay_logppl) {
+            lr_decay *= lr_decay_ratio;
+          }
         }
+
       }
     }
 
