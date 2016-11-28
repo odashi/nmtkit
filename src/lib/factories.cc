@@ -20,6 +20,7 @@ namespace nmtkit {
 
 boost::shared_ptr<Encoder> Factory::createEncoder(
     const string & name,
+    const unsigned num_layers,
     const unsigned vocab_size,
     const unsigned embed_size,
     const unsigned hidden_size,
@@ -27,21 +28,22 @@ boost::shared_ptr<Encoder> Factory::createEncoder(
   if (name == "backward") {
     return boost::shared_ptr<Encoder>(
         new BackwardEncoder(
-            1, vocab_size, embed_size, hidden_size, model));
+            num_layers, vocab_size, embed_size, hidden_size, model));
   } else if (name == "bidirectional") {
     return boost::shared_ptr<Encoder>(
         new BidirectionalEncoder(
-            1, vocab_size, embed_size, hidden_size, model));
+            num_layers, vocab_size, embed_size, hidden_size, model));
   } else if (name == "forward") {
     return boost::shared_ptr<Encoder>(
         new ForwardEncoder(
-            1, vocab_size, embed_size, hidden_size, model));
+            num_layers, vocab_size, embed_size, hidden_size, model));
   }
   NMTKIT_FATAL("Invalid encoder name: " + name);
 }
 
 boost::shared_ptr<Decoder> Factory::createDecoder(
     const string & name,
+    const unsigned num_layers,
     const unsigned vocab_size,
     const unsigned in_embed_size,
     const unsigned out_embed_size,
@@ -52,17 +54,17 @@ boost::shared_ptr<Decoder> Factory::createDecoder(
   if (name == "bahdanau") {
     return boost::shared_ptr<Decoder>(
         new BahdanauDecoder(
-            vocab_size, in_embed_size, out_embed_size, hidden_size,
+            num_layers, vocab_size, in_embed_size, out_embed_size, hidden_size,
             seed_size, context_size, model));
   } else if (name == "default") {
     return boost::shared_ptr<Decoder>(
         new DefaultDecoder(
-            vocab_size, in_embed_size, hidden_size,
+            num_layers, vocab_size, in_embed_size, hidden_size,
             seed_size, context_size, model));
   } else if (name == "luong") {
     return boost::shared_ptr<Decoder>(
         new LuongDecoder(
-            vocab_size, in_embed_size, out_embed_size, hidden_size,
+            num_layers, vocab_size, in_embed_size, out_embed_size, hidden_size,
             seed_size, context_size, model));
   }
   NMTKIT_FATAL("Invalid decoder name: " + name);

@@ -26,6 +26,7 @@ public:
   // Initializes a decoder.
   //
   // Arguments:
+  //   num_layers: Depth of the decoder stack.
   //   vocab_size: Vocabulary size of the input sequences.
   //   in_embed_size: Number of units in the input embedding layer.
   //   out_embed_size: Number of units in the output embedding layer.
@@ -34,6 +35,7 @@ public:
   //   context_size: Number of units in the context vector.
   //   model: Model object for training.
   BahdanauDecoder(
+      unsigned num_layers,
       unsigned vocab_size,
       unsigned in_embed_size,
       unsigned out_embed_size,
@@ -64,6 +66,7 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Decoder>(*this);
+    ar & num_layers_;
     ar & vocab_size_;
     ar & in_embed_size_;
     ar & out_embed_size_;
@@ -76,6 +79,7 @@ private:
     ar & p_lookup_;
   }
 
+  unsigned num_layers_;
   unsigned vocab_size_;
   unsigned in_embed_size_;
   unsigned out_embed_size_;

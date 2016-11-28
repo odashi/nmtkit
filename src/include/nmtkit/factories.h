@@ -26,6 +26,7 @@ public:
   //           "backward": Backward RNN
   //           "bidirectional": Bidirectional RNN
   //           "forward": Forward RNN
+  //   num_layers: Depth of the encoder stack.
   //   vocab_size: Vocabulary size of the input IDs.
   //   embed_size: Number of units in the input embedding layer.
   //   hidden_size: Number of units in the RNN hidden layer.
@@ -35,6 +36,7 @@ public:
   //   A shared pointer of selected Encoder object.
   static boost::shared_ptr<Encoder> createEncoder(
       const std::string & name,
+      const unsigned num_layers,
       const unsigned vocab_size,
       const unsigned embed_size,
       const unsigned hidden_size,
@@ -46,6 +48,7 @@ public:
   //   name: Identifier of the Decoder implementation.
   //         Available values:
   //           "default": Default RNN decoder
+  //   num_layers: Depth of the decoder stack.
   //   vocab_size: Vocabulary size of the input IDs.
   //   in_embed_size: Number of units in the input embedding layer.
   //   out_embed_size: Number of units in the output embedding layer.
@@ -58,6 +61,7 @@ public:
   //   A shared pointer of selected Decoder object.
   static boost::shared_ptr<Decoder> createDecoder(
       const std::string & name,
+      const unsigned num_layers,
       const unsigned vocab_size,
       const unsigned in_embed_size,
       const unsigned out_embed_size,

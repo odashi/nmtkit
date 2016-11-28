@@ -274,6 +274,7 @@ int main(int argc, char * argv[]) {
     logger->info("Created new trainer.");
     auto encoder = nmtkit::Factory::createEncoder(
         config.get<string>("Model.encoder_type"),
+        config.get<unsigned>("Model.num_layers"),
         config.get<unsigned>("Model.source_vocabulary_size"),
         config.get<unsigned>("Model.source_embedding_size"),
         config.get<unsigned>("Model.encoder_hidden_size"),
@@ -286,6 +287,7 @@ int main(int argc, char * argv[]) {
         &model);
     auto decoder = nmtkit::Factory::createDecoder(
         config.get<string>("Model.decoder_type"),
+        config.get<unsigned>("Model.num_layers"),
         config.get<unsigned>("Model.target_vocabulary_size"),
         config.get<unsigned>("Model.target_embedding_size"),
         config.get<unsigned>("Model.output_embedding_size"),

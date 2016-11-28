@@ -10,21 +10,23 @@ namespace DE = dynet::expr;
 namespace nmtkit {
 
 DefaultDecoder::DefaultDecoder(
+    unsigned num_layers,
     unsigned vocab_size,
     unsigned embed_size,
     unsigned hidden_size,
     unsigned seed_size,
     unsigned context_size,
     dynet::Model * model)
-: vocab_size_(vocab_size)
+: num_layers_(num_layers)
+, vocab_size_(vocab_size)
 , embed_size_(embed_size)
 , hidden_size_(hidden_size)
 , seed_size_(seed_size)
 , context_size_(context_size)
-, rnn_(1, embed_size + context_size, hidden_size, model)
+, rnn_(num_layers, embed_size + context_size, hidden_size, model)
 , p_lookup_(model->add_lookup_parameters(vocab_size, {embed_size}))
 {
-  for (unsigned i = 0; i < 2; ++i) {
+  for (unsigned i = 0; i < 2 * num_layers; ++i) {
     enc2dec_.emplace_back(
         MultilayerPerceptron({seed_size, hidden_size}, model));
   }
@@ -33,9 +35,9 @@ DefaultDecoder::DefaultDecoder(
 Decoder::State DefaultDecoder::prepare(
     const vector<DE::Expression> & seed,
     dynet::ComputationGraph * cg) {
-  NMTKIT_CHECK_EQ(2, seed.size(), "Invalid number of initial states.");
+  NMTKIT_CHECK_EQ(2 * num_layers_, seed.size(), "Invalid number of initial states.");
   vector<DE::Expression> states;
-  for (unsigned i = 0; i < 2; ++i) {
+  for (unsigned i = 0; i < 2 * num_layers_; ++i) {
     enc2dec_[i].prepare(cg);
     states.emplace_back(enc2dec_[i].compute(seed[i]));
   }

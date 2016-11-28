@@ -25,6 +25,7 @@ public:
   // Initializes a decoder.
   //
   // Arguments:
+  //   num_layers: Depth of the decoder stack.
   //   vocab_size: Vocabulary size of the input sequences.
   //   embed_size: Number of units in the embedding layer.
   //   hidden_size: Number of units in each RNN hidden layer.
@@ -32,6 +33,7 @@ public:
   //   context_size: Number of units in the context vector.
   //   model: Model object for training.
   DefaultDecoder(
+      unsigned num_layers,
       unsigned vocab_size,
       unsigned embed_size,
       unsigned hidden_size,
@@ -61,6 +63,7 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Decoder>(*this);
+    ar & num_layers_;
     ar & vocab_size_;
     ar & embed_size_;
     ar & hidden_size_;
@@ -71,6 +74,7 @@ private:
     ar & p_lookup_;
   }
 
+  unsigned num_layers_;
   unsigned vocab_size_;
   unsigned embed_size_;
   unsigned hidden_size_;
