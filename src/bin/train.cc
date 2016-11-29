@@ -163,17 +163,32 @@ nmtkit::Vocabulary * createVocabulary(
 // TODO: ditto
 dynet::Trainer * createTrainer(const PT::ptree & config, dynet::Model * model) {
   const string opt_type = config.get<string>("Train.optimizer_type");
-  if (opt_type == "adam") {
+  if (opt_type == "sgd") {
+    return new dynet::SimpleSGDTrainer(
+        model,
+        config.get<float>("Train.sgd_eta"));
+  } else if (opt_type == "momentum") {
+    return new dynet::MomentumSGDTrainer(
+        model,
+        config.get<float>("Train.sgd_eta"),
+        config.get<float>("Train.sgd_momentum"));
+  } else if (opt_type == "adagrad") {
+    return new dynet::AdagradTrainer(
+        model,
+        config.get<float>("Train.adagrad_eta"),
+        config.get<float>("Train.adagrad_eps"));
+  } else if (opt_type == "adadelta") {
+    return new dynet::AdadeltaTrainer(
+        model,
+        config.get<float>("Train.adadelta_eps"),
+        config.get<float>("Train.adadelta_rho"));
+  } else if (opt_type == "adam") {
     return new dynet::AdamTrainer(
         model,
         config.get<float>("Train.adam_alpha"),
         config.get<float>("Train.adam_beta1"),
         config.get<float>("Train.adam_beta2"),
         config.get<float>("Train.adam_eps"));
-  } else if (opt_type == "sgd") {
-    return new dynet::SimpleSGDTrainer(
-        model,
-        config.get<float>("Train.sgd_eta"));
   }
   NMTKIT_FATAL("Invalid optimizer type: " + opt_type);
 }
