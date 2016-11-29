@@ -160,6 +160,24 @@ nmtkit::Vocabulary * createVocabulary(
   NMTKIT_FATAL("Invalid vocabulary type: " + vocab_type);
 }
 
+// TODO: ditto
+dynet::Trainer * createTrainer(const PT::ptree & config, dynet::Model * model) {
+  const string opt_type = config.get<string>("Train.optimizer_type");
+  if (opt_type == "adam") {
+    return new dynet::AdamTrainer(
+        model,
+        config.get<float>("Train.adam_alpha"),
+        config.get<float>("Train.adam_beta1"),
+        config.get<float>("Train.adam_beta2"),
+        config.get<float>("Train.adam_eps"));
+  } else if (opt_type == "sgd") {
+    return new dynet::SimpleSGDTrainer(
+        model,
+        config.get<float>("Train.sgd_eta"));
+  }
+  NMTKIT_FATAL("Invalid optimizer type: " + opt_type);
+}
+
 template <class T>
 void saveArchive(
     const FS::path & filepath,
@@ -263,15 +281,13 @@ int main(int argc, char * argv[]) {
     logger->info("Loaded 'test' corpus.");
     nmtkit::BatchConverter batch_converter(*src_vocab, *trg_vocab);
 
-    // Creates a new trainer and an EncoderDecoder model.
     dynet::Model model;
-    dynet::AdamTrainer trainer(
-        &model,
-        config.get<float>("Train.adam_alpha"),
-        config.get<float>("Train.adam_beta1"),
-        config.get<float>("Train.adam_beta2"),
-        config.get<float>("Train.adam_eps"));
+
+    // Creates a new trainer.
+    boost::scoped_ptr<dynet::Trainer> trainer(::createTrainer(config, &model));
     logger->info("Created new trainer.");
+
+    // Create a new encoder-decoder model.
     auto encoder = nmtkit::Factory::createEncoder(
         config.get<string>("Model.encoder_type"),
         config.get<unsigned>("Model.num_layers"),
@@ -340,7 +356,7 @@ int main(int argc, char * argv[]) {
             batch, &cg);
         cg.forward(total_loss_expr);
         cg.backward(total_loss_expr);
-        trainer.update(lr_decay);
+        trainer->update(lr_decay);
 
         num_trained_samples += batch.source_ids[0].size();
         if (!train_sampler.hasSamples()) {
