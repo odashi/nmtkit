@@ -60,10 +60,10 @@ vector<const InferenceGraph::Node *> InferenceGraph::findOneBestPath(
     const unsigned eos_id) const {
   // Finds <s> and </s> nodes.
   auto bos_nodes = findNodes([&](const Node & node) {
-      return node.label().word_id == bos_id;
+      return node.label().word_id == bos_id && node.prev().size() == 0;
   });
   auto eos_nodes = findNodes([&](const Node & node) {
-      return node.label().word_id == eos_id;
+      return node.label().word_id == eos_id && node.next().size() == 0;
   });
   NMTKIT_CHECK_NE(
       0, bos_nodes.size(),
@@ -73,7 +73,7 @@ vector<const InferenceGraph::Node *> InferenceGraph::findOneBestPath(
       "Detected mulriple <s> nodes in the inference graph.");
   NMTKIT_CHECK(
       !eos_nodes.empty(),
-      "No </s> nodes found in the inference graph.");
+      "Detected no </s> nodes in the inference graph.");
   const Node * bos_node = bos_nodes[0];
 
   // Finds the </s> node which has the largest probability.
