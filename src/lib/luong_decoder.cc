@@ -29,7 +29,7 @@ LuongDecoder::LuongDecoder(
 , rnn_(num_layers, in_embed_size + out_embed_size, hidden_size, model)
 , p_lookup_(model->add_lookup_parameters(vocab_size, {in_embed_size}))
 {
-  for (unsigned i = 0; i < 2 * num_layers; ++i) {
+  for (unsigned i = 0; i < num_layers; ++i) {
     enc2dec_.emplace_back(
         MultilayerPerceptron({seed_size, hidden_size}, model));
   }
@@ -40,9 +40,12 @@ Decoder::State LuongDecoder::prepare(
     dynet::ComputationGraph * cg) {
   NMTKIT_CHECK_EQ(2 * num_layers_, seed.size(), "Invalid number of initial states.");
   vector<DE::Expression> states;
-  for (unsigned i = 0; i < 2 * num_layers_; ++i) {
+  for (unsigned i = 0; i < num_layers_; ++i) {
     enc2dec_[i].prepare(cg);
     states.emplace_back(enc2dec_[i].compute(seed[i]));
+  }
+  for (unsigned i = 0; i < num_layers_; ++i) {
+    states.emplace_back(DE::tanh(states[i]));
   }
   rnn_.new_graph(*cg);
   rnn_.start_new_sequence(states);
