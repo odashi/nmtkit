@@ -212,6 +212,28 @@ void saveArchive(
   }
 }
 
+float evaluateLogPerplexity(
+    nmtkit::EncoderDecoder & encdec,
+    nmtkit::MonotoneSampler & sampler,
+    nmtkit::BatchConverter & converter) {
+  unsigned num_outputs = 0;
+  float total_loss = 0.0f;
+  sampler.rewind();
+  while (sampler.hasSamples()) {
+    vector<nmtkit::Sample> samples;
+    sampler.getSamples(&samples);
+    nmtkit::Batch batch;
+    converter.convert(samples, &batch);
+    dynet::ComputationGraph cg;
+    dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
+        batch, 0.0, &cg);
+    num_outputs += batch.target_ids.size() - 1;
+    total_loss += static_cast<float>(
+        dynet::as_scalar(cg.forward(total_loss_expr)));
+  }
+  return total_loss / num_outputs;
+}
+
 }  // namespace
 
 int main(int argc, char * argv[]) {
@@ -390,51 +412,11 @@ int main(int argc, char * argv[]) {
       }
 
       if (iteration % eval_interval == 0) {
-        float dev_log_ppl, test_log_ppl;
-
         logger->info("Evaluating...");
-
-        // Devtest
-        {
-          unsigned num_outputs = 0;
-          float total_loss = 0.0f;
-          while (dev_sampler.hasSamples()) {
-            vector<nmtkit::Sample> samples;
-            dev_sampler.getSamples(&samples);
-            nmtkit::Batch batch;
-            batch_converter.convert(samples, &batch);
-            dynet::ComputationGraph cg;
-            dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
-                batch, 0.0, &cg);
-            num_outputs += batch.target_ids.size() - 1;
-            total_loss += static_cast<float>(
-                dynet::as_scalar(cg.forward(total_loss_expr)));
-          }
-
-          dev_log_ppl = total_loss / num_outputs;
-          dev_sampler.rewind();
-        }
-
-        // Test
-        {
-          unsigned num_outputs = 0;
-          float total_loss = 0.0f;
-          while (test_sampler.hasSamples()) {
-            vector<nmtkit::Sample> samples;
-            test_sampler.getSamples(&samples);
-            nmtkit::Batch batch;
-            batch_converter.convert(samples, &batch);
-            dynet::ComputationGraph cg;
-            dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
-                batch, 0.0, &cg);
-            num_outputs += batch.target_ids.size() - 1;
-            total_loss += static_cast<float>(
-                dynet::as_scalar(cg.forward(total_loss_expr)));
-          }
-
-          test_log_ppl = total_loss / num_outputs;
-          test_sampler.rewind();
-        }
+        float dev_log_ppl = evaluateLogPerplexity(
+            encdec, dev_sampler, batch_converter);
+        float test_log_ppl = evaluateLogPerplexity(
+            encdec, test_sampler, batch_converter);
 
         if (do_lr_decay_eval) {
           lr_decay *= lr_decay_ratio;
