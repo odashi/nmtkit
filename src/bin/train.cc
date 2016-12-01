@@ -352,6 +352,7 @@ int main(int argc, char * argv[]) {
     const float lr_decay_ratio = config.get<float>("Train.lr_decay_ratio");
 
     // Train/dev/test loop
+    const float dropout_ratio = config.get<float>("Train.dropout_ratio");
     const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
     const unsigned eval_interval = config.get<unsigned>(
         "Train.evaluation_interval");
@@ -368,7 +369,7 @@ int main(int argc, char * argv[]) {
         batch_converter.convert(samples, &batch);
         dynet::ComputationGraph cg;
         dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
-            batch, &cg);
+            batch, dropout_ratio, &cg);
         cg.forward(total_loss_expr);
         cg.backward(total_loss_expr);
         trainer->update(lr_decay);
@@ -404,7 +405,7 @@ int main(int argc, char * argv[]) {
             batch_converter.convert(samples, &batch);
             dynet::ComputationGraph cg;
             dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
-                batch, &cg);
+                batch, 0.0, &cg);
             num_outputs += batch.target_ids.size() - 1;
             total_loss += static_cast<float>(
                 dynet::as_scalar(cg.forward(total_loss_expr)));
@@ -425,7 +426,7 @@ int main(int argc, char * argv[]) {
             batch_converter.convert(samples, &batch);
             dynet::ComputationGraph cg;
             dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
-                batch, &cg);
+                batch, 0.0, &cg);
             num_outputs += batch.target_ids.size() - 1;
             total_loss += static_cast<float>(
                 dynet::as_scalar(cg.forward(total_loss_expr)));

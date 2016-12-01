@@ -32,12 +32,14 @@ public:
   //
   // Arguments:
   //   seed: Seed values of initial states, e.g., final encoder states.
+  //   dropout_ratio: Dropout probability.
   //   cg: Target computation graph.
   //
   // Returns:
   //   Initial state of the decoder.
   virtual State prepare(
       const std::vector<dynet::expr::Expression> & seed,
+      const float dropout_ratio,
       dynet::ComputationGraph * cg) = 0;
 
   // Proceeds one decoding step.

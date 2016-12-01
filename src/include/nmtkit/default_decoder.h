@@ -47,6 +47,7 @@ public:
 
   Decoder::State prepare(
       const std::vector<dynet::expr::Expression> & seed,
+      const float dropout_ratio,
       dynet::ComputationGraph * cg) override;
 
   Decoder::State oneStep(

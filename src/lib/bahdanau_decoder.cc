@@ -37,6 +37,7 @@ BahdanauDecoder::BahdanauDecoder(
 
 Decoder::State BahdanauDecoder::prepare(
     const vector<DE::Expression> & seed,
+    const float dropout_ratio,
     dynet::ComputationGraph * cg) {
   NMTKIT_CHECK_EQ(2 * num_layers_, seed.size(), "Invalid number of initial states.");
   vector<DE::Expression> states;
@@ -47,6 +48,7 @@ Decoder::State BahdanauDecoder::prepare(
   for (unsigned i = 0; i < num_layers_; ++i) {
     states.emplace_back(DE::tanh(states[i]));
   }
+  rnn_.set_dropout(dropout_ratio);
   rnn_.new_graph(*cg);
   rnn_.start_new_sequence(states);
   dec2out_.prepare(cg);

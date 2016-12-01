@@ -45,19 +45,21 @@ public:
       boost::shared_ptr<Encoder> & encoder,
       boost::shared_ptr<Decoder> & decoder,
       boost::shared_ptr<Attention> & attention,
-      unsigned trg_vocab_size,
+      const unsigned trg_vocab_size,
       dynet::Model * model);
 
   // Constructs computation graph for the batch data.
   //
   // Arguments:
   //   batch: Batch data to be trained.
+  //   dropout_ratio: Dropout probability.
   //   cg: Target computation graph.
   //
   // Returns:
   //   dynet::Expression object representing total loss value.
   dynet::expr::Expression buildTrainGraph(
       const Batch & batch,
+      const float dropout_ratio,
       dynet::ComputationGraph * cg);
 
   // Generates output sentence using given input sentence.
@@ -82,18 +84,6 @@ public:
       InferenceGraph * ig);
 
 private:
-  // Constructs decoder graph for training.
-  //
-  // Arguments:
-  //   target_ids: Target word IDs for this step.
-  //   cg: Target computation graph.
-  //
-  // Returns:
-  //   List of expression objects representing logit values.
-  std::vector<dynet::expr::Expression> buildDecoderGraph(
-      const std::vector<std::vector<unsigned>> & target_ids,
-      dynet::ComputationGraph * cg);
-
   // Generates output sequence using encoder results.
   //
   // Arguments:

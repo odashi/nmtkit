@@ -23,8 +23,11 @@ public:
   // Initializes internal states.
   //
   // Arguments:
+  //   dropout_ratio: Dropout probability.
   //   cg: Computation graph.
-  virtual void prepare(dynet::ComputationGraph * cg) = 0;
+  virtual void prepare(
+      const float dropout_ratio,
+      dynet::ComputationGraph * cg) = 0;
 
   // Calculates outputs of all inputs.
   //

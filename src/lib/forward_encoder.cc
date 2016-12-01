@@ -22,7 +22,10 @@ ForwardEncoder::ForwardEncoder(
   p_lookup_ = model->add_lookup_parameters(vocab_size_, {embed_size_});
 }
 
-void ForwardEncoder::prepare(dynet::ComputationGraph * cg) {
+void ForwardEncoder::prepare(
+    const float dropout_ratio,
+    dynet::ComputationGraph * cg) {
+  rnn_.set_dropout(dropout_ratio);
   rnn_.new_graph(*cg);
   rnn_.start_new_sequence();
 }

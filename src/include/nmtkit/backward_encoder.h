@@ -36,7 +36,9 @@ public:
 
   ~BackwardEncoder() override {}
 
-  void prepare(dynet::ComputationGraph * cg) override;
+  void prepare(
+      const float dropout_ratio,
+      dynet::ComputationGraph * cg) override;
   std::vector<dynet::expr::Expression> compute(
       const std::vector<std::vector<unsigned>> & input_ids,
       dynet::ComputationGraph * cg) override;
