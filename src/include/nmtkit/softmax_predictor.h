@@ -29,17 +29,19 @@ public:
 
   dynet::expr::Expression computeLoss(
       const std::vector<std::vector<unsigned>> & target_ids,
-      const std::vector<dynet::expr::Expression> & logits) override;
+      const std::vector<dynet::expr::Expression> & scores) override;
 
   std::vector<Predictor::Result> predictKBest(
-      const dynet::expr::Expression & logit,
+      const dynet::expr::Expression & score,
       unsigned num_results,
       dynet::ComputationGraph * cg) override;
 
   std::vector<Predictor::Result> predictByIDs(
-      const dynet::expr::Expression & logit,
+      const dynet::expr::Expression & score,
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) override;
+
+  unsigned getScoreSize() const { return vocab_size_; }
 
 private:
   // Boost serialization interface.

@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <nmtkit/array.h>
 #include <nmtkit/exception.h>
-#include <nmtkit/softmax_predictor.h>
 
 /* Input/output mapping for training/force decoding:
  *
@@ -27,20 +26,16 @@ EncoderDecoder::EncoderDecoder(
     boost::shared_ptr<Encoder> & encoder,
     boost::shared_ptr<Decoder> & decoder,
     boost::shared_ptr<Attention> & attention,
-    const unsigned trg_vocab_size,
+    boost::shared_ptr<Predictor> & predictor,
     dynet::Model * model)
 : encoder_(encoder)
 , decoder_(decoder)
-, attention_(attention) {
-  NMTKIT_CHECK(trg_vocab_size > 0, "trg_vocab_size should be greater than 0.");
-
-  const unsigned dec_out_size = decoder_->getOutputSize();
-
+, attention_(attention)
+, predictor_(predictor) {
   // Output projection.
   dec2logit_.reset(
-      new MultilayerPerceptron({dec_out_size, trg_vocab_size}, model));
-
-  predictor_.reset(new SoftmaxPredictor(trg_vocab_size));
+      new MultilayerPerceptron(
+          {decoder_->getOutputSize(), predictor_->getScoreSize()}, model));
 }
 
 Expression EncoderDecoder::buildTrainGraph(
@@ -90,7 +85,7 @@ void EncoderDecoder::beamSearch(
     // The "<s>" node
     {nullptr,
      {bos_id, 0.0f, 0.0f, {}},
-     decoder_->prepare(encoder_->getStates(), 0.0, cg)},
+     decoder_->prepare(encoder_->getStates(), 0.0f, cg)},
   };
   float best_accum_log_prob = -1e10f;
 
@@ -193,7 +188,7 @@ void EncoderDecoder::infer(
   source_ids_inner.emplace_back(vector<unsigned> {eos_id});
 
   // Encode
-  encoder_->prepare(0.0, cg);
+  encoder_->prepare(0.0f, cg);
   const vector<Expression> enc_outputs = encoder_->compute(
       source_ids_inner, cg);
 

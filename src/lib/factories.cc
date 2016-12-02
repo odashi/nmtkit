@@ -14,6 +14,8 @@
 #include <nmtkit/bilinear_attention.h>
 #include <nmtkit/mlp_attention.h>
 
+#include <nmtkit/softmax_predictor.h>
+
 using namespace std;
 
 namespace nmtkit {
@@ -86,6 +88,15 @@ boost::shared_ptr<Attention> Factory::createAttention(
             context_size, controller_size, hidden_size, model));
   }
   NMTKIT_FATAL("Invalid attention name: " + name);
+}
+
+boost::shared_ptr<Predictor> Factory::createPredictor(
+    const string & name,
+    const Vocabulary & vocab) {
+  if (name == "softmax") {
+    return boost::shared_ptr<Predictor>(new SoftmaxPredictor(vocab.size()));
+  }
+  NMTKIT_FATAL("Invalid predictor name: " + name);
 }
 
 }  // namespace nmtkit

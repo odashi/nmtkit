@@ -26,23 +26,23 @@ public:
   Predictor() {}
   virtual ~Predictor() {}
 
-  // Calculates the loss value of given logits.
+  // Calculates the loss value of given scores.
   //
   // Arguments:
   //   target_ids: Target word IDs for all outputs.
-  //   logits: List of the expression object which represents logit values
+  //   scores: List of the expression object which represents score values
   //                for all outputs.
   //
   // Returns:
   //   Expression object of the total loss value.
   virtual dynet::expr::Expression computeLoss(
       const std::vector<std::vector<unsigned>> & target_ids,
-      const std::vector<dynet::expr::Expression> & logits) = 0;
+      const std::vector<dynet::expr::Expression> & scores) = 0;
 
   // Predicts k-best words using given vector.
   //
   // Arguments:
-  //   logit: Expression object which describes logit values of one output
+  //   score: Expression object which describes score values of one output
   //          layer.
   //   num_results: Number of results to be obtained.
   //   cg: Target computation graph.
@@ -51,14 +51,14 @@ public:
   //   List of top-k candidates. The order of elements in the output vector
   //   would be sorted by the decsending order according to their probabilities.
   virtual std::vector<Result> predictKBest(
-      const dynet::expr::Expression & logit,
+      const dynet::expr::Expression & score,
       unsigned num_results,
       dynet::ComputationGraph * cg) = 0;
 
   // Obtains log probabilities of specific word IDs.
   //
   // Arguments:
-  //   logit: Expression object which describes logit values of one output
+  //   score: Expression object which describes score values of one output
   //          layer.
   //   word_ids: Target word IDs.
   //   cg: Target computation graph.
@@ -67,9 +67,12 @@ public:
   //   List of candidates. The order of outputs would be similar to that of
   //   word_ids.
   virtual std::vector<Result> predictByIDs(
-      const dynet::expr::Expression & logit,
+      const dynet::expr::Expression & score,
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) = 0;
+
+  // Returns size of the input layer.
+  virtual unsigned getScoreSize() const = 0;
 
 private:
   // Boost serialization interface.

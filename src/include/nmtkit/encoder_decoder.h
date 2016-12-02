@@ -39,13 +39,13 @@ public:
   //   encoder: Pointer to the Encoder object.
   //   decoder: Pointer to the Decoder object.
   //   attention: Pointer to the Attention object.
-  //   trg_vocab_size: Target vocabulary size.
+  //   predictor: Pointer to the Predictor object.
   //   model: Model object for training.
   EncoderDecoder(
       boost::shared_ptr<Encoder> & encoder,
       boost::shared_ptr<Decoder> & decoder,
       boost::shared_ptr<Attention> & attention,
-      const unsigned trg_vocab_size,
+      boost::shared_ptr<Predictor> & predictor,
       dynet::Model * model);
 
   // Constructs computation graph for the batch data.
@@ -118,7 +118,7 @@ private:
   boost::shared_ptr<Decoder> decoder_;
   boost::shared_ptr<Attention> attention_;
   boost::scoped_ptr<MultilayerPerceptron> dec2logit_;
-  boost::scoped_ptr<Predictor> predictor_;
+  boost::shared_ptr<Predictor> predictor_;
 };
 
 }  // namespace nmtkit

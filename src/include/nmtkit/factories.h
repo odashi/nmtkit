@@ -7,6 +7,8 @@
 #include <nmtkit/attention.h>
 #include <nmtkit/decoder.h>
 #include <nmtkit/encoder.h>
+#include <nmtkit/predictor.h>
+#include <nmtkit/vocabulary.h>
 
 namespace nmtkit {
 
@@ -93,6 +95,20 @@ public:
       const unsigned controller_size,
       const unsigned hidden_size,
       dynet::Model * model);
+
+  // Creates an Predictor object.
+  //
+  // Arguments:
+  //   name: Identifier of the Predictor implementation.
+  //         Available values:
+  //           "softmax": Softmax prediction.
+  //   vocab: Vocabulary object of the target language.
+  //
+  // Returns:
+  //   A shared pointer of selected Predictor object.
+  static boost::shared_ptr<Predictor> createPredictor(
+      const std::string & name,
+      const Vocabulary & vocab);
 };
 
 }  // namespace nmtkit

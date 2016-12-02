@@ -348,10 +348,11 @@ int main(int argc, char * argv[]) {
         encoder->getStateSize(),
         encoder->getOutputSize(),
         &model);
+    auto predictor = nmtkit::Factory::createPredictor(
+        config.get<string>("Model.predictor_type"),
+        *trg_vocab);
     nmtkit::EncoderDecoder encdec(
-        encoder, decoder, attention,
-        config.get<unsigned>("Model.target_vocabulary_size"),
-        &model);
+        encoder, decoder, attention, predictor, &model);
     logger->info("Created new encoder-decoder model.");
 
     // Selects the policy of the learning rate decaying.
