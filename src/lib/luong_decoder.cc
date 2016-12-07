@@ -79,9 +79,7 @@ Decoder::State LuongDecoder::oneStep(
   const DE::Expression next_h = rnn_.add_input(
       prev_pos, DE::concatenate({in_embed, feed}));
   const vector<DE::Expression> atten_info = attention->compute(next_h);
-  // Note: In the original implementation, the tanh function is used for the
-  //       output nonlinearization, not ReLU.
-  const DE::Expression out_embed = DE::rectify(
+  const DE::Expression out_embed = DE::tanh(
       dec2out_.compute(DE::concatenate({atten_info[1], next_h})));
 
   // Store outputs.
