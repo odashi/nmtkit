@@ -35,7 +35,16 @@ public:
   //
   // Returns:
   //   Corresponding word string of `id`.
-  virtual std::string getWord(unsigned id) const = 0;
+  virtual std::string getWord(const unsigned id) const = 0;
+
+  // Retrieves frequency of given word in the corpus.
+  //
+  // Arguments:
+  //   id: A word ID.
+  //
+  // Returns:
+  //   A number representing the frequency of given word in the corpus.
+  virtual unsigned getFrequency(const unsigned id) const = 0;
 
   // Converts a sentence into a list of word IDs.
   //

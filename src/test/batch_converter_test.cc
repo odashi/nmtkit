@@ -15,7 +15,7 @@ namespace {
 template <class T>
 void loadArchive(const string & filepath, T * obj) {
   ifstream ifs(filepath);
-  boost::archive::text_iarchive iar(ifs);
+  boost::archive::binary_iarchive iar(ifs);
   iar >> *obj;
 }
 

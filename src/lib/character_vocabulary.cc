@@ -60,8 +60,13 @@ CharacterVocabulary::CharacterVocabulary(
   // Counts letter frequencies.
   map<string, unsigned> freq;
   string line;
+  unsigned num_lines = 0;
+  unsigned num_letters = 0;
   while (Corpus::readLine(&ifs, &line)) {
-    for (const string & letter : ::convertToLetters(line)) {
+    ++num_lines;
+    const vector<string> letters = ::convertToLetters(line);
+    num_letters += letters.size();
+    for (const string & letter : letters) {
       ++freq[letter];
     }
   }
@@ -72,7 +77,7 @@ CharacterVocabulary::CharacterVocabulary(
     entries.emplace_back(make_pair(entry.second, entry.first));
   }
   Array::sort(&entries, greater<pair<unsigned, string>>());
-  
+
   // Store entries.
   stoi_["<unk>"] = 0;
   stoi_["<s>"] = 1;
@@ -80,10 +85,15 @@ CharacterVocabulary::CharacterVocabulary(
   itos_.emplace_back("<unk>");
   itos_.emplace_back("<s>");
   itos_.emplace_back("</s>");
+  freq_.emplace_back(num_letters);
+  freq_.emplace_back(num_lines);
+  freq_.emplace_back(num_lines);
   for (unsigned i = 3; i < size && i - 3 < entries.size(); ++i) {
-    const string & letter = entries[i - 3].second;
-    stoi_[letter] = i;
-    itos_.emplace_back(letter);
+    const auto & entry = entries[i - 3];
+    stoi_[entry.second] = i;
+    itos_.emplace_back(entry.second);
+    freq_.emplace_back(entry.first);
+    freq_[0] -= entry.first;
   }
 }
 
@@ -93,9 +103,14 @@ unsigned CharacterVocabulary::getID(const string & word) const {
   return entry->second;
 }
 
-string CharacterVocabulary::getWord(unsigned id) const {
-  if (id >= itos_.size()) return "<unk>";  // out of range
+string CharacterVocabulary::getWord(const unsigned id) const {
+  NMTKIT_CHECK(id < itos_.size(), "Index out of range.");
   return itos_[id];
+}
+
+unsigned CharacterVocabulary::getFrequency(const unsigned id) const {
+  NMTKIT_CHECK(id < itos_.size(), "Index out of range.");
+  return freq_[id];
 }
 
 vector<unsigned> CharacterVocabulary::convertToIDs(

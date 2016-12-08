@@ -22,7 +22,7 @@ const string trg_vocab_filename = "data/small.ja.vocab";
 template <class T>
 void loadArchive(const string & filepath, T * obj) {
   ifstream ifs(filepath);
-  boost::archive::text_iarchive iar(ifs);
+  boost::archive::binary_iarchive iar(ifs);
   iar >> *obj;
 }
 
@@ -44,15 +44,15 @@ BOOST_AUTO_TEST_CASE(CheckLoadingSingle) {
   ::loadArchive(::src_vocab_filename, &vocab);
   vector<vector<unsigned>> result;
   nmtkit::Corpus::loadSingleSentences(::src_tok_filename, vocab, &result);
-  
+
   BOOST_CHECK_EQUAL(expected_num_sents, result.size());
-  
+
   unsigned num_words = 0;
   for (const auto & sent : result) {
     num_words += sent.size();
   }
   BOOST_CHECK_EQUAL(expected_num_words, num_words);
-  
+
   for (unsigned i = 0; i < expected_words.size(); ++i) {
     BOOST_CHECK_EQUAL_COLLECTIONS(
         expected_words[i].begin(), expected_words[i].end(),

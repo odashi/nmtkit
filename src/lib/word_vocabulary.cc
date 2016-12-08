@@ -23,10 +23,14 @@ WordVocabulary::WordVocabulary(const string & corpus_filename, unsigned size) {
   // Counts word frequencies.
   map<string, unsigned> freq;
   string line;
+  unsigned num_lines = 0;
+  unsigned num_words = 0;
   while (Corpus::readLine(&ifs, &line)) {
+    ++num_lines;
     vector<string> words;
     boost::split(
         words, line, boost::is_space(), boost::algorithm::token_compress_on);
+    num_words += words.size();
     for (const string & word : words) {
       ++freq[word];
     }
@@ -38,7 +42,7 @@ WordVocabulary::WordVocabulary(const string & corpus_filename, unsigned size) {
     entries.emplace_back(make_pair(entry.second, entry.first));
   }
   Array::sort(&entries, greater<pair<unsigned, string>>());
-  
+
   // Store entries.
   stoi_["<unk>"] = 0;
   stoi_["<s>"] = 1;
@@ -46,10 +50,15 @@ WordVocabulary::WordVocabulary(const string & corpus_filename, unsigned size) {
   itos_.emplace_back("<unk>");
   itos_.emplace_back("<s>");
   itos_.emplace_back("</s>");
+  freq_.emplace_back(num_words);
+  freq_.emplace_back(num_lines);
+  freq_.emplace_back(num_lines);
   for (unsigned i = 3; i < size && i - 3 < entries.size(); ++i) {
-    const string & word = entries[i - 3].second;
-    stoi_[word] = i;
-    itos_.emplace_back(word);
+    const auto & entry = entries[i - 3];
+    stoi_[entry.second] = i;
+    itos_.emplace_back(entry.second);
+    freq_.emplace_back(entry.first);
+    freq_[0] -= entry.first;
   }
 }
 
@@ -59,9 +68,14 @@ unsigned WordVocabulary::getID(const string & word) const {
   return entry->second;
 }
 
-string WordVocabulary::getWord(unsigned id) const {
-  if (id >= itos_.size()) return "<unk>";  // out of range
+string WordVocabulary::getWord(const unsigned id) const {
+  NMTKIT_CHECK(id < itos_.size(), "Index out of range.");
   return itos_[id];
+}
+
+unsigned WordVocabulary::getFrequency(const unsigned id) const {
+  NMTKIT_CHECK(id < itos_.size(), "Index out of range.");
+  return freq_[id];
 }
 
 vector<unsigned> WordVocabulary::convertToIDs(const string & sentence) const {

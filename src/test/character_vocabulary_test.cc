@@ -6,8 +6,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <boost/archive/text_iarchive.hpp>
 #include <nmtkit/character_vocabulary.h>
+#include <nmtkit/serialization_utils.h>
 
 using namespace std;
 
@@ -16,7 +16,7 @@ namespace {
 template <class T>
 void loadArchive(const string & filepath, T * obj) {
   ifstream ifs(filepath);
-  boost::archive::text_iarchive iar(ifs);
+  boost::archive::binary_iarchive iar(ifs);
   iar >> *obj;
 }
 
@@ -35,8 +35,10 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
   }
   BOOST_CHECK_EQUAL(0, vocab.getID("unknown-word"));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(100));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(-1));
+  BOOST_CHECK_EQUAL(0, vocab.getFrequency(0));
+  BOOST_CHECK_EQUAL(500, vocab.getFrequency(1));
+  BOOST_CHECK_EQUAL(500, vocab.getFrequency(2));
+  BOOST_CHECK_EQUAL(3371, vocab.getFrequency(3));
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
@@ -50,8 +52,10 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
   }
   BOOST_CHECK_EQUAL(0, vocab.getID("未知語"));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(100));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(-1));
+  BOOST_CHECK_EQUAL(1405, vocab.getFrequency(0));
+  BOOST_CHECK_EQUAL(500, vocab.getFrequency(1));
+  BOOST_CHECK_EQUAL(500, vocab.getFrequency(2));
+  BOOST_CHECK_EQUAL(5126, vocab.getFrequency(3));
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
@@ -64,8 +68,10 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
   }
   BOOST_CHECK_EQUAL(0, vocab.getID("unknown-word"));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(100));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(-1));
+  BOOST_CHECK_EQUAL(0, vocab.getFrequency(0));
+  BOOST_CHECK_EQUAL(500, vocab.getFrequency(1));
+  BOOST_CHECK_EQUAL(500, vocab.getFrequency(2));
+  BOOST_CHECK_EQUAL(3371, vocab.getFrequency(3));
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
@@ -78,8 +84,10 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
     BOOST_CHECK_EQUAL(topk[i], vocab.getWord(i));
   }
   BOOST_CHECK_EQUAL(0, vocab.getID("未知語"));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(100));
-  BOOST_CHECK_EQUAL("<unk>", vocab.getWord(-1));
+  BOOST_CHECK_EQUAL(1405, vocab.getFrequency(0));
+  BOOST_CHECK_EQUAL(500, vocab.getFrequency(1));
+  BOOST_CHECK_EQUAL(500, vocab.getFrequency(2));
+  BOOST_CHECK_EQUAL(5126, vocab.getFrequency(3));
 }
 
 BOOST_AUTO_TEST_CASE(CheckConvertingToIDs) {

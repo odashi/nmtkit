@@ -33,11 +33,12 @@ public:
   //   corpus_filename: Location of the corpus file to be analyzed.
   //   size: Size of the vocabulary.
   CharacterVocabulary(const std::string & corpus_filename, unsigned size);
-  
+
   ~CharacterVocabulary() override {}
 
   unsigned getID(const std::string & word) const override;
-  std::string getWord(unsigned id) const override;
+  std::string getWord(const unsigned id) const override;
+  unsigned getFrequency(const unsigned id) const override;
   std::vector<unsigned> convertToIDs(
       const std::string & sentence) const override;
   std::string convertToSentence(
@@ -52,10 +53,12 @@ private:
     ar & boost::serialization::base_object<Vocabulary>(*this);
     ar & stoi_;
     ar & itos_;
+    ar & freq_;
   }
 
   std::map<std::string, unsigned> stoi_;
   std::vector<std::string> itos_;
+  std::vector<unsigned> freq_;
 };
 
 }  // namespace nmtkit
