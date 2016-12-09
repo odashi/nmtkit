@@ -38,6 +38,9 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     ("model",
      PO::value<string>(),
      "(required) Location of the model directory.")
+    ("model-prefix",
+     PO::value<string>()->default_value("best_dev_log_ppl"),
+     "Prefix of the model parameter file.")
     ("format",
      PO::value<string>()->default_value("text"),
      "Output format.\n"
@@ -167,9 +170,10 @@ int main(int argc, char * argv[]) {
     const float word_penalty = args["word-penalty"].as<float>();
 
     // Loads EncoderDecoder model.
+    const string model_prefix = args["model-prefix"].as<string>();
     nmtkit::EncoderDecoder encdec;
     ::loadArchive(
-        model_dir / "best_dev_log_ppl.model.params",
+        model_dir / (model_prefix + ".model.params"),
         archive_format, &encdec);
 
     formatter->initialize(&cout);
@@ -204,4 +208,3 @@ int main(int argc, char * argv[]) {
   nmtkit::finalize();
   return 0;
 }
-
