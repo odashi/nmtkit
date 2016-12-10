@@ -8,9 +8,7 @@ namespace nmtkit {
 
 class InferenceGraph {
   InferenceGraph(const InferenceGraph &) = delete;
-  InferenceGraph(InferenceGraph &&) = delete;
   InferenceGraph & operator=(const InferenceGraph &) = delete;
-  InferenceGraph & operator=(InferenceGraph &&) = delete;
 
 public:
   struct Label {
@@ -44,6 +42,9 @@ public:
   };
 
   InferenceGraph() {}
+  InferenceGraph(InferenceGraph &&) = default;
+  InferenceGraph & operator=(InferenceGraph &&) = default;
+
   ~InferenceGraph();
 
   // Clear the graph.

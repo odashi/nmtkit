@@ -64,14 +64,13 @@ Expression EncoderDecoder::buildTrainGraph(
   return predictor_->computeLoss(batch.target_ids, logits);
 }
 
-void EncoderDecoder::beamSearch(
+InferenceGraph EncoderDecoder::beamSearch(
     const unsigned bos_id,
     const unsigned eos_id,
     const unsigned max_length,
     const unsigned beam_width,
     const float word_penalty,
-    dynet::ComputationGraph * cg,
-    InferenceGraph * ig) {
+    dynet::ComputationGraph * cg) {
   // Candidates of new nodes.
   struct Candidate {
     InferenceGraph::Node * prev;
@@ -80,7 +79,7 @@ void EncoderDecoder::beamSearch(
   };
 
   // Initialize the inference graph.
-  ig->clear();
+  InferenceGraph ig;
   vector<Candidate> history {
     // The "<s>" node
     {nullptr,
@@ -94,9 +93,9 @@ void EncoderDecoder::beamSearch(
 
     for (Candidate & prev : history) {
       // Add a new node using a history.
-      auto prev_node = ig->addNode(prev.label);
+      auto prev_node = ig.addNode(prev.label);
       if (prev.prev != nullptr) {
-        ig->connect(prev.prev, prev_node);
+        ig.connect(prev.prev, prev_node);
       }
 
       if (prev.label.word_id == eos_id) {
@@ -167,17 +166,17 @@ void EncoderDecoder::beamSearch(
       history.emplace_back(next_cands[id]);
     }
   }  // for (unsigned length = 1; ; ++length)
+
+  return ig;
 }
 
-void EncoderDecoder::infer(
+InferenceGraph EncoderDecoder::infer(
     const vector<unsigned> & source_ids,
     const unsigned bos_id,
     const unsigned eos_id,
     const unsigned max_length,
     const unsigned beam_width,
-    const float word_penalty,
-    dynet::ComputationGraph * cg,
-    InferenceGraph * ig) {
+    const float word_penalty) {
 
   // Make batch data.
   vector<vector<unsigned>> source_ids_inner;
@@ -187,15 +186,18 @@ void EncoderDecoder::infer(
   }
   source_ids_inner.emplace_back(vector<unsigned> {eos_id});
 
+  dynet::ComputationGraph cg;
+
   // Encode
-  encoder_->prepare(0.0f, cg);
+  encoder_->prepare(0.0f, &cg);
   const vector<Expression> enc_outputs = encoder_->compute(
-      source_ids_inner, cg);
+      source_ids_inner, &cg);
 
   // Infer output words
-  attention_->prepare(enc_outputs, cg);
-  dec2logit_->prepare(cg);
-  beamSearch(bos_id, eos_id, max_length, beam_width, word_penalty, cg, ig);
+  attention_->prepare(enc_outputs, &cg);
+  dec2logit_->prepare(&cg);
+  return beamSearch(
+      bos_id, eos_id, max_length, beam_width, word_penalty, &cg);
 }
 
 }  // namespace nmtkit

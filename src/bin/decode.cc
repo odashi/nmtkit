@@ -182,12 +182,8 @@ int main(int argc, char * argv[]) {
     string input_line;
     while (nmtkit::Corpus::readLine(&cin, &input_line)) {
       vector<unsigned> input_ids = src_vocab->convertToIDs(input_line);
-      dynet::ComputationGraph cg;
-      nmtkit::InferenceGraph ig;
-      encdec.infer(
-          input_ids, bos_id, eos_id,
-          max_length, beam_width, word_penalty,
-          &cg, &ig);
+      nmtkit::InferenceGraph ig = encdec.infer(
+          input_ids, bos_id, eos_id, max_length, beam_width, word_penalty);
       formatter->write(input_line, ig, *src_vocab, *trg_vocab, &cout);
     }
 

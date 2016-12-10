@@ -71,17 +71,16 @@ public:
   //   max_length: Maximum number of words (except "<s>") to be generated.
   //   beam_width: Beam width.
   //   word_penalty: Word penalty.
-  //   cg: Target computation graph.
-  //   ig: Placeholder of the output inference graph.
-  void infer(
+  //
+  // Returns:
+  //   Inference graph representing the decoder results.
+  InferenceGraph infer(
       const std::vector<unsigned> & source_ids,
       const unsigned bos_id,
       const unsigned eos_id,
       const unsigned max_length,
       const unsigned beam_width,
-      const float word_penalty,
-      dynet::ComputationGraph * cg,
-      InferenceGraph * ig);
+      const float word_penalty);
 
 private:
   // Generates output sequence using encoder results.
@@ -93,15 +92,16 @@ private:
   //   beam_width: Beam width.
   //   word_penalty: Word penalty.
   //   cg: Target computation graph.
-  //   ig: Placeholder of the output inference graph.
-  void beamSearch(
+  //
+  // Returns:
+  //   Inference graph representing the decoder results.
+  InferenceGraph beamSearch(
       const unsigned bos_id,
       const unsigned eos_id,
       const unsigned max_length,
       const unsigned beam_width,
       const float word_penalty,
-      dynet::ComputationGraph * cg,
-      InferenceGraph * ig);
+      dynet::ComputationGraph * cg);
 
   // Boost serialization interface.
   friend class boost::serialization::access;

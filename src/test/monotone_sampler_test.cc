@@ -57,23 +57,23 @@ BOOST_AUTO_TEST_CASE(CheckIteration) {
 
   BOOST_CHECK(sampler.hasSamples());
 
-  vector<nmtkit::Sample> samples;
-
   // Checks head samples.
-  sampler.getSamples(&samples);
-  BOOST_CHECK_EQUAL(::batch_size, samples.size());
-  for (unsigned i = 0; i < ::expected_src.size(); ++i) {
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        ::expected_src[i].begin(), ::expected_src[i].end(),
-        samples[i].source.begin(), samples[i].source.end());
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        ::expected_trg[i].begin(), ::expected_trg[i].end(),
-        samples[i].target.begin(), samples[i].target.end());
+  {
+    vector<nmtkit::Sample> samples = sampler.getSamples();
+    BOOST_CHECK_EQUAL(::batch_size, samples.size());
+    for (unsigned i = 0; i < ::expected_src.size(); ++i) {
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          ::expected_src[i].begin(), ::expected_src[i].end(),
+          samples[i].source.begin(), samples[i].source.end());
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          ::expected_trg[i].begin(), ::expected_trg[i].end(),
+          samples[i].target.begin(), samples[i].target.end());
+    }
   }
 
   // Checks all iterations.
   while (sampler.hasSamples()) {
-    sampler.getSamples(&samples);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
     if (samples.size() != ::batch_size) {
       BOOST_CHECK_EQUAL(::tail_size, samples.size());
       BOOST_CHECK(!sampler.hasSamples());
@@ -85,15 +85,17 @@ BOOST_AUTO_TEST_CASE(CheckIteration) {
   BOOST_CHECK(sampler.hasSamples());
 
   // Re-checks head samples.
-  sampler.getSamples(&samples);
-  BOOST_CHECK_EQUAL(::batch_size, samples.size());
-  for (unsigned i = 0; i < ::expected_src.size(); ++i) {
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        ::expected_src[i].begin(), ::expected_src[i].end(),
-        samples[i].source.begin(), samples[i].source.end());
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        ::expected_trg[i].begin(), ::expected_trg[i].end(),
-        samples[i].target.begin(), samples[i].target.end());
+  {
+    vector<nmtkit::Sample> samples = sampler.getSamples();
+    BOOST_CHECK_EQUAL(::batch_size, samples.size());
+    for (unsigned i = 0; i < ::expected_src.size(); ++i) {
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          ::expected_src[i].begin(), ::expected_src[i].end(),
+          samples[i].source.begin(), samples[i].source.end());
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          ::expected_trg[i].begin(), ::expected_trg[i].end(),
+          samples[i].target.begin(), samples[i].target.end());
+    }
   }
 }
 

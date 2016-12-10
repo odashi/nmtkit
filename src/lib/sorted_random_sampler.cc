@@ -146,15 +146,17 @@ void SortedRandomSampler::rewind() {
   Array::shuffle(&positions_, &rnd_);
 }
 
-void SortedRandomSampler::getSamples(vector<Sample> * result) {
+vector<Sample> SortedRandomSampler::getSamples() {
   NMTKIT_CHECK(hasSamples(), "No more samples.");
 
-  result->clear();
+  vector<Sample> result;
   const Position & pos = positions_[current_];
   for (unsigned i = pos.head; i < pos.tail; ++i) {
-    result->emplace_back(samples_[i]);
+    result.emplace_back(samples_[i]);
   }
   ++current_;
+
+  return result;
 }
 
 bool SortedRandomSampler::hasSamples() const {

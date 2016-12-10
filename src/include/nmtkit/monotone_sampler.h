@@ -26,7 +26,7 @@ public:
   ~MonotoneSampler() override {}
 
   void rewind() override;
-  void getSamples(std::vector<Sample> * result) override;
+  std::vector<Sample> getSamples() override;
   bool hasSamples() const override;
 
 private:

@@ -22,10 +22,9 @@ public:
   virtual void rewind() = 0;
 
   // Retrieves next samples.
-  // Arguments:
-  //   result: Placeholder to store new samples. Old data will be deleted
-  //           automatically before storing new samples.
-  virtual void getSamples(std::vector<Sample> * result) = 0;
+  // Returns:
+  //   List of new samples.
+  virtual std::vector<Sample> getSamples() = 0;
 
   // Checks whether or not the sampler has unprocessed samples.
   // Returns:

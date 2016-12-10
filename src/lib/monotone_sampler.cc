@@ -32,15 +32,17 @@ void MonotoneSampler::rewind() {
   current_ = 0;
 }
 
-void MonotoneSampler::getSamples(vector<Sample> * result) {
+vector<Sample> MonotoneSampler::getSamples() {
   NMTKIT_CHECK(hasSamples(), "No more samples.");
 
-  result->clear();
+  vector<Sample> result;
   for (unsigned i = 0; i < batch_size_ && hasSamples(); ++i) {
-    result->emplace_back(
+    result.emplace_back(
         Sample {src_samples_[current_], trg_samples_[current_]});
     ++current_;
   }
+
+  return result;
 }
 
 bool MonotoneSampler::hasSamples() const {

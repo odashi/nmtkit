@@ -275,8 +275,7 @@ float evaluateLogPerplexity(
   float total_loss = 0.0f;
   sampler.rewind();
   while (sampler.hasSamples()) {
-    vector<nmtkit::Sample> samples;
-    sampler.getSamples(&samples);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
     nmtkit::Batch batch;
     converter.convert(samples, &batch);
     dynet::ComputationGraph cg;
@@ -310,12 +309,9 @@ float evaluateBLEU(
   MTEval::Statistics stats;
   sampler.rewind();
   while (sampler.hasSamples()) {
-    vector<nmtkit::Sample> samples;
-    sampler.getSamples(&samples);
-    dynet::ComputationGraph cg;
-    nmtkit::InferenceGraph ig;
-    encdec.infer(
-        samples[0].source, bos_id, eos_id, max_length, 1, 0.0f, &cg, &ig);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
+    nmtkit::InferenceGraph ig = encdec.infer(
+        samples[0].source, bos_id, eos_id, max_length, 1, 0.0f);
     const auto hyp_nodes = ig.findOneBestPath(bos_id, eos_id);
     vector<unsigned> hyp_ids;
     // Note: Ignore <s> and </s>.
@@ -468,8 +464,7 @@ int main(int argc, char * argv[]) {
     for (unsigned iteration = 1; iteration <= max_iteration; ++iteration) {
       // Training
       {
-        vector<nmtkit::Sample> samples;
-        train_sampler.getSamples(&samples);
+        vector<nmtkit::Sample> samples = train_sampler.getSamples();
         nmtkit::Batch batch;
         batch_converter.convert(samples, &batch);
         dynet::ComputationGraph cg;

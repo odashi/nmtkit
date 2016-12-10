@@ -70,23 +70,22 @@ BOOST_AUTO_TEST_CASE(CheckRewinding) {
 
   BOOST_CHECK(sampler.hasSamples());
 
-  vector<nmtkit::Sample> samples;
-
   // Checks head samples.
-  sampler.getSamples(&samples);
-
-  for (unsigned i = 0; i < expected_src.size(); ++i) {
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        expected_src[i].begin(), expected_src[i].end(),
-        samples[i].source.begin(), samples[i].source.end());
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        expected_trg[i].begin(), expected_trg[i].end(),
-        samples[i].target.begin(), samples[i].target.end());
+  {
+    vector<nmtkit::Sample> samples = sampler.getSamples();
+    for (unsigned i = 0; i < expected_src.size(); ++i) {
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          expected_src[i].begin(), expected_src[i].end(),
+          samples[i].source.begin(), samples[i].source.end());
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          expected_trg[i].begin(), expected_trg[i].end(),
+          samples[i].target.begin(), samples[i].target.end());
+    }
   }
 
-  // Checks all iterations.
+  // Skips all iterations.
   while (sampler.hasSamples()) {
-    sampler.getSamples(&samples);
+    sampler.getSamples();
   }
 
   // Checks rewinding.
@@ -96,14 +95,16 @@ BOOST_AUTO_TEST_CASE(CheckRewinding) {
   // Re-checks head samples.
   // The order of samples was shuffled again by calling rewind(), and generated
   // batch has different samples with the first one.
-  sampler.getSamples(&samples);
-  for (unsigned i = 0; i < expected_src2.size(); ++i) {
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        expected_src2[i].begin(), expected_src2[i].end(),
-        samples[i].source.begin(), samples[i].source.end());
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        expected_trg2[i].begin(), expected_trg2[i].end(),
-        samples[i].target.begin(), samples[i].target.end());
+  {
+    vector<nmtkit::Sample> samples = sampler.getSamples();
+    for (unsigned i = 0; i < expected_src2.size(); ++i) {
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          expected_src2[i].begin(), expected_src2[i].end(),
+          samples[i].source.begin(), samples[i].source.end());
+      BOOST_CHECK_EQUAL_COLLECTIONS(
+          expected_trg2[i].begin(), expected_trg2[i].end(),
+          samples[i].target.begin(), samples[i].target.end());
+    }
   }
 }
 
@@ -184,8 +185,7 @@ BOOST_AUTO_TEST_CASE(CheckSorting) {
     BOOST_CHECK(sampler.hasSamples());
 
     // Checks only head samples.
-    vector<nmtkit::Sample> samples;
-    sampler.getSamples(&samples);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
     for (unsigned j = 0; j < expected_src[i].size(); ++j) {
       BOOST_CHECK_EQUAL_COLLECTIONS(
           expected_src[i][j].begin(), expected_src[i][j].end(),
@@ -213,12 +213,11 @@ BOOST_AUTO_TEST_CASE(CheckBatch_Sentence) {
         "sentence", "none", batch_size,
         globals::max_length, globals::max_length_ratio, globals::random_seed);
 
-    vector<nmtkit::Sample> samples;
     unsigned num_data = 0;
     bool tail_sample = false;
 
     while (sampler.hasSamples()) {
-      sampler.getSamples(&samples);
+      vector<nmtkit::Sample> samples = sampler.getSamples();
       num_data += samples.size();
       if (samples.size() != batch_size) {
         BOOST_CHECK(!tail_sample);
@@ -254,12 +253,11 @@ BOOST_AUTO_TEST_CASE(CheckBatch_BothWord) {
       "both_word", "source_target", 512,
       globals::max_length, globals::max_length_ratio, globals::random_seed);
 
-  vector<nmtkit::Sample> samples;
   vector<unsigned> batch_sizes;
   vector<unsigned> lengths;
 
   while (sampler.hasSamples()) {
-    sampler.getSamples(&samples);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
     batch_sizes.emplace_back(samples.size());
     unsigned max_length = 0;
     for (auto sample : samples) {
@@ -297,12 +295,11 @@ BOOST_AUTO_TEST_CASE(CheckBatch_SourceWord) {
       "source_word", "source_target", 256,
       globals::max_length, globals::max_length_ratio, globals::random_seed);
 
-  vector<nmtkit::Sample> samples;
   vector<unsigned> batch_sizes;
   vector<unsigned> lengths;
 
   while (sampler.hasSamples()) {
-    sampler.getSamples(&samples);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
     batch_sizes.emplace_back(samples.size());
     unsigned max_length = 0;
     for (auto sample : samples) {
@@ -342,12 +339,11 @@ BOOST_AUTO_TEST_CASE(CheckBatch_TargetWord) {
       "target_word", "target_source", 256,
       globals::max_length, globals::max_length_ratio, globals::random_seed);
 
-  vector<nmtkit::Sample> samples;
   vector<unsigned> batch_sizes;
   vector<unsigned> lengths;
 
   while (sampler.hasSamples()) {
-    sampler.getSamples(&samples);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
     batch_sizes.emplace_back(samples.size());
     unsigned max_length = 0;
     for (auto sample : samples) {
@@ -383,11 +379,10 @@ BOOST_AUTO_TEST_CASE(CheckSmallBatch_Both) {
       "both_word", "source_target", 1 + 2 * globals::max_length,
       globals::max_length, globals::max_length_ratio, globals::random_seed);
 
-  vector<nmtkit::Sample> samples;
   vector<unsigned> obtained_num_batches {0, 0, 0, 0, 0};
 
   while (sampler.hasSamples()) {
-    sampler.getSamples(&samples);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
     BOOST_CHECK(samples.size() <= 3 /* 4 */);
     ++obtained_num_batches[samples.size()];
   }
@@ -415,11 +410,10 @@ BOOST_AUTO_TEST_CASE(CheckSmallBatch_Source) {
       "source_word", "source_target", globals::max_length,
       globals::max_length, globals::max_length_ratio, globals::random_seed);
 
-  vector<nmtkit::Sample> samples;
   vector<unsigned> obtained_num_batches {0, 0, 0, 0, 0};
 
   while (sampler.hasSamples()) {
-    sampler.getSamples(&samples);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
     BOOST_CHECK(samples.size() <= 4);
     ++obtained_num_batches[samples.size()];
   }
@@ -451,7 +445,7 @@ BOOST_AUTO_TEST_CASE(CheckSmallBatch_Target) {
   vector<unsigned> obtained_num_batches {0, 0, 0, 0, 0};
 
   while (sampler.hasSamples()) {
-    sampler.getSamples(&samples);
+    vector<nmtkit::Sample> samples = sampler.getSamples();
     BOOST_CHECK(samples.size() <= 3 /* 4 */);
     ++obtained_num_batches[samples.size()];
   }
