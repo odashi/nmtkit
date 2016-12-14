@@ -415,32 +415,12 @@ int main(int argc, char * argv[]) {
     logger->info("Created new trainer.");
 
     // Create a new encoder-decoder model.
-    auto encoder = nmtkit::Factory::createEncoder(
-        config.get<string>("Model.encoder_type"),
-        config.get<unsigned>("Model.num_layers"),
-        src_vocab->size(),
-        config.get<unsigned>("Model.source_embedding_size"),
-        config.get<unsigned>("Model.encoder_hidden_size"),
-        &model);
-    auto attention = nmtkit::Factory::createAttention(
-        config.get<string>("Model.attention_type"),
-        encoder->getOutputSize(),
-        config.get<unsigned>("Model.decoder_hidden_size"),
-        config.get<unsigned>("Model.attention_hidden_size"),
-        &model);
+    auto encoder = nmtkit::Factory::createEncoder(config, *src_vocab, &model);
+    auto attention = nmtkit::Factory::createAttention(config, *encoder, &model);
     auto decoder = nmtkit::Factory::createDecoder(
-        config.get<string>("Model.decoder_type"),
-        config.get<unsigned>("Model.num_layers"),
-        trg_vocab->size(),
-        config.get<unsigned>("Model.target_embedding_size"),
-        config.get<unsigned>("Model.output_embedding_size"),
-        config.get<unsigned>("Model.decoder_hidden_size"),
-        encoder->getStateSize(),
-        encoder->getOutputSize(),
-        &model);
+        config, *trg_vocab, *encoder, &model);
     auto predictor = nmtkit::Factory::createPredictor(
-        config.get<string>("Model.predictor_type"),
-        *trg_vocab);
+        config, *trg_vocab, &model);
     nmtkit::EncoderDecoder encdec(
         encoder, decoder, attention, predictor, &model);
     logger->info("Created new encoder-decoder model.");

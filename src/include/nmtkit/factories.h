@@ -2,6 +2,7 @@
 #define NMTKIT_FACTORIES_H_
 
 #include <string>
+#include <boost/property_tree/ptree.hpp>
 #include <boost/shared_ptr.hpp>
 #include <dynet/model.h>
 #include <nmtkit/attention.h>
@@ -23,92 +24,60 @@ public:
   // Creates an Encoder object.
   //
   // Arguments:
-  //   name: Identifier of the Encoder implementation.
-  //         Available values:
-  //           "backward": Backward RNN
-  //           "bidirectional": Bidirectional RNN
-  //           "forward": Forward RNN
-  //   num_layers: Depth of the encoder stack.
-  //   vocab_size: Vocabulary size of the input IDs.
-  //   embed_size: Number of units in the input embedding layer.
-  //   hidden_size: Number of units in the RNN hidden layer.
+  //   config: ptree object with correctly-defined options.
+  //   vocab: Vocabulary object for the source language.
   //   model: Model object for training.
   //
   // Returns:
   //   A shared pointer of selected Encoder object.
   static boost::shared_ptr<Encoder> createEncoder(
-      const std::string & name,
-      const unsigned num_layers,
-      const unsigned vocab_size,
-      const unsigned embed_size,
-      const unsigned hidden_size,
+      const boost::property_tree::ptree & config,
+      const Vocabulary & vocab,
       dynet::Model * model);
 
   // Creates an Decoder object.
   //
   // Arguments:
-  //   name: Identifier of the Decoder implementation.
-  //         Available values:
-  //           "default": Default RNN decoder
-  //   num_layers: Depth of the decoder stack.
-  //   vocab_size: Vocabulary size of the input IDs.
-  //   in_embed_size: Number of units in the input embedding layer.
-  //   out_embed_size: Number of units in the output embedding layer.
-  //   hidden_size: Number of units in the RNN hidden layer.
-  //   seed_size: Number of units in the seed layer.
-  //   context_size: Number of units in the context layer.
+  //   config: ptree object with correctly-defined options.
+  //   vocab: Vocabulary object for the target langauge.
+  //   encoder: Encoder object.
   //   model: Model object for training.
   //
   // Returns:
   //   A shared pointer of selected Decoder object.
   static boost::shared_ptr<Decoder> createDecoder(
-      const std::string & name,
-      const unsigned num_layers,
-      const unsigned vocab_size,
-      const unsigned in_embed_size,
-      const unsigned out_embed_size,
-      const unsigned hidden_size,
-      const unsigned seed_size,
-      const unsigned context_size,
+      const boost::property_tree::ptree & config,
+      const Vocabulary & vocab,
+      const Encoder & encoder,
       dynet::Model * model);
 
   // Creates an Attention object.
   //
   // Arguments:
-  //   name: Identifier of the Attention implementation.
-  //         Available values:
-  //           "mlp": Multilayer perceptron-based attention
-  //                  (similar to [Bahdanau+14])
-  //           "bilinear": Bilinear attention
-  //                       ("general" method in [Luong+15])
-  //   context_size: Number of units in all context inputs.
-  //   controller_size: Number of units in the controller input.
-  //   hidden_size: Number of units in the attention hidden layer.
-  //                This value is used only in the "mlp" method.
+  //   config: ptree object with correctly-defined options.
+  //   encoder: Encoder object.
   //   model: Model object for training.
   //
   // Returns:
   //   A shared pointer of selected Attention object.
   static boost::shared_ptr<Attention> createAttention(
-      const std::string & name,
-      const unsigned context_size,
-      const unsigned controller_size,
-      const unsigned hidden_size,
+      const boost::property_tree::ptree & config,
+      const Encoder & encoder,
       dynet::Model * model);
 
   // Creates an Predictor object.
   //
   // Arguments:
-  //   name: Identifier of the Predictor implementation.
-  //         Available values:
-  //           "softmax": Softmax prediction.
+  //   config: ptree object with correctly-defined options.
   //   vocab: Vocabulary object of the target language.
+  //   model: Model object for training.
   //
   // Returns:
   //   A shared pointer of selected Predictor object.
   static boost::shared_ptr<Predictor> createPredictor(
-      const std::string & name,
-      const Vocabulary & vocab);
+      const boost::property_tree::ptree & config,
+      const Vocabulary & vocab,
+      dynet::Model * model);
 };
 
 }  // namespace nmtkit
