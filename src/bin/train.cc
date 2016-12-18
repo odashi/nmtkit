@@ -434,9 +434,12 @@ int main(int argc, char * argv[]) {
     // Train/dev/test loop
     const float dropout_ratio = config.get<float>("Train.dropout_ratio");
     const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
+    const string evaluation_type = config.get<string>("Train.evaluation_type");
     const unsigned eval_interval = config.get<unsigned>(
         "Train.evaluation_interval");
     unsigned long num_trained_samples = 0;
+    unsigned long num_trained_words = 0;
+    unsigned long num_current_trained_words = 0;
     float best_dev_log_ppl = 1e100;
     float best_dev_bleu = -1e100;
     logger->info("Start training.");
@@ -455,13 +458,15 @@ int main(int argc, char * argv[]) {
         trainer->update(lr_decay);
 
         num_trained_samples += batch.source_ids[0].size();
+        num_trained_words += batch.target_ids.size() * batch.target_ids[0].size();
+        num_current_trained_words += batch.target_ids.size() * batch.target_ids[0].size();
         if (!train_sampler.hasSamples()) {
           train_sampler.rewind();
         }
 
-        const string fmt_str = "Trained: batch=%d samples=%d lr=%.6e";
+        const string fmt_str = "Trained: batch=%d samples=%d words=%d lr=%.6e";
         const auto fmt = boost::format(fmt_str)
-            % iteration % num_trained_samples % lr_decay;
+            % iteration % num_trained_samples % num_trained_words % lr_decay;
         logger->info(fmt.str());
       }
 
@@ -469,35 +474,37 @@ int main(int argc, char * argv[]) {
         lr_decay *= lr_decay_ratio;
       }
 
-      if (iteration % eval_interval == 0) {
+      if ((evaluation_type == "step" and iteration % eval_interval == 0) or
+          (evaluation_type == "word" and num_current_trained_words >= eval_interval)) {
+        num_current_trained_words = 0;
         logger->info("Evaluating...");
 
         const float dev_log_ppl = ::evaluateLogPerplexity(
             encdec, dev_sampler, batch_converter);
         const auto fmt_dev_log_ppl = boost::format(
-            "Evaluated: batch=%d dev-log-ppl=%.6e")
-            % iteration % dev_log_ppl;
+            "Evaluated: batch=%d words=%d dev-log-ppl=%.6e")
+            % iteration % num_trained_words % dev_log_ppl;
         logger->info(fmt_dev_log_ppl.str());
 
         const float dev_bleu = ::evaluateBLEU(
             *trg_vocab, encdec, dev_sampler, train_max_length);
         const auto fmt_dev_bleu = boost::format(
-            "Evaluated: batch=%d dev-bleu=%.6f")
-            % iteration % dev_bleu;
+            "Evaluated: batch=%d words=%d dev-bleu=%.6f")
+            % iteration % num_trained_words % dev_bleu;
         logger->info(fmt_dev_bleu.str());
 
         const float test_log_ppl = ::evaluateLogPerplexity(
             encdec, test_sampler, batch_converter);
         const auto fmt_test_log_ppl = boost::format(
-            "Evaluated: batch=%d test-log-ppl=%.6e")
-            % iteration % test_log_ppl;
+            "Evaluated: batch=%d words=%d test-log-ppl=%.6e")
+            % iteration % num_trained_words % test_log_ppl;
         logger->info(fmt_test_log_ppl.str());
 
         const float test_bleu = ::evaluateBLEU(
             *trg_vocab, encdec, test_sampler, train_max_length);
         const auto fmt_test_bleu = boost::format(
-            "Evaluated: batch=%d test-bleu=%.6f")
-            % iteration % test_bleu;
+            "Evaluated: batch=%d words=%d test-bleu=%.6f")
+            % iteration % num_trained_words % test_bleu;
         logger->info(fmt_test_bleu.str());
 
         if (lr_decay_type == "eval") {
