@@ -439,7 +439,7 @@ int main(int argc, char * argv[]) {
         "Train.evaluation_interval");
     unsigned long num_trained_samples = 0;
     unsigned long num_trained_words = 0;
-    unsigned long num_current_trained_words = 0;
+    unsigned long num_next_evaluation_words = eval_interval;
     float best_dev_log_ppl = 1e100;
     float best_dev_bleu = -1e100;
     logger->info("Start training.");
@@ -459,7 +459,6 @@ int main(int argc, char * argv[]) {
 
         num_trained_samples += batch.source_ids[0].size();
         num_trained_words += batch.target_ids.size() * batch.target_ids[0].size();
-        num_current_trained_words += batch.target_ids.size() * batch.target_ids[0].size();
         if (!train_sampler.hasSamples()) {
           train_sampler.rewind();
         }
@@ -475,8 +474,8 @@ int main(int argc, char * argv[]) {
       }
 
       if ((evaluation_type == "step" and iteration % eval_interval == 0) or
-          (evaluation_type == "word" and num_current_trained_words >= eval_interval)) {
-        num_current_trained_words = 0;
+          (evaluation_type == "word" and num_trained_words >= num_next_evaluation_words)) {
+        num_next_evaluation_words += eval_interval;
         logger->info("Evaluating...");
 
         const float dev_log_ppl = ::evaluateLogPerplexity(
