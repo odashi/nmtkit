@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <chrono>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -440,6 +441,9 @@ int main(int argc, char * argv[]) {
     unsigned long num_trained_samples = 0;
     unsigned long num_trained_words = 0;
     unsigned long num_next_evaluation_words = eval_interval;
+    auto next_eval_time = 
+        std::chrono::system_clock::to_time_t(
+        (std::chrono::system_clock::now() + std::chrono::minutes(eval_interval)));
     float best_dev_log_ppl = 1e100;
     float best_dev_bleu = -1e100;
     logger->info("Start training.");
@@ -474,8 +478,13 @@ int main(int argc, char * argv[]) {
       }
 
       if ((evaluation_type == "step" and iteration % eval_interval == 0) or
-          (evaluation_type == "word" and num_trained_words >= num_next_evaluation_words)) {
+          (evaluation_type == "word" and num_trained_words >= num_next_evaluation_words) or
+          (evaluation_type == "time" and 
+           std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) >= next_eval_time)) {
         num_next_evaluation_words += eval_interval;
+        next_eval_time = 
+            std::chrono::system_clock::to_time_t(
+            (std::chrono::system_clock::now() + std::chrono::minutes(eval_interval)));
         logger->info("Evaluating...");
 
         const float dev_log_ppl = ::evaluateLogPerplexity(
