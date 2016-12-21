@@ -26,7 +26,7 @@ BahdanauDecoder::BahdanauDecoder(
 , seed_size_(seed_size)
 , context_size_(context_size)
 , dec2out_({in_embed_size + context_size + hidden_size, out_embed_size}, model)
-, rnn_(num_layers, in_embed_size + context_size, hidden_size, model)
+, rnn_(num_layers, in_embed_size + context_size, hidden_size, *model)
 , p_lookup_(model->add_lookup_parameters(vocab_size, {in_embed_size}))
 {
   for (unsigned i = 0; i < num_layers; ++i) {
