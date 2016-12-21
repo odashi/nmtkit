@@ -7,6 +7,7 @@ nobase_include_HEADERS = \
   nmtkit/basic_types.h \
   nmtkit/bidirectional_encoder.h \
   nmtkit/bilinear_attention.h \
+  nmtkit/binary_code.h \
   nmtkit/character_vocabulary.h \
   nmtkit/corpus.h \
   nmtkit/decoder.h \
@@ -17,6 +18,7 @@ nobase_include_HEADERS = \
   nmtkit/factories.h \
   nmtkit/formatter.h \
   nmtkit/forward_encoder.h \
+  nmtkit/frequency_code.h \
   nmtkit/html_formatter.h \
   nmtkit/inference_graph.h \
   nmtkit/init.h \

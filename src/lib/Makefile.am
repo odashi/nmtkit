@@ -22,6 +22,7 @@ libnmtkit_la_SOURCES = \
   encoder_decoder.cc \
   factories.cc \
   forward_encoder.cc \
+  frequency_code.cc \
   html_formatter.cc \
   inference_graph.cc \
   init.cc \
