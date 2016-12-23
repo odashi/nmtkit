@@ -396,6 +396,7 @@ int main(int argc, char * argv[]) {
         config.get<unsigned>("Batch.batch_size"),
         train_max_length, train_max_length_ratio,
         config.get<unsigned>("Global.random_seed"));
+    const int corpus_size = train_sampler.getCorpusSize();
     logger->info("Loaded 'train' corpus.");
     nmtkit::MonotoneSampler dev_sampler(
         config.get<string>("Corpus.dev_source"),
@@ -407,6 +408,11 @@ int main(int argc, char * argv[]) {
         config.get<string>("Corpus.test_target"),
         *src_vocab, *trg_vocab, test_max_length, test_max_length_ratio, 1);
     logger->info("Loaded 'test' corpus.");
+    const auto fmt_corpus_size = boost::format(
+        "Cleaned corpus size: train=%d dev=%d test=%d")
+        % train_sampler.getCorpusSize() % dev_sampler.getCorpusSize() 
+        % test_sampler.getCorpusSize();
+    logger->info(fmt_corpus_size.str());
     nmtkit::BatchConverter batch_converter(*src_vocab, *trg_vocab);
 
     dynet::Model model;
@@ -440,10 +446,11 @@ int main(int argc, char * argv[]) {
         "Train.evaluation_interval");
     unsigned long num_trained_samples = 0;
     unsigned long num_trained_words = 0;
-    unsigned long num_next_evaluation_words = eval_interval;
+    unsigned long next_eval_words = eval_interval;
     auto next_eval_time = 
         std::chrono::system_clock::to_time_t(
         (std::chrono::system_clock::now() + std::chrono::minutes(eval_interval)));
+    unsigned long next_eval_samples = eval_interval * corpus_size;
     float best_dev_log_ppl = 1e100;
     float best_dev_bleu = -1e100;
     logger->info("Start training.");
@@ -478,13 +485,12 @@ int main(int argc, char * argv[]) {
       }
 
       if ((evaluation_type == "step" and iteration % eval_interval == 0) or
-          (evaluation_type == "word" and num_trained_words >= num_next_evaluation_words) or
+          (evaluation_type == "word" and num_trained_words >= next_eval_words) or
           (evaluation_type == "time" and 
-           std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) >= next_eval_time)) {
-        num_next_evaluation_words += eval_interval;
-        next_eval_time = 
-            std::chrono::system_clock::to_time_t(
-            (std::chrono::system_clock::now() + std::chrono::minutes(eval_interval)));
+           std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) >= next_eval_time) or
+          (evaluation_type == "epoch" and num_trained_samples >= next_eval_samples)) {
+        next_eval_words += eval_interval;
+        next_eval_samples += eval_interval * corpus_size;
         logger->info("Evaluating...");
 
         const float dev_log_ppl = ::evaluateLogPerplexity(
@@ -555,6 +561,9 @@ int main(int argc, char * argv[]) {
           }
         }
 
+        next_eval_time = 
+            std::chrono::system_clock::to_time_t(
+            (std::chrono::system_clock::now() + std::chrono::minutes(eval_interval)));
       }
     }
 

@@ -159,6 +159,10 @@ vector<Sample> SortedRandomSampler::getSamples() {
   return result;
 }
 
+int SortedRandomSampler::getCorpusSize() {
+  return samples_.size();
+}
+
 bool SortedRandomSampler::hasSamples() const {
   return current_ < positions_.size();
 }
