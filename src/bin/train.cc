@@ -451,6 +451,8 @@ int main(int argc, char * argv[]) {
         std::chrono::system_clock::to_time_t(
         (std::chrono::system_clock::now() + std::chrono::minutes(eval_interval)));
     auto training_start_time = std::chrono::system_clock::now();
+    auto epoch_start_time = std::chrono::system_clock::now();
+    unsigned long next_epoch_samples = corpus_size;
     unsigned long next_eval_samples = eval_interval * corpus_size;
     float best_dev_log_ppl = 1e100;
     float best_dev_bleu = -1e100;
@@ -485,6 +487,16 @@ int main(int argc, char * argv[]) {
         lr_decay *= lr_decay_ratio;
       }
 
+      if (num_trained_samples >= next_epoch_samples) {
+        next_epoch_samples += corpus_size;
+        auto elapsed_time = std::chrono::system_clock::now() - epoch_start_time;
+        auto elapsed_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
+        const auto fmt_epoch_time = boost::format(
+                "Epoch finished: elapsed-time=%d") % elapsed_time_seconds;
+        logger->info(fmt_epoch_time.str());
+        epoch_start_time = std::chrono::system_clock::now();
+      }
+
       if ((evaluation_type == "step" and iteration % eval_interval == 0) or
           (evaluation_type == "word" and num_trained_words >= next_eval_words) or
           (evaluation_type == "time" and 
@@ -494,6 +506,7 @@ int main(int argc, char * argv[]) {
         next_eval_samples += eval_interval * corpus_size;
         auto elapsed_time = std::chrono::system_clock::now() - training_start_time;
         auto elapsed_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
+        auto eval_start_time = std::chrono::system_clock::now();
 
         logger->info("Evaluating...");
 
@@ -565,6 +578,11 @@ int main(int argc, char * argv[]) {
           }
         }
 
+        // not to include evaluation time in epoch elapsed time.
+        auto eval_took_time = std::chrono::system_clock::now() - eval_start_time;
+        epoch_start_time += eval_took_time;
+
+        num_trained_words = 0;
         training_start_time = std::chrono::system_clock::now();
         next_eval_time = 
             std::chrono::system_clock::to_time_t(
