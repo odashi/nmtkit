@@ -11,6 +11,7 @@ using namespace std;
 
 namespace {
 
+const string tok_filename = "data/small.en.tok";
 const string vocab_filename = "data/small.en.vocab";
 
 template <class T>
@@ -24,7 +25,19 @@ void loadArchive(const string & filepath, T * obj) {
 
 BOOST_AUTO_TEST_SUITE(FrequencyCodeTest)
 
+
 BOOST_AUTO_TEST_CASE(CheckNumBits) {
+  const vector<unsigned> vocab_sizes {4, 7, 8, 9, 15, 16, 17};
+  const vector<unsigned> num_bits {2, 3, 3, 4, 4, 4, 5};
+
+  for (unsigned i = 0; i < vocab_sizes.size(); ++i) {
+    nmtkit::WordVocabulary vocab(tok_filename, vocab_sizes[i]);
+    nmtkit::FrequencyCode codec(vocab);
+    BOOST_CHECK_EQUAL(num_bits[i], codec.getNumBits());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(CheckNumBits2) {
   nmtkit::WordVocabulary vocab;
   ::loadArchive(::vocab_filename, &vocab);
   nmtkit::FrequencyCode codec(vocab);
