@@ -61,7 +61,7 @@ Expression EncoderDecoder::buildTrainGraph(
     logits.emplace_back(dec2logit_->compute(out_embed));
   }
 
-  return predictor_->computeLoss(batch.target_ids, logits);
+  return predictor_->computeLoss(batch.target_ids, logits, cg);
 }
 
 InferenceGraph EncoderDecoder::beamSearch(

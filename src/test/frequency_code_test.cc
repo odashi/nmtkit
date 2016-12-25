@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(CheckNumBits) {
 
 BOOST_AUTO_TEST_CASE(CheckEncoding) {
   const vector<unsigned> ids {0, 1, 2, 3, 4, 10, 50, 100, 200, 400};
-  const vector<vector<float>> expected {
+  const vector<vector<bool>> expected {
     {0, 1, 0, 0, 0, 0, 0, 0, 0},
     {1, 0, 0, 0, 0, 0, 0, 0, 0},
     {1, 1, 0, 0, 0, 0, 0, 0, 0},
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(CheckEncoding) {
   nmtkit::FrequencyCode codec(vocab);
 
   for (unsigned i = 0; i < ids.size(); ++i) {
-    const vector<float> observed = codec.getCode(ids[i]);
+    const vector<bool> observed = codec.getCode(ids[i]);
     BOOST_CHECK_EQUAL_COLLECTIONS(
         expected[i].begin(), expected[i].end(),
         observed.begin(), observed.end());
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(CheckEncoding) {
 }
 
 BOOST_AUTO_TEST_CASE(CheckDecoding) {
-  const vector<vector<float>> code {
+  const vector<vector<bool>> code {
     {0, 1, 0, 0, 0, 0, 0, 0, 0},
     {1, 0, 0, 0, 0, 0, 0, 0, 0},
     {1, 1, 0, 0, 0, 0, 0, 0, 0},
@@ -69,9 +69,17 @@ BOOST_AUTO_TEST_CASE(CheckDecoding) {
     {1, 0, 0, 0, 1, 1, 0, 0, 0},
     {1, 1, 0, 1, 1, 0, 1, 0, 0},
     {1, 0, 0, 0, 0, 1, 1, 1, 0},
-    {0.49999, 0.49999, 0.5, 0.5, 0.49999, 0.49999, 0.49999, 0.49999, 0.5},
+    {0, 0, 1, 1, 0, 0, 0, 0, 1},
+    {1, 1, 0, 0, 1, 1, 1, 1, 1},
+    {0, 0, 1, 0, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1},
   };
-  const vector<unsigned> expected {0, 1, 2, 3, 4, 10, 50, 100, 200, 400};
+  const vector<unsigned> expected {
+    0, 1, 2, 3, 4, 10, 50, 100, 200, 400,
+    408,
+    nmtkit::BinaryCode::INVALID_CODE,
+    nmtkit::BinaryCode::INVALID_CODE,
+  };
 
   nmtkit::WordVocabulary vocab;
   ::loadArchive(::vocab_filename, &vocab);

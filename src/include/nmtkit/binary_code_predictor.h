@@ -1,31 +1,35 @@
-#ifndef NMTKIT_SOFTMAX_PREDICTOR_H_
-#define NMTKIT_SOFTMAX_PREDICTOR_H_
+#ifndef NMTKIT_BINARY_CODE_PREDICTOR_H_
+#define NMTKIT_BINARY_CODE_PREDICTOR_H_
 
+#include <string>
+#include <boost/shared_ptr.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <nmtkit/binary_code.h>
 #include <nmtkit/predictor.h>
 #include <nmtkit/serialization_utils.h>
 
 namespace nmtkit {
 
-// Word predictor using softmax outputs.
-class SoftmaxPredictor : public Predictor {
-  SoftmaxPredictor(const SoftmaxPredictor &) = delete;
-  SoftmaxPredictor(SoftmaxPredictor &&) = delete;
-  SoftmaxPredictor & operator=(const SoftmaxPredictor &) = delete;
-  SoftmaxPredictor & operator=(SoftmaxPredictor &&) = delete;
+// Word predictor using binary code outputs.
+class BinaryCodePredictor : public Predictor {
+  BinaryCodePredictor(const BinaryCodePredictor &) = delete;
+  BinaryCodePredictor(BinaryCodePredictor &&) = delete;
+  BinaryCodePredictor & operator=(const BinaryCodePredictor &) = delete;
+  BinaryCodePredictor & operator=(BinaryCodePredictor &&) = delete;
 
 public:
   // Initializes an empty predictor.
-  SoftmaxPredictor() {}
+  BinaryCodePredictor() {}
 
   // Initializes the predictor.
   //
   // Arguments:
-  //   vocab_size: Vocabulary size of the target language.
-  SoftmaxPredictor(unsigned vocab_size);
+  //   bc: Pointer to a BinaryCode object.
+  explicit BinaryCodePredictor(boost::shared_ptr<BinaryCode> & bc);
 
-  ~SoftmaxPredictor() override {}
+  ~BinaryCodePredictor() override {}
 
   dynet::expr::Expression computeLoss(
       const std::vector<std::vector<unsigned>> & target_ids,
@@ -42,7 +46,7 @@ public:
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) override;
 
-  unsigned getScoreSize() const { return vocab_size_; }
+  unsigned getScoreSize() const override;
 
 private:
   // Boost serialization interface.
@@ -50,14 +54,14 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Predictor>(*this);
-    ar & vocab_size_;
+    ar & bc_;
   }
 
-  unsigned vocab_size_;
+  boost::shared_ptr<BinaryCode> bc_;
 };
 
 }  // namespace nmtkit
 
-NMTKIT_SERIALIZATION_DECL(nmtkit::SoftmaxPredictor);
+NMTKIT_SERIALIZATION_DECL(nmtkit::BinaryCodePredictor);
 
-#endif  // NMTKIT_SOFTMAX_PREDICTOR_H_
+#endif  // NMTKIT_BINARY_CODE_PREDICTOR_H_

@@ -13,27 +13,30 @@ class BinaryCode {
   BinaryCode & operator=(BinaryCode &&) = delete;
 
 public:
+  // Special word ID for invalid code.
+  static const unsigned INVALID_CODE = 0xffffffffu;
+
   BinaryCode() {}
   virtual ~BinaryCode() {}
 
-  // Retrieves bit representation of given ID.
+  // Retrieves bit representation of given word ID.
   //
   // Arguments:
-  //   id: Target ID.
+  //   id: Target word ID.
   //
   // Returns:
-  //   List of bit probabilities.
-  //   1.0 represents the bit becomes 1, and 0.0 represents 0.
-  virtual std::vector<float> getCode(const unsigned id) const = 0;
+  //   List of bits.
+  virtual std::vector<bool> getCode(const unsigned id) const = 0;
 
-  // Retrieves original ID by analysing bit probabilities.
+  // Retrieves original ID by analysing a bit array.
   //
   // Arguments:
-  //   probs: Target bit probabilities.
+  //   code: Target bit array.
   //
   // Returns:
-  //   The most probable ID.
-  virtual unsigned getID(const std::vector<float> & probs) const = 0;
+  //   Word ID corresponding to given bits, or INVALID_CODE if bits did not
+  //   correspond to any word IDs.
+  virtual unsigned getID(const std::vector<bool> & code) const = 0;
 
   // Retrieves the number of bits in a binary code.
   virtual unsigned getNumBits() const = 0;

@@ -14,7 +14,10 @@
 #include <nmtkit/bilinear_attention.h>
 #include <nmtkit/mlp_attention.h>
 
+#include <nmtkit/binary_code_predictor.h>
 #include <nmtkit/softmax_predictor.h>
+
+#include <nmtkit/frequency_code.h>
 
 using namespace std;
 
@@ -111,7 +114,10 @@ boost::shared_ptr<Predictor> Factory::createPredictor(
     dynet::Model * /*model*/) {
   const string name = config.get<string>("Model.predictor_type");
 
-  if (name == "softmax") {
+  if (name == "binary_code") {
+    boost::shared_ptr<BinaryCode> bc(new FrequencyCode(vocab));
+    return boost::shared_ptr<Predictor>(new BinaryCodePredictor(bc));
+  } else if (name == "softmax") {
     return boost::shared_ptr<Predictor>(new SoftmaxPredictor(vocab.size()));
   }
   NMTKIT_FATAL("Invalid predictor name: " + name);

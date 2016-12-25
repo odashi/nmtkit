@@ -2,6 +2,7 @@
 
 #include <numeric>
 #include <nmtkit/array.h>
+#include <nmtkit/exception.h>
 #include <nmtkit/frequency_code.h>
 
 using namespace std;
@@ -12,39 +13,40 @@ FrequencyCode::FrequencyCode(const Vocabulary & vocab)
 : wid_to_code_(vocab.size())
 , code_to_wid_(vocab.size())
 , vocab_size_(vocab.size()) {
-  // Sort word IDs by word frequency.
+  // Sorts word IDs by word frequency.
   iota(wid_to_code_.begin(), wid_to_code_.end(), 0);
   Array::sort(&wid_to_code_, [&](const unsigned a, const unsigned b) {
       return vocab.getFrequency(a) > vocab.getFrequency(b);
   });
 
-  // Make reverse mapping.
+  // Makes reverse mapping.
   for (unsigned i = 0; i < vocab_size_; ++i) {
     code_to_wid_[wid_to_code_[i]] = i;
   }
 
-  // Retrieve bit length of code.
+  // Retrieves bit length of code.
   num_bits_ = 0;
   while (1u << num_bits_ < vocab_size_) {
     ++num_bits_;
   }
 }
 
-vector<float> FrequencyCode::getCode(const unsigned id) const {
+vector<bool> FrequencyCode::getCode(const unsigned id) const {
+  NMTKIT_CHECK(id < vocab_size_, "id should be less than vocab_size.");
   const unsigned code = wid_to_code_[id];
-  vector<float> result(num_bits_);
+  vector<bool> result(num_bits_);
   for (unsigned i = 0; i < num_bits_; ++i) {
-    result[i] = static_cast<float>((code >> i) & 1);
+    result[i] = !!((code >> i) & 1);
   }
   return result;
 }
 
-unsigned FrequencyCode::getID(const vector<float> & probs) const {
+unsigned FrequencyCode::getID(const vector<bool> & code) const {
   unsigned result = 0;
   for (unsigned i = 0; i < num_bits_; ++i) {
-    result |= static_cast<unsigned>(probs[i] >= 0.5f) << i;
+    result |= static_cast<unsigned>(!!code[i]) << i;
   }
-  return result < vocab_size_ ? code_to_wid_[result] : 0;
+  return result < vocab_size_ ? code_to_wid_[result] : BinaryCode::INVALID_CODE;
 }
 
 unsigned FrequencyCode::getNumBits() const {
@@ -53,3 +55,4 @@ unsigned FrequencyCode::getNumBits() const {
 
 }  // namespace nmtkit
 
+NMTKIT_SERIALIZATION_IMPL(nmtkit::FrequencyCode);

@@ -32,12 +32,14 @@ public:
   //   target_ids: Target word IDs for all outputs.
   //   scores: List of the expression object which represents score values
   //                for all outputs.
+  //   cg: Target computation graph.
   //
   // Returns:
   //   Expression object of the total loss value.
   virtual dynet::expr::Expression computeLoss(
       const std::vector<std::vector<unsigned>> & target_ids,
-      const std::vector<dynet::expr::Expression> & scores) = 0;
+      const std::vector<dynet::expr::Expression> & scores,
+      dynet::ComputationGraph * cg) = 0;
 
   // Predicts k-best words using given vector.
   //

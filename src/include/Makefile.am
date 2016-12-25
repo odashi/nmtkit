@@ -8,6 +8,7 @@ nobase_include_HEADERS = \
   nmtkit/bidirectional_encoder.h \
   nmtkit/bilinear_attention.h \
   nmtkit/binary_code.h \
+  nmtkit/binary_code_predictor.h \
   nmtkit/character_vocabulary.h \
   nmtkit/corpus.h \
   nmtkit/decoder.h \

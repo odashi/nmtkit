@@ -2,8 +2,10 @@
 #define NMTKIT_FREQUENCY_CODE_H_
 
 #include <boost/serialization/base_object.hpp>
+#include <boost/serialization/vector.hpp>
 #include <nmtkit/binary_code.h>
 #include <nmtkit/vocabulary.h>
+#include <nmtkit/serialization_utils.h>
 
 namespace nmtkit {
 
@@ -22,12 +24,12 @@ public:
   //
   // Arguments:
   //   vocab: Vocabulary object for the target language.
-  FrequencyCode(const Vocabulary & vocab);
+  explicit FrequencyCode(const Vocabulary & vocab);
 
   ~FrequencyCode() override {};
 
-  std::vector<float> getCode(const unsigned id) const override;
-  unsigned getID(const std::vector<float> & probs) const override;
+  std::vector<bool> getCode(const unsigned id) const override;
+  unsigned getID(const std::vector<bool> & code) const override;
   unsigned getNumBits() const override;
 
 private:
@@ -49,5 +51,7 @@ private:
 };
 
 }  // namespace nmtkit
+
+NMTKIT_SERIALIZATION_DECL(nmtkit::FrequencyCode);
 
 #endif  // NMTKIT_FREQUENCY_CODE_H_

@@ -18,7 +18,8 @@ SoftmaxPredictor::SoftmaxPredictor(unsigned vocab_size)
 
 DE::Expression SoftmaxPredictor::computeLoss(
     const vector<vector<unsigned>> & target_ids,
-    const vector<DE::Expression> & scores) {
+    const vector<DE::Expression> & scores,
+    dynet::ComputationGraph * /*cg*/) {
   NMTKIT_CHECK_EQ(
       target_ids.size(), scores.size() + 1,
       "Mismatched lengths of `target_ids` and `scores`.");

@@ -15,6 +15,7 @@ libnmtkit_la_SOURCES = \
   batch_converter.cc \
   bidirectional_encoder.cc \
   bilinear_attention.cc \
+  binary_code_predictor.cc \
   character_vocabulary.cc \
   decoder.cc \
   default_decoder.cc \
