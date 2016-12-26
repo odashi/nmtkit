@@ -3,10 +3,8 @@
 
 #include <string>
 #include <vector>
-#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/serialization/access.hpp>
-#include <boost/serialization/scoped_ptr.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
@@ -17,7 +15,6 @@
 #include <nmtkit/decoder.h>
 #include <nmtkit/encoder.h>
 #include <nmtkit/inference_graph.h>
-#include <nmtkit/multilayer_perceptron.h>
 #include <nmtkit/serialization_utils.h>
 #include <nmtkit/predictor.h>
 
@@ -40,20 +37,18 @@ public:
   //   decoder: Pointer to the Decoder object.
   //   attention: Pointer to the Attention object.
   //   predictor: Pointer to the Predictor object.
-  //   model: Model object for training.
   EncoderDecoder(
       boost::shared_ptr<Encoder> & encoder,
       boost::shared_ptr<Decoder> & decoder,
       boost::shared_ptr<Attention> & attention,
-      boost::shared_ptr<Predictor> & predictor,
-      dynet::Model * model);
+      boost::shared_ptr<Predictor> & predictor);
 
   // Constructs computation graph for the batch data.
   //
   // Arguments:
   //   batch: Batch data to be trained.
   //   dropout_ratio: Dropout probability.
-  //   cg: Target computation graph.
+  //   cg: Computation graph.
   //
   // Returns:
   //   dynet::Expression object representing total loss value.
@@ -91,7 +86,7 @@ private:
   //   max_length: Maximum number of words (except "<s>") to be generated.
   //   beam_width: Beam width.
   //   word_penalty: Word penalty.
-  //   cg: Target computation graph.
+  //   cg: Computation graph.
   //
   // Returns:
   //   Inference graph representing the decoder results.
@@ -110,14 +105,12 @@ private:
     ar & encoder_;
     ar & decoder_;
     ar & attention_;
-    ar & dec2logit_;
     ar & predictor_;
   }
 
   boost::shared_ptr<Encoder> encoder_;
   boost::shared_ptr<Decoder> decoder_;
   boost::shared_ptr<Attention> attention_;
-  boost::scoped_ptr<MultilayerPerceptron> dec2logit_;
   boost::shared_ptr<Predictor> predictor_;
 };
 

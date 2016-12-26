@@ -36,10 +36,10 @@ public:
   // Prepares precomputed values.
   //
   // Arguments:
-  //   cg: Target computation graph.
+  //   cg: Computation graph.
   void prepare(dynet::ComputationGraph * cg);
 
-  // Constructs computation graph.
+  // Performs forward calculation.
   //
   // Arguments:
   //   input: input expression.

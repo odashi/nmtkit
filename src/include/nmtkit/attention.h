@@ -25,7 +25,7 @@ public:
   // Arguments:
   //   memories: List of input memory arrays. All expression should be a vector
   //             with same number of units.
-  //   cg: Target computation graph.
+  //   cg: Computation graph.
   virtual void prepare(
       const std::vector<dynet::expr::Expression> & memories,
       dynet::ComputationGraph * cg) = 0;

@@ -70,6 +70,7 @@ public:
   // Arguments:
   //   config: ptree object with correctly-defined options.
   //   vocab: Vocabulary object of the target language.
+  //   decoder: Decoder object.
   //   model: Model object for training.
   //
   // Returns:
@@ -77,6 +78,7 @@ public:
   static boost::shared_ptr<Predictor> createPredictor(
       const boost::property_tree::ptree & config,
       const Vocabulary & vocab,
+      const Decoder & decoder,
       dynet::Model * model);
 };
 
