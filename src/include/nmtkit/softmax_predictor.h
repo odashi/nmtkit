@@ -37,7 +37,8 @@ public:
 
   dynet::expr::Expression computeLoss(
       const dynet::expr::Expression & input,
-      const std::vector<unsigned> & target_ids) override;
+      const std::vector<unsigned> & target_ids,
+      dynet::ComputationGraph * cg) override;
 
   std::vector<Predictor::Result> predictKBest(
       const dynet::expr::Expression & input,

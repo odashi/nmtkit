@@ -26,7 +26,8 @@ void SoftmaxPredictor::prepare(dynet::ComputationGraph * cg) {
 
 DE::Expression SoftmaxPredictor::computeLoss(
     const DE::Expression & input,
-    const vector<unsigned> & target_ids) {
+    const vector<unsigned> & target_ids,
+    dynet::ComputationGraph * /*cg*/) {
   const DE::Expression score = converter_.compute(input);
   return DE::pickneglogsoftmax(score, target_ids);
 }

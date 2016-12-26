@@ -62,7 +62,7 @@ Expression EncoderDecoder::buildTrainGraph(
     state = decoder_->oneStep(
         state, batch.target_ids[i], attention_.get(), cg, nullptr, &out_embed);
     losses.emplace_back(
-        predictor_->computeLoss(out_embed, batch.target_ids[i + 1]));
+        predictor_->computeLoss(out_embed, batch.target_ids[i + 1], cg));
   }
 
   // Calculates integrated loss value.

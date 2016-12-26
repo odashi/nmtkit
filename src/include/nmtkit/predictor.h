@@ -37,12 +37,14 @@ public:
   // Arguments:
   //   input: Expression object representing input vector.
   //   target_ids: Target word IDs.
+  //   cg: Computation graph.
   //
   // Returns:
   //   Expression object representing loss values.
   virtual dynet::expr::Expression computeLoss(
       const dynet::expr::Expression & input,
-      const std::vector<unsigned> & target_ids) = 0;
+      const std::vector<unsigned> & target_ids,
+      dynet::ComputationGraph * cg) = 0;
 
   // Predicts k-best words.
   //
