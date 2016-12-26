@@ -7,6 +7,7 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <nmtkit/binary_code.h>
+#include <nmtkit/multilayer_perceptron.h>
 #include <nmtkit/predictor.h>
 #include <nmtkit/serialization_utils.h>
 
@@ -26,27 +27,32 @@ public:
   // Initializes the predictor.
   //
   // Arguments:
+  //   input_size: Number of units in the input vector.
   //   bc: Pointer to a BinaryCode object.
-  explicit BinaryCodePredictor(boost::shared_ptr<BinaryCode> & bc);
+  //   model: Model object for training.
+  BinaryCodePredictor(
+      const unsigned input_size,
+      boost::shared_ptr<BinaryCode> & bc,
+      dynet::Model * model);
 
   ~BinaryCodePredictor() override {}
 
+  void prepare(dynet::ComputationGraph * cg) override;
+
   dynet::expr::Expression computeLoss(
-      const std::vector<std::vector<unsigned>> & target_ids,
-      const std::vector<dynet::expr::Expression> & scores,
+      const dynet::expr::Expression & input,
+      const std::vector<unsigned> & target_ids,
       dynet::ComputationGraph * cg) override;
 
   std::vector<Predictor::Result> predictKBest(
-      const dynet::expr::Expression & score,
-      unsigned num_results,
+      const dynet::expr::Expression & input,
+      const unsigned num_results,
       dynet::ComputationGraph * cg) override;
 
   std::vector<Predictor::Result> predictByIDs(
-      const dynet::expr::Expression & score,
+      const dynet::expr::Expression & input,
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) override;
-
-  unsigned getScoreSize() const override;
 
 private:
   // Boost serialization interface.
@@ -55,9 +61,11 @@ private:
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Predictor>(*this);
     ar & bc_;
+    ar & converter_;
   }
 
   boost::shared_ptr<BinaryCode> bc_;
+  MultilayerPerceptron converter_;
 };
 
 }  // namespace nmtkit

@@ -12,52 +12,48 @@ namespace DE = dynet::expr;
 
 namespace nmtkit {
 
-BinaryCodePredictor::BinaryCodePredictor(boost::shared_ptr<BinaryCode> & bc)
-: bc_(bc) {}
+BinaryCodePredictor::BinaryCodePredictor(
+    const unsigned input_size,
+    boost::shared_ptr<BinaryCode> & bc,
+    dynet::Model * model)
+: bc_(bc)
+, converter_({input_size, bc->getNumBits()}, model) {}
+
+void BinaryCodePredictor::prepare(dynet::ComputationGraph * cg) {
+  converter_.prepare(cg);
+}
 
 DE::Expression BinaryCodePredictor::computeLoss(
-    const vector<vector<unsigned>> & target_ids,
-    const vector<DE::Expression> & scores,
+    const DE::Expression & input,
+    const vector<unsigned> & target_ids,
     dynet::ComputationGraph * cg) {
-  NMTKIT_CHECK_EQ(
-      target_ids.size(), scores.size() + 1,
-      "Mismatches lengths of `target_ids` and `scores`");
-
-  const unsigned batch_size = target_ids[0].size();
-  const unsigned target_len = scores.size();
+  const unsigned batch_size = target_ids.size();
   const unsigned num_bits = bc_->getNumBits();
 
-  vector<DE::Expression> losses;
-
-  for (unsigned i = 0; i < target_len; ++i) {
-    // Retrieves target bits.
-    vector<float> target_bits(batch_size * num_bits);
-    for (unsigned j = 0; j < batch_size; ++j) {
-      const vector<bool> code = bc_->getCode(target_ids[i + 1][j]);
-      const unsigned offset = j * num_bits;
-      for (unsigned k = 0; k < num_bits; ++k) {
-        target_bits[offset + k] = static_cast<float>(code[k]);
-      }
+  // Retrieves target bits.
+  vector<float> target_bits(batch_size * num_bits);
+  for (unsigned b = 0; b < batch_size; ++b) {
+    const vector<bool> code = bc_->getCode(target_ids[b]);
+    const unsigned offset = b * num_bits;
+    for (unsigned n = 0; n < num_bits; ++n) {
+      target_bits[offset + n] = static_cast<float>(code[n]);
     }
-
-    // Calculates losses.
-    const DE::Expression output_expr = DE::logistic(scores[i]);
-    const DE::Expression target_expr = DE::input(*cg, {num_bits}, target_bits);
-    losses.emplace_back(DE::squared_distance(output_expr, target_expr));
   }
 
-  // Integrates all losses.
-  return DE::sum_batches(DE::sum(losses));
+  // Calculates losses.
+  const DE::Expression output_expr = DE::logistic(converter_.compute(input));
+  const DE::Expression target_expr = DE::input(*cg, {num_bits}, target_bits);
+  return DE::squared_distance(output_expr, target_expr);
 }
 
 vector<Predictor::Result> BinaryCodePredictor::predictKBest(
-    const DE::Expression & score,
-    unsigned num_results,
+    const DE::Expression & input,
+    const unsigned num_results,
     dynet::ComputationGraph * cg) {
   const unsigned num_bits = bc_->getNumBits();
 
   const vector<dynet::real> logits = dynet::as_vector(
-      cg->incremental_forward(score));
+      cg->incremental_forward(converter_.compute(input)));
   vector<bool> best_code(num_bits);
   float best_log_prob = 0.0f;
   //vector<vector<float>> log_probs(num_bits, {0, 0});
@@ -81,14 +77,14 @@ vector<Predictor::Result> BinaryCodePredictor::predictKBest(
 }
 
 vector<Predictor::Result> BinaryCodePredictor::predictByIDs(
-    const DE::Expression & score,
+    const DE::Expression & input,
     const vector<unsigned> word_ids,
     dynet::ComputationGraph * cg) {
   const unsigned num_bits = bc_->getNumBits();
 
   const vector<dynet::real> logits = dynet::as_vector(
-      cg->incremental_forward(score));
-  vector<vector<float>> log_probs(num_bits, {0, 0});
+      cg->incremental_forward(converter_.compute(input)));
+  vector<vector<float>> log_probs(num_bits, {0.0f, 0.0f});
   for (unsigned i = 0; i < num_bits; ++i) {
     const float x = static_cast<float>(logits[i]);
     if (x >= 0.0f) {
@@ -111,10 +107,6 @@ vector<Predictor::Result> BinaryCodePredictor::predictByIDs(
   }
 
   return results;
-}
-
-unsigned BinaryCodePredictor::getScoreSize() const {
-  return bc_->getNumBits();
 }
 
 }  // namespace nmtkit

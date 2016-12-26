@@ -4,6 +4,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <nmtkit/predictor.h>
+#include <nmtkit/multilayer_perceptron.h>
 #include <nmtkit/serialization_utils.h>
 
 namespace nmtkit {
@@ -22,27 +23,32 @@ public:
   // Initializes the predictor.
   //
   // Arguments:
+  //   input_size: Number of units in the input vector.
   //   vocab_size: Vocabulary size of the target language.
-  SoftmaxPredictor(unsigned vocab_size);
+  //   model: Model object for training.
+  SoftmaxPredictor(
+      const unsigned input_size,
+      const unsigned vocab_size,
+      dynet::Model * model);
 
   ~SoftmaxPredictor() override {}
 
+  void prepare(dynet::ComputationGraph * cg) override;
+
   dynet::expr::Expression computeLoss(
-      const std::vector<std::vector<unsigned>> & target_ids,
-      const std::vector<dynet::expr::Expression> & scores,
+      const dynet::expr::Expression & input,
+      const std::vector<unsigned> & target_ids,
       dynet::ComputationGraph * cg) override;
 
   std::vector<Predictor::Result> predictKBest(
-      const dynet::expr::Expression & score,
-      unsigned num_results,
+      const dynet::expr::Expression & input,
+      const unsigned num_results,
       dynet::ComputationGraph * cg) override;
 
   std::vector<Predictor::Result> predictByIDs(
-      const dynet::expr::Expression & score,
+      const dynet::expr::Expression & input,
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) override;
-
-  unsigned getScoreSize() const { return vocab_size_; }
 
 private:
   // Boost serialization interface.
@@ -51,9 +57,11 @@ private:
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Predictor>(*this);
     ar & vocab_size_;
+    ar & converter_;
   }
 
   unsigned vocab_size_;
+  MultilayerPerceptron converter_;
 };
 
 }  // namespace nmtkit

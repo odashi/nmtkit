@@ -7,3 +7,6 @@
 [submodule "submodules/spdlog"]
 	path = submodules/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "submodules/google_styleguide"]
+	path = submodules/google_styleguide
+	url = https://github.com/google/styleguide

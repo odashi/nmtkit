@@ -33,7 +33,7 @@ public:
   // Arguments:
   //   seed: Seed values of initial states, e.g., final encoder states.
   //   dropout_ratio: Dropout probability.
-  //   cg: Target computation graph.
+  //   cg: Computation graph.
   //
   // Returns:
   //   Initial state of the decoder.
@@ -48,7 +48,7 @@ public:
   //   state: Previous decoder state.
   //   input_ids: List of input symbols in the current step.
   //   attention: Attention object.
-  //   cg: Target computation graph.
+  //   cg: Computation graph.
   //   atten_probs: Placeholder of the attention probability vector. If the
   //                value is nullptr, this argument would be ignored.
   //   output: Placeholder of the output embedding. If the value is nullptr,

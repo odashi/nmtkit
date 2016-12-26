@@ -27,15 +27,18 @@ EncoderDecoder::EncoderDecoder(
     boost::shared_ptr<Decoder> & decoder,
     boost::shared_ptr<Attention> & attention,
     boost::shared_ptr<Predictor> & predictor,
-    dynet::Model * model)
+    const string & loss_integration_type)
 : encoder_(encoder)
 , decoder_(decoder)
 , attention_(attention)
 , predictor_(predictor) {
-  // Output projection.
-  dec2logit_.reset(
-      new MultilayerPerceptron(
-          {decoder_->getOutputSize(), predictor_->getScoreSize()}, model));
+  if (loss_integration_type == "sum") {
+    mean_by_samples_ = false;
+  } else if (loss_integration_type == "mean") {
+    mean_by_samples_ = true;
+  } else {
+    NMTKIT_FATAL("Invalid loss_integration_type: " + loss_integration_type);
+  }
 }
 
 Expression EncoderDecoder::buildTrainGraph(
@@ -49,19 +52,25 @@ Expression EncoderDecoder::buildTrainGraph(
 
   // Decode
   attention_->prepare(enc_outputs, cg);
-  dec2logit_->prepare(cg);
+  predictor_->prepare(cg);
   Decoder::State state = decoder_->prepare(
       encoder_->getStates(), dropout_ratio, cg);
-  vector<Expression> logits;
+  vector<Expression> losses;
 
   for (unsigned i = 0; i < batch.target_ids.size() - 1; ++i) {
     Expression out_embed;
     state = decoder_->oneStep(
         state, batch.target_ids[i], attention_.get(), cg, nullptr, &out_embed);
-    logits.emplace_back(dec2logit_->compute(out_embed));
+    losses.emplace_back(
+        predictor_->computeLoss(out_embed, batch.target_ids[i + 1], cg));
   }
 
-  return predictor_->computeLoss(batch.target_ids, logits, cg);
+  // Calculates integrated loss value.
+  float loss_divisor = 1.0f;
+  if (mean_by_samples_) {
+    loss_divisor *= batch.source_ids[0].size();
+  }
+  return DE::sum_batches(DE::sum(losses)) / loss_divisor;
 }
 
 InferenceGraph EncoderDecoder::beamSearch(
@@ -121,11 +130,10 @@ InferenceGraph EncoderDecoder::beamSearch(
         }
 
         // Predict next words.
-        const Expression logit = dec2logit_->compute(out_embed);
         const vector<Predictor::Result> kbest =
             length < max_length ?
-            predictor_->predictKBest(logit, beam_width, cg) :  // k-best words
-            predictor_->predictByIDs(logit, {eos_id}, cg);  // only "</s>"
+            predictor_->predictKBest(out_embed, beam_width, cg) :  // k-best
+            predictor_->predictByIDs(out_embed, {eos_id}, cg);  // "</s>"
 
         // Make next candidates.
         for (const Predictor::Result & res : kbest) {
@@ -195,7 +203,7 @@ InferenceGraph EncoderDecoder::infer(
 
   // Infer output words
   attention_->prepare(enc_outputs, &cg);
-  dec2logit_->prepare(&cg);
+  predictor_->prepare(&cg);
   return beamSearch(
       bos_id, eos_id, max_length, beam_width, word_penalty, &cg);
 }

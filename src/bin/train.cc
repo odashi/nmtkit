@@ -420,9 +420,10 @@ int main(int argc, char * argv[]) {
     auto decoder = nmtkit::Factory::createDecoder(
         config, *trg_vocab, *encoder, &model);
     auto predictor = nmtkit::Factory::createPredictor(
-        config, *trg_vocab, &model);
+        config, *trg_vocab, *decoder, &model);
     nmtkit::EncoderDecoder encdec(
-        encoder, decoder, attention, predictor, &model);
+        encoder, decoder, attention, predictor,
+        config.get<string>("Train.loss_integration_type"));
     logger->info("Created new encoder-decoder model.");
 
     const string lr_decay_type = config.get<string>("Train.lr_decay_type");
