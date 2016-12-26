@@ -26,11 +26,19 @@ EncoderDecoder::EncoderDecoder(
     boost::shared_ptr<Encoder> & encoder,
     boost::shared_ptr<Decoder> & decoder,
     boost::shared_ptr<Attention> & attention,
-    boost::shared_ptr<Predictor> & predictor)
+    boost::shared_ptr<Predictor> & predictor,
+    const string & loss_integration_type)
 : encoder_(encoder)
 , decoder_(decoder)
 , attention_(attention)
 , predictor_(predictor) {
+  if (loss_integration_type == "sum") {
+    mean_by_samples_ = false;
+  } else if (loss_integration_type == "mean") {
+    mean_by_samples_ = true;
+  } else {
+    NMTKIT_FATAL("Invalid loss_integration_type: " + loss_integration_type);
+  }
 }
 
 Expression EncoderDecoder::buildTrainGraph(
@@ -57,7 +65,12 @@ Expression EncoderDecoder::buildTrainGraph(
         predictor_->computeLoss(out_embed, batch.target_ids[i + 1]));
   }
 
-  return DE::sum_batches(DE::sum(losses));
+  // Calculates integrated loss value.
+  float loss_divisor = 1.0f;
+  if (mean_by_samples_) {
+    loss_divisor *= batch.source_ids[0].size();
+  }
+  return DE::sum_batches(DE::sum(losses)) / loss_divisor;
 }
 
 InferenceGraph EncoderDecoder::beamSearch(

@@ -37,11 +37,17 @@ public:
   //   decoder: Pointer to the Decoder object.
   //   attention: Pointer to the Attention object.
   //   predictor: Pointer to the Predictor object.
+  //   loss_integration_type:
+  //     Name of the strategy to integrate loss values.
+  //     Available values:
+  //       'sum': Sum all losses.
+  //       'mean': Sum all losses, then divides by batch size.
   EncoderDecoder(
       boost::shared_ptr<Encoder> & encoder,
       boost::shared_ptr<Decoder> & decoder,
       boost::shared_ptr<Attention> & attention,
-      boost::shared_ptr<Predictor> & predictor);
+      boost::shared_ptr<Predictor> & predictor,
+      const std::string & loss_integration_type);
 
   // Constructs computation graph for the batch data.
   //
@@ -102,12 +108,14 @@ private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
+    ar & mean_by_samples_;
     ar & encoder_;
     ar & decoder_;
     ar & attention_;
     ar & predictor_;
   }
 
+  bool mean_by_samples_;
   boost::shared_ptr<Encoder> encoder_;
   boost::shared_ptr<Decoder> decoder_;
   boost::shared_ptr<Attention> attention_;
