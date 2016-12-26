@@ -34,7 +34,7 @@ DE::Expression SoftmaxPredictor::computeLoss(
 
 vector<Predictor::Result> SoftmaxPredictor::predictKBest(
     const DE::Expression & input,
-    unsigned num_results,
+    const unsigned num_results,
     dynet::ComputationGraph * cg) {
   NMTKIT_CHECK(
       num_results <= vocab_size_,
