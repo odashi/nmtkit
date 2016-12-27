@@ -438,22 +438,28 @@ int main(int argc, char * argv[]) {
     float lr_decay = 1.0f;
     const float lr_decay_ratio = config.get<float>("Train.lr_decay_ratio");
 
-    // Train/dev/test loop
     const float dropout_ratio = config.get<float>("Train.dropout_ratio");
     const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
+
     const string evaluation_type = config.get<string>("Train.evaluation_type");
     const unsigned eval_interval = config.get<unsigned>(
         "Train.evaluation_interval");
     unsigned long num_trained_samples = 0;
     unsigned long num_trained_words = 0;
     unsigned long next_eval_words = eval_interval;
+    unsigned long next_eval_samples = eval_interval;
+    if (evaluation_type == "epoch") {
+      next_eval_samples = eval_interval * corpus_size;
+    } else if (evaluation_type == "sample") {
+      next_eval_samples = eval_interval;
+    }
     auto next_eval_time = 
         std::chrono::system_clock::to_time_t(
         (std::chrono::system_clock::now() + std::chrono::minutes(eval_interval)));
     auto training_start_time = std::chrono::system_clock::now();
     auto epoch_start_time = std::chrono::system_clock::now();
     unsigned long next_epoch_samples = corpus_size;
-    unsigned long next_eval_samples = eval_interval * corpus_size;
+
     float best_dev_log_ppl = 1e100;
     float best_dev_bleu = -1e100;
     logger->info("Start training.");
@@ -477,7 +483,7 @@ int main(int argc, char * argv[]) {
           train_sampler.rewind();
         }
 
-        const string fmt_str = "Trained: batch=%d samples=%d words=%d lr=%.6e";
+        const string fmt_str = "Trained: batch=%d samples=%d current-proc-words=%d lr=%.6e";
         const auto fmt = boost::format(fmt_str)
             % iteration % num_trained_samples % num_trained_words % lr_decay;
         logger->info(fmt.str());
@@ -492,7 +498,7 @@ int main(int argc, char * argv[]) {
         auto elapsed_time = std::chrono::system_clock::now() - epoch_start_time;
         auto elapsed_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
         const auto fmt_epoch_time = boost::format(
-                "Epoch finished: elapsed-time=%d") % elapsed_time_seconds;
+                "Epoch finished: elapsed-time(sec)=%d") % elapsed_time_seconds;
         logger->info(fmt_epoch_time.str());
         epoch_start_time = std::chrono::system_clock::now();
       }
@@ -501,9 +507,13 @@ int main(int argc, char * argv[]) {
           (evaluation_type == "word" and num_trained_words >= next_eval_words) or
           (evaluation_type == "time" and 
            std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) >= next_eval_time) or
-          (evaluation_type == "epoch" and num_trained_samples >= next_eval_samples)) {
+          ((evaluation_type == "epoch" or evaluation_type == "sample") and num_trained_samples >= next_eval_samples)) {
         next_eval_words += eval_interval;
-        next_eval_samples += eval_interval * corpus_size;
+        if (evaluation_type == "epoch") {
+          next_eval_samples += eval_interval * corpus_size;
+        } else if (evaluation_type == "sample") {
+          next_eval_samples += eval_interval;
+        }
         auto elapsed_time = std::chrono::system_clock::now() - training_start_time;
         auto elapsed_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
         auto eval_start_time = std::chrono::system_clock::now();
@@ -513,28 +523,28 @@ int main(int argc, char * argv[]) {
         const float dev_log_ppl = ::evaluateLogPerplexity(
             encdec, dev_sampler, batch_converter);
         const auto fmt_dev_log_ppl = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time=%d dev-log-ppl=%.6e")
+            "Evaluated: batch=%d current-proc-words=%d elapsed-time(sec)=%d dev-log-ppl=%.6e")
             % iteration % num_trained_words % elapsed_time_seconds % dev_log_ppl;
         logger->info(fmt_dev_log_ppl.str());
 
         const float dev_bleu = ::evaluateBLEU(
             *trg_vocab, encdec, dev_sampler, train_max_length);
         const auto fmt_dev_bleu = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time=%d dev-bleu=%.6f")
+            "Evaluated: batch=%d current-proc-words=%d elapsed-time(sec)=%d dev-bleu=%.6f")
             % iteration % num_trained_words % elapsed_time_seconds % dev_bleu;
         logger->info(fmt_dev_bleu.str());
 
         const float test_log_ppl = ::evaluateLogPerplexity(
             encdec, test_sampler, batch_converter);
         const auto fmt_test_log_ppl = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time=%d test-log-ppl=%.6e")
+            "Evaluated: batch=%d current-proc-words=%d elapsed-time(sec)=%d test-log-ppl=%.6e")
             % iteration % num_trained_words % elapsed_time_seconds % test_log_ppl;
         logger->info(fmt_test_log_ppl.str());
 
         const float test_bleu = ::evaluateBLEU(
             *trg_vocab, encdec, test_sampler, train_max_length);
         const auto fmt_test_bleu = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time=%d test-bleu=%.6f")
+            "Evaluated: batch=%d current-proc-words=%d elapsed-time(sec)=%d test-bleu=%.6f")
             % iteration % num_trained_words % elapsed_time_seconds % test_bleu;
         logger->info(fmt_test_bleu.str());
 
