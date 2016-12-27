@@ -419,6 +419,7 @@ int main(int argc, char * argv[]) {
 
     // Creates a new trainer.
     boost::scoped_ptr<dynet::Trainer> trainer(::createTrainer(config, &model));
+    trainer->sparse_updates_enabled = false;
     logger->info("Created new trainer.");
 
     // Create a new encoder-decoder model.
