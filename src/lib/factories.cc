@@ -108,11 +108,13 @@ boost::shared_ptr<Attention> Factory::createAttention(
 boost::shared_ptr<Predictor> Factory::createPredictor(
     const boost::property_tree::ptree & config,
     const Vocabulary & vocab,
-    dynet::Model * /*model*/) {
+    const Decoder & decoder,
+    dynet::Model * model) {
   const string name = config.get<string>("Model.predictor_type");
 
   if (name == "softmax") {
-    return boost::shared_ptr<Predictor>(new SoftmaxPredictor(vocab.size()));
+    return boost::shared_ptr<Predictor>(
+        new SoftmaxPredictor(decoder.getOutputSize(), vocab.size(), model));
   }
   NMTKIT_FATAL("Invalid predictor name: " + name);
 }

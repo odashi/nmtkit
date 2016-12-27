@@ -20,8 +20,8 @@ BidirectionalEncoder::BidirectionalEncoder(
 , vocab_size_(vocab_size)
 , embed_size_(embed_size)
 , hidden_size_(hidden_size)
-, rnn_fw_(num_layers, embed_size, hidden_size, model)
-, rnn_bw_(num_layers, embed_size, hidden_size, model) {
+, rnn_fw_(num_layers, embed_size, hidden_size, *model)
+, rnn_bw_(num_layers, embed_size, hidden_size, *model) {
   p_lookup_ = model->add_lookup_parameters(vocab_size_, {embed_size_});
 }
 

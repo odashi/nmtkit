@@ -26,53 +26,55 @@ public:
   Predictor() {}
   virtual ~Predictor() {}
 
-  // Calculates the loss value of given scores.
+  // Prepares the predictor.
   //
   // Arguments:
-  //   target_ids: Target word IDs for all outputs.
-  //   scores: List of the expression object which represents score values
-  //                for all outputs.
+  //   cg: Computation graph.
+  virtual void prepare(dynet::ComputationGraph * cg) = 0;
+
+  // Calculates loss values.
+  //
+  // Arguments:
+  //   input: Expression object representing input vector.
+  //   target_ids: Target word IDs.
+  //   cg: Computation graph.
   //
   // Returns:
-  //   Expression object of the total loss value.
+  //   Expression object representing loss values.
   virtual dynet::expr::Expression computeLoss(
-      const std::vector<std::vector<unsigned>> & target_ids,
-      const std::vector<dynet::expr::Expression> & scores) = 0;
+      const dynet::expr::Expression & input,
+      const std::vector<unsigned> & target_ids,
+      dynet::ComputationGraph * cg) = 0;
 
-  // Predicts k-best words using given vector.
+  // Predicts k-best words.
   //
   // Arguments:
-  //   score: Expression object which describes score values of one output
-  //          layer.
+  //   input: Expression object representing input vector.
   //   num_results: Number of results to be obtained.
-  //   cg: Target computation graph.
+  //   cg: Computation graph.
   //
   // Returns:
   //   List of top-k candidates. The order of elements in the output vector
-  //   would be sorted by the decsending order according to their probabilities.
+  //   would be sorted by the decsending order about their probabilities.
   virtual std::vector<Result> predictKBest(
-      const dynet::expr::Expression & score,
-      unsigned num_results,
+      const dynet::expr::Expression & input,
+      const unsigned num_results,
       dynet::ComputationGraph * cg) = 0;
 
   // Obtains log probabilities of specific word IDs.
   //
   // Arguments:
-  //   score: Expression object which describes score values of one output
-  //          layer.
+  //   input: Expression object representing input vector.
   //   word_ids: Target word IDs.
-  //   cg: Target computation graph.
+  //   cg: Computation graph.
   //
   // Returns:
   //   List of candidates. The order of outputs would be similar to that of
   //   word_ids.
   virtual std::vector<Result> predictByIDs(
-      const dynet::expr::Expression & score,
+      const dynet::expr::Expression & input,
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) = 0;
-
-  // Returns size of the input layer.
-  virtual unsigned getScoreSize() const = 0;
 
 private:
   // Boost serialization interface.

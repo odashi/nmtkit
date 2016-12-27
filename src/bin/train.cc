@@ -206,26 +206,26 @@ dynet::Trainer * createTrainer(const PT::ptree & config, dynet::Model * model) {
   const string opt_type = config.get<string>("Train.optimizer_type");
   if (opt_type == "sgd") {
     return new dynet::SimpleSGDTrainer(
-        model,
+        *model,
         config.get<float>("Train.sgd_eta"));
   } else if (opt_type == "momentum") {
     return new dynet::MomentumSGDTrainer(
-        model,
+        *model,
         config.get<float>("Train.sgd_eta"),
         config.get<float>("Train.sgd_momentum"));
   } else if (opt_type == "adagrad") {
     return new dynet::AdagradTrainer(
-        model,
+        *model,
         config.get<float>("Train.adagrad_eta"),
         config.get<float>("Train.adagrad_eps"));
   } else if (opt_type == "adadelta") {
     return new dynet::AdadeltaTrainer(
-        model,
+        *model,
         config.get<float>("Train.adadelta_eps"),
         config.get<float>("Train.adadelta_rho"));
   } else if (opt_type == "adam") {
     return new dynet::AdamTrainer(
-        model,
+        *model,
         config.get<float>("Train.adam_alpha"),
         config.get<float>("Train.adam_beta1"),
         config.get<float>("Train.adam_beta2"),
@@ -427,9 +427,10 @@ int main(int argc, char * argv[]) {
     auto decoder = nmtkit::Factory::createDecoder(
         config, *trg_vocab, *encoder, &model);
     auto predictor = nmtkit::Factory::createPredictor(
-        config, *trg_vocab, &model);
+        config, *trg_vocab, *decoder, &model);
     nmtkit::EncoderDecoder encdec(
-        encoder, decoder, attention, predictor, &model);
+        encoder, decoder, attention, predictor,
+        config.get<string>("Train.loss_integration_type"));
     logger->info("Created new encoder-decoder model.");
 
     const string lr_decay_type = config.get<string>("Train.lr_decay_type");

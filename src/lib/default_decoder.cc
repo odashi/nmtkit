@@ -23,7 +23,7 @@ DefaultDecoder::DefaultDecoder(
 , hidden_size_(hidden_size)
 , seed_size_(seed_size)
 , context_size_(context_size)
-, rnn_(num_layers, embed_size + context_size, hidden_size, model)
+, rnn_(num_layers, embed_size + context_size, hidden_size, *model)
 , p_lookup_(model->add_lookup_parameters(vocab_size, {embed_size}))
 {
   for (unsigned i = 0; i < num_layers; ++i) {
