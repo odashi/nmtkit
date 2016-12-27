@@ -38,14 +38,10 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<BinaryCode>(*this);
-    ar & wid_to_code_;
-    ar & code_to_wid_;
     ar & vocab_size_;
     ar & num_bits_;
   }
 
-  std::vector<unsigned> wid_to_code_;
-  std::vector<unsigned> code_to_wid_;
   unsigned vocab_size_;
   unsigned num_bits_;
 };
