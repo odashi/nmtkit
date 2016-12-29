@@ -42,7 +42,8 @@ DE::Expression BinaryCodePredictor::computeLoss(
 
   // Calculates losses.
   const DE::Expression output_expr = DE::logistic(converter_.compute(input));
-  const DE::Expression target_expr = DE::input(*cg, {num_bits}, target_bits);
+  const DE::Expression target_expr = DE::input(
+      *cg, dynet::Dim({num_bits}, batch_size), target_bits);
   return DE::squared_distance(output_expr, target_expr);
 }
 
