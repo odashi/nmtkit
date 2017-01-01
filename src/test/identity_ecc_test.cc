@@ -18,4 +18,41 @@ BOOST_AUTO_TEST_CASE(CheckNumBits) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(CheckEncoding) {
+  const vector<vector<bool>> inputs {
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {1, 1, 1, 1, 1, 1, 1, 1},
+    {0, 1, 0, 1, 0, 1, 0, 1},
+    {0, 0, 1, 1, 0, 0, 1, 1},
+    {0, 0, 0, 0, 1, 1, 1, 1},
+  };
+
+  IdentityECC ecc;
+  for (unsigned i = 0; i < inputs.size(); ++i) {
+    const vector<bool> observed = ecc.encode(inputs[i]);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        inputs[i].begin(), inputs[i].end(),
+        observed.begin(), observed.end());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(CheckDecoding) {
+  const vector<vector<float>> inputs {
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {1, 1, 1, 1, 1, 1, 1, 1},
+    {0, 1, 0, 1, 0, 1, 0, 1},
+    {0, 0, 1, 1, 0, 0, 1, 1},
+    {0, 0, 0, 0, 1, 1, 1, 1},
+  };
+
+  IdentityECC ecc;
+  for (unsigned i = 0; i < inputs.size(); ++i) {
+    const vector<float> observed = ecc.decode(inputs[i]);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        inputs[i].begin(), inputs[i].end(),
+        observed.begin(), observed.end());
+  }
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()
