@@ -19,6 +19,7 @@ check_PROGRAMS = \
   character_vocabulary_test \
   corpus_test \
   frequency_code_test \
+  identity_ecc_test \
   inference_graph_test \
   monotone_sampler_test \
   random_test \
@@ -31,6 +32,7 @@ TESTS = \
   character_vocabulary_test \
   corpus_test \
   frequency_code_test \
+  identity_ecc_test \
   inference_graph_test \
   monotone_sampler_test \
   random_test \
@@ -42,6 +44,7 @@ batch_converter_test_SOURCES = batch_converter_test.cc
 character_vocabulary_test_SOURCES = character_vocabulary_test.cc
 corpus_test_SOURCES = corpus_test.cc
 frequency_code_test_SOURCES = frequency_code_test.cc
+identity_ecc_test_SOURCES = identity_ecc_test.cc
 inference_graph_test_SOURCES = inference_graph_test.cc
 monotone_sampler_test_SOURCES = monotone_sampler_test.cc
 random_test_SOURCES = random_test.cc

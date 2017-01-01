@@ -7,6 +7,7 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <nmtkit/binary_code.h>
+#include <nmtkit/error_correcting_code.h>
 #include <nmtkit/multilayer_perceptron.h>
 #include <nmtkit/predictor.h>
 #include <nmtkit/serialization_utils.h>
@@ -29,10 +30,12 @@ public:
   // Arguments:
   //   input_size: Number of units in the input vector.
   //   bc: Pointer to a BinaryCode object.
+  //   ecc: Pointer to a ErrorCorrectingCode object.
   //   model: Model object for training.
   BinaryCodePredictor(
       const unsigned input_size,
       boost::shared_ptr<BinaryCode> & bc,
+      boost::shared_ptr<ErrorCorrectingCode> & ecc,
       dynet::Model * model);
 
   ~BinaryCodePredictor() override {}
@@ -60,11 +63,15 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Predictor>(*this);
+    ar & num_bits_;
     ar & bc_;
+    ar & ecc_;
     ar & converter_;
   }
 
+  unsigned num_bits_;
   boost::shared_ptr<BinaryCode> bc_;
+  boost::shared_ptr<ErrorCorrectingCode> ecc_;
   MultilayerPerceptron converter_;
 };
 

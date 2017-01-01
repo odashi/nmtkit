@@ -15,16 +15,19 @@ libnmtkit_la_SOURCES = \
   batch_converter.cc \
   bidirectional_encoder.cc \
   bilinear_attention.cc \
+  binary_code.cc \
   binary_code_predictor.cc \
   character_vocabulary.cc \
   decoder.cc \
   default_decoder.cc \
   encoder.cc \
   encoder_decoder.cc \
+  error_correcting_code.cc \
   factories.cc \
   forward_encoder.cc \
   frequency_code.cc \
   html_formatter.cc \
+  identity_ecc.cc \
   inference_graph.cc \
   init.cc \
   luong_decoder.cc \

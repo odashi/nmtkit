@@ -19,7 +19,51 @@
 
 #include <nmtkit/frequency_code.h>
 
+#include <nmtkit/identity_ecc.h>
+
 using namespace std;
+
+namespace {
+
+// Creates new BinaryCode object.
+//
+// Arguments:
+//   config: ptree object with correctly-defined options.
+//   vocab: Vocabulary object for the target language.
+//
+// Returns:
+//   A shared pointer of BinaryCode object.
+boost::shared_ptr<nmtkit::BinaryCode> createBinaryCode(
+    const boost::property_tree::ptree & config,
+    const nmtkit::Vocabulary & vocab) {
+  const string name = config.get<string>("Model.binary_code_type");
+
+  if (name == "frequency") {
+    return boost::shared_ptr<nmtkit::BinaryCode>(
+        new nmtkit::FrequencyCode(vocab));
+  }
+  NMTKIT_FATAL("Invalid name of binary code: " + name);
+}
+
+// Creates new ErrorCorrectingCode object.
+//
+// Arguments:
+//   config: ptree object with correctly-defined options.
+//
+// Returns:
+//   A shared pointer of ErrorCorrectingCode object.
+boost::shared_ptr<nmtkit::ErrorCorrectingCode> createErrorCorrectingCode(
+    const boost::property_tree::ptree & config) {
+  const string name = config.get<string>("Model.error_correcting_code_type");
+
+  if (name == "identity") {
+    return boost::shared_ptr<nmtkit::ErrorCorrectingCode>(
+        new nmtkit::IdentityECC());
+  }
+  NMTKIT_FATAL("Invalid name of error correcting code: " + name);
+}
+
+}  // namespace
 
 namespace nmtkit {
 
@@ -115,10 +159,11 @@ boost::shared_ptr<Predictor> Factory::createPredictor(
     dynet::Model * model) {
   const string name = config.get<string>("Model.predictor_type");
 
-  if (name == "binary_code") {
-    boost::shared_ptr<BinaryCode> bc(new FrequencyCode(vocab));
+  if (name == "binary") {
+    auto bc = ::createBinaryCode(config, vocab);
+    auto ecc = ::createErrorCorrectingCode(config);
     return boost::shared_ptr<Predictor>(
-        new BinaryCodePredictor(decoder.getOutputSize(), bc, model));
+        new BinaryCodePredictor(decoder.getOutputSize(), bc, ecc, model));
   } else if (name == "softmax") {
     return boost::shared_ptr<Predictor>(
         new SoftmaxPredictor(decoder.getOutputSize(), vocab.size(), model));

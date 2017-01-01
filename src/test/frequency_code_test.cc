@@ -3,11 +3,19 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
+#include <fstream>
+#include <string>
 #include <vector>
 #include <nmtkit/frequency_code.h>
 #include <nmtkit/word_vocabulary.h>
 
-using namespace std;
+using std::ifstream;
+using std::string;
+using std::vector;
+using boost::archive::binary_iarchive;
+using nmtkit::BinaryCode;
+using nmtkit::FrequencyCode;
+using nmtkit::WordVocabulary;
 
 namespace {
 
@@ -17,7 +25,7 @@ const string vocab_filename = "data/small.en.vocab";
 template <class T>
 void loadArchive(const string & filepath, T * obj) {
   ifstream ifs(filepath);
-  boost::archive::binary_iarchive iar(ifs);
+  binary_iarchive iar(ifs);
   iar >> *obj;
 }
 
@@ -31,16 +39,16 @@ BOOST_AUTO_TEST_CASE(CheckNumBits) {
   const vector<unsigned> num_bits {2, 3, 3, 4, 4, 4, 5};
 
   for (unsigned i = 0; i < vocab_sizes.size(); ++i) {
-    nmtkit::WordVocabulary vocab(tok_filename, vocab_sizes[i]);
-    nmtkit::FrequencyCode codec(vocab);
+    WordVocabulary vocab(tok_filename, vocab_sizes[i]);
+    FrequencyCode codec(vocab);
     BOOST_CHECK_EQUAL(num_bits[i], codec.getNumBits());
   }
 }
 
 BOOST_AUTO_TEST_CASE(CheckNumBits2) {
-  nmtkit::WordVocabulary vocab;
+  WordVocabulary vocab;
   ::loadArchive(::vocab_filename, &vocab);
-  nmtkit::FrequencyCode codec(vocab);
+  FrequencyCode codec(vocab);
   BOOST_CHECK_EQUAL(9, codec.getNumBits());
 }
 
@@ -60,9 +68,9 @@ BOOST_AUTO_TEST_CASE(CheckEncoding) {
     {1, 1, 0, 0, 1, 1, 1, 1, 1},
   };
 
-  nmtkit::WordVocabulary vocab;
+  WordVocabulary vocab;
   ::loadArchive(::vocab_filename, &vocab);
-  nmtkit::FrequencyCode codec(vocab);
+  FrequencyCode codec(vocab);
 
   for (unsigned i = 0; i < ids.size(); ++i) {
     const vector<bool> observed = codec.getCode(ids[i]);
@@ -90,13 +98,13 @@ BOOST_AUTO_TEST_CASE(CheckDecoding) {
   };
   const vector<unsigned> expected {
     0, 1, 2, 3, 4, 10, 50, 100, 200, 400, 499,
-    nmtkit::BinaryCode::INVALID_CODE,
-    nmtkit::BinaryCode::INVALID_CODE,
+    BinaryCode::INVALID_CODE,
+    BinaryCode::INVALID_CODE,
   };
 
-  nmtkit::WordVocabulary vocab;
+  WordVocabulary vocab;
   ::loadArchive(::vocab_filename, &vocab);
-  nmtkit::FrequencyCode codec(vocab);
+  FrequencyCode codec(vocab);
 
   for (unsigned i = 0; i < code.size(); ++i) {
     const unsigned observed = codec.getID(code[i]);

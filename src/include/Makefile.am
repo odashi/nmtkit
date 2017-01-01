@@ -13,6 +13,7 @@ nobase_include_HEADERS = \
   nmtkit/corpus.h \
   nmtkit/decoder.h \
   nmtkit/default_decoder.h \
+  nmtkit/error_correcting_code.h \
   nmtkit/encoder.h \
   nmtkit/encoder_decoder.h \
   nmtkit/exception.h \
@@ -21,6 +22,7 @@ nobase_include_HEADERS = \
   nmtkit/forward_encoder.h \
   nmtkit/frequency_code.h \
   nmtkit/html_formatter.h \
+  nmtkit/identity_ecc.h \
   nmtkit/inference_graph.h \
   nmtkit/init.h \
   nmtkit/luong_decoder.h \

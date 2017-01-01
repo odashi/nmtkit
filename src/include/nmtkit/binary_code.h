@@ -6,6 +6,7 @@
 
 namespace nmtkit {
 
+// Base class of word ID to binary code mapper.
 class BinaryCode {
   BinaryCode(const BinaryCode &) = delete;
   BinaryCode(BinaryCode &&) = delete;
