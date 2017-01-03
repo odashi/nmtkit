@@ -27,8 +27,8 @@ public:
     return encoded_probs;
   }
 
-  unsigned getNumBits(const unsigned original_num_bits) const override {
-    return original_num_bits;
+  unsigned getNumBits(const unsigned num_original_bits) const override {
+    return num_original_bits;
   }
 
 private:

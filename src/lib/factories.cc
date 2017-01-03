@@ -19,6 +19,7 @@
 
 #include <nmtkit/frequency_code.h>
 
+#include <nmtkit/convolutional_ecc.h>
 #include <nmtkit/identity_ecc.h>
 
 using namespace std;
@@ -56,7 +57,12 @@ boost::shared_ptr<nmtkit::ErrorCorrectingCode> createErrorCorrectingCode(
     const boost::property_tree::ptree & config) {
   const string name = config.get<string>("Model.error_correcting_code_type");
 
-  if (name == "identity") {
+  if (name == "convolutional") {
+    const unsigned num_registers = config.get<unsigned>(
+        "Model.convolutional_ecc_num_registers");
+    return boost::shared_ptr<nmtkit::ErrorCorrectingCode>(
+        new nmtkit::ConvolutionalECC(num_registers));
+  } else if (name == "identity") {
     return boost::shared_ptr<nmtkit::ErrorCorrectingCode>(
         new nmtkit::IdentityECC());
   }

@@ -63,13 +63,15 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Predictor>(*this);
-    ar & num_bits_;
+    ar & num_original_bits_;
+    ar & num_encoded_bits_;
     ar & bc_;
     ar & ecc_;
     ar & converter_;
   }
 
-  unsigned num_bits_;
+  unsigned num_original_bits_;
+  unsigned num_encoded_bits_;
   boost::shared_ptr<BinaryCode> bc_;
   boost::shared_ptr<ErrorCorrectingCode> ecc_;
   MultilayerPerceptron converter_;

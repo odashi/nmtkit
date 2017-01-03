@@ -17,6 +17,7 @@ check_PROGRAMS = \
   array_test \
   batch_converter_test \
   character_vocabulary_test \
+  convolutional_ecc_test \
   corpus_test \
   frequency_code_test \
   identity_ecc_test \
@@ -30,6 +31,7 @@ TESTS = \
   array_test \
   batch_converter_test \
   character_vocabulary_test \
+  convolutional_ecc_test \
   corpus_test \
   frequency_code_test \
   identity_ecc_test \
@@ -42,6 +44,7 @@ TESTS = \
 array_test_SOURCES = array_test.cc
 batch_converter_test_SOURCES = batch_converter_test.cc
 character_vocabulary_test_SOURCES = character_vocabulary_test.cc
+convolutional_ecc_test_SOURCES = convolutional_ecc_test.cc
 corpus_test_SOURCES = corpus_test.cc
 frequency_code_test_SOURCES = frequency_code_test.cc
 identity_ecc_test_SOURCES = identity_ecc_test.cc

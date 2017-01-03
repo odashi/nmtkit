@@ -41,11 +41,11 @@ public:
   // Retrieves the number of bits in a encoded array.
   //
   // Arguments:
-  //   original_num_bits: Number of bits in an original bit array.
+  //   num_original_bits: Number of bits in an original bit array.
   //
   // Returns:
   //   Number of bits in an encoded array.
-  virtual unsigned getNumBits(const unsigned original_num_bits) const = 0;
+  virtual unsigned getNumBits(const unsigned num_original_bits) const = 0;
 
 private:
   // Boost serialization interface.

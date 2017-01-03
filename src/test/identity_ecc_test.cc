@@ -54,5 +54,4 @@ BOOST_AUTO_TEST_CASE(CheckDecoding) {
   }
 }
 
-
 BOOST_AUTO_TEST_SUITE_END()

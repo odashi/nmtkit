@@ -9,7 +9,6 @@ AM_CXXFLAGS = \
 
 libnmtkit_la_SOURCES = \
   attention.cc \
-  corpus.cc \
   backward_encoder.cc \
   bahdanau_decoder.cc \
   batch_converter.cc \
@@ -18,6 +17,8 @@ libnmtkit_la_SOURCES = \
   binary_code.cc \
   binary_code_predictor.cc \
   character_vocabulary.cc \
+  convolutional_ecc.cc \
+  corpus.cc \
   decoder.cc \
   default_decoder.cc \
   encoder.cc \
