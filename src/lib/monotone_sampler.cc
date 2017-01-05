@@ -45,6 +45,10 @@ vector<Sample> MonotoneSampler::getSamples() {
   return result;
 }
 
+unsigned MonotoneSampler::getNumSamples() {
+  return src_samples_.size();
+}
+
 bool MonotoneSampler::hasSamples() const {
   return current_ < src_samples_.size();
 }

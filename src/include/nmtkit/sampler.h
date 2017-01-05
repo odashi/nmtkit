@@ -26,6 +26,11 @@ public:
   //   List of new samples.
   virtual std::vector<Sample> getSamples() = 0;
 
+  // Rerieves the number of filtered samples.
+  // Returns:
+  //   Number of filtered samples.
+  virtual unsigned getNumSamples() = 0;
+
   // Checks whether or not the sampler has unprocessed samples.
   // Returns:
   //   true if the sampler has more samples, false otherwise.

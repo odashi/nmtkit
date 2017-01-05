@@ -159,6 +159,10 @@ vector<Sample> SortedRandomSampler::getSamples() {
   return result;
 }
 
+unsigned SortedRandomSampler::getNumSamples() {
+  return samples_.size();
+}
+
 bool SortedRandomSampler::hasSamples() const {
   return current_ < positions_.size();
 }
