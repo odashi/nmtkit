@@ -172,6 +172,7 @@ void initializeLogger(
 // Arguments:
 //   corpus_filepath: Location of the corpus file to be analyzed.
 //   vocab_type: Name of the vocabulary type.
+//   unk_frequency: Frequency of unknown word.
 //   vocab_size: Number of entries in the vocabulary.
 //
 // Returns:
@@ -183,11 +184,12 @@ void initializeLogger(
 nmtkit::Vocabulary * createVocabulary(
     const string & corpus_filepath,
     const string & vocab_type,
+    const unsigned unk_frequency,
     const unsigned vocab_size) {
   if (vocab_type == "character") {
-    return new nmtkit::CharacterVocabulary(corpus_filepath, vocab_size);
+    return new nmtkit::CharacterVocabulary(corpus_filepath, unk_frequency, vocab_size);
   } else if (vocab_type == "word") {
-    return new nmtkit::WordVocabulary(corpus_filepath, vocab_size);
+    return new nmtkit::WordVocabulary(corpus_filepath, unk_frequency, vocab_size);
   }
   NMTKIT_FATAL("Invalid vocabulary type: " + vocab_type);
 }
@@ -370,11 +372,13 @@ int main(int argc, char * argv[]) {
         ::createVocabulary(
             config.get<string>("Corpus.train_source"),
             config.get<string>("Model.source_vocabulary_type"),
+            config.get<unsigned>("Model.unk_frequency"),
             config.get<unsigned>("Model.source_vocabulary_size")));
     boost::scoped_ptr<nmtkit::Vocabulary> trg_vocab(
         ::createVocabulary(
             config.get<string>("Corpus.train_target"),
             config.get<string>("Model.target_vocabulary_type"),
+            config.get<unsigned>("Model.unk_frequency"),
             config.get<unsigned>("Model.target_vocabulary_size")));
     ::saveArchive(model_dir / "source.vocab", archive_format, src_vocab);
     ::saveArchive(model_dir / "target.vocab", archive_format, trg_vocab);

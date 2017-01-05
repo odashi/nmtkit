@@ -32,7 +32,7 @@ public:
   // Arguments:
   //   corpus_filename: Location of the corpus file to be analyzed.
   //   size: Size of the vocabulary.
-  CharacterVocabulary(const std::string & corpus_filename, unsigned size);
+  CharacterVocabulary(const std::string & corpus_filename, unsigned unk_frequency, unsigned size);
 
   ~CharacterVocabulary() override {}
 

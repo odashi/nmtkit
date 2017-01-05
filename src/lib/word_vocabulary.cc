@@ -13,8 +13,9 @@ using namespace std;
 
 namespace nmtkit {
 
-WordVocabulary::WordVocabulary(const string & corpus_filename, unsigned size) {
-  NMTKIT_CHECK(size >= 3, "Size should be equal or greater than 3.");
+WordVocabulary::WordVocabulary(const string & corpus_filename, unsigned unk_frequency, unsigned size) {
+  NMTKIT_CHECK(!(unk_frequency == 0 && size == 0), "Either size or unk_frequency must be specified.");
+  NMTKIT_CHECK(unk_frequency > 0 || size >= 3, "Size should be equal or greater than 3.");
   ifstream ifs(corpus_filename);
   NMTKIT_CHECK(
       ifs.is_open(),
@@ -39,7 +40,7 @@ WordVocabulary::WordVocabulary(const string & corpus_filename, unsigned size) {
   // Selects most frequent words.
   vector<pair<unsigned, string>> entries;
   for (const auto & entry : freq) {
-    entries.emplace_back(make_pair(entry.second, entry.first));
+      entries.emplace_back(make_pair(entry.second, entry.first));
   }
   Array::sort(&entries, greater<pair<unsigned, string>>());
 
@@ -53,13 +54,21 @@ WordVocabulary::WordVocabulary(const string & corpus_filename, unsigned size) {
   freq_.emplace_back(num_words);
   freq_.emplace_back(num_lines);
   freq_.emplace_back(num_lines);
-  for (unsigned i = 3; i < size && i - 3 < entries.size(); ++i) {
+
+  unsigned longest_size = size;
+  if (unk_frequency > 0) {
+    longest_size = entries.size();
+  }
+
+  for (unsigned i = 3; i < longest_size && i - 3 < entries.size() && entries[i-3].first > unk_frequency; ++i) {
     const auto & entry = entries[i - 3];
     stoi_[entry.second] = i;
     itos_.emplace_back(entry.second);
     freq_.emplace_back(entry.first);
     freq_[0] -= entry.first;
   }
+
+
 }
 
 unsigned WordVocabulary::getID(const string & word) const {
