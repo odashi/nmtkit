@@ -67,7 +67,7 @@ public:
 
   void rewind() override;
   std::vector<Sample> getSamples() override;
-  int getNumSamples() override;
+  unsigned getNumSamples() override;
   bool hasSamples() const override;
 
 private:

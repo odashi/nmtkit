@@ -29,7 +29,7 @@ public:
   // Rerieves the number of filtered samples.
   // Returns:
   //   Number of filtered samples.
-  virtual int getNumSamples() = 0;
+  virtual unsigned getNumSamples() = 0;
 
   // Checks whether or not the sampler has unprocessed samples.
   // Returns:

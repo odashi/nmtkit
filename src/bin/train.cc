@@ -491,8 +491,8 @@ int main(int argc, char * argv[]) {
         num_trained_words +=  (batch.target_ids.size() - 1) * batch.target_ids[0].size();
         if (!train_sampler.hasSamples()) {
           train_sampler.rewind();
-          auto elapsed_time = std::chrono::system_clock::now() - epoch_start_time;
-          auto elapsed_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
+          const auto elapsed_time = std::chrono::system_clock::now() - epoch_start_time;
+          const auto elapsed_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
           const auto fmt_corpus_time = boost::format(
                   "Corpus finished: elapsed-time(sec)=%d") % elapsed_time_seconds;
           logger->info(fmt_corpus_time.str());

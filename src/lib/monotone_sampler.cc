@@ -45,7 +45,7 @@ vector<Sample> MonotoneSampler::getSamples() {
   return result;
 }
 
-int MonotoneSampler::getNumSamples() {
+unsigned MonotoneSampler::getNumSamples() {
   return src_samples_.size();
 }
 
