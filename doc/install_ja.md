@@ -18,6 +18,7 @@ NMTKitは以下のライブラリに依存しています。
 * **Git**
 * **Mercurial**
 * **autotools**
+* **CMake**
 
 
 Eigenのインストール
@@ -57,7 +58,7 @@ CUDA環境がある場合：
 CUDAとDyNetの共有ライブラリがNMTKitから見える場所に設置されている必要があります。
 以下のようにパスを通す設定を各自のshell-rcなどに記述します。
 
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/cuda
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/cuda/lib64
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/dynet/build/dynet
 
 

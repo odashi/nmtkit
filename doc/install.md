@@ -18,7 +18,8 @@ And the installation process requires following tools:
 
 * **Git**
 * **Mercurial**
-* **autotools**.
+* **autotools**
+* **CMake**.
 
 
 Install Eigen
@@ -59,7 +60,7 @@ All shared libraries of CUDA and DyNet should be visible from the NMTKit
 binaries.
 Add a configuration in your shell-rc file like:
 
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/cuda
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/cuda/lib64
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/dynet/build/dynet
 
 
