@@ -31,8 +31,9 @@ public:
   //
   // Arguments:
   //   corpus_filename: Location of the corpus file to be analyzed.
+  //   unk_frequency: A parameter to which word will be treated as unk.
   //   size: Size of the vocabulary.
-  WordVocabulary(const std::string & corpus_filename, unsigned size);
+  WordVocabulary(const std::string & corpus_filename, unsigned unk_frequency, unsigned size);
 
   ~WordVocabulary() override {}
 
