@@ -27,7 +27,7 @@ public:
 
   void rewind() override;
   std::vector<Sample> getSamples() override;
-  int getCorpusSize() override;
+  int getNumSamples() override;
   bool hasSamples() const override;
 
 private:

@@ -26,10 +26,10 @@ public:
   //   List of new samples.
   virtual std::vector<Sample> getSamples() = 0;
 
-  // Rerieves the size of the corpus.
+  // Rerieves the number of filtered samples.
   // Returns:
-  //   Size of the corpus.
-  virtual int getCorpusSize() = 0;
+  //   Number of filtered samples.
+  virtual int getNumSamples() = 0;
 
   // Checks whether or not the sampler has unprocessed samples.
   // Returns:

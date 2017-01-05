@@ -159,7 +159,7 @@ vector<Sample> SortedRandomSampler::getSamples() {
   return result;
 }
 
-int SortedRandomSampler::getCorpusSize() {
+int SortedRandomSampler::getNumSamples() {
   return samples_.size();
 }
 
