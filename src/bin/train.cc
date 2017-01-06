@@ -450,6 +450,10 @@ int main(int argc, char * argv[]) {
     const float dropout_ratio = config.get<float>("Train.dropout_ratio");
     const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
 
+    const unsigned max_waiting_hour = config.get<unsigned>("Train.max_waiting_hour");
+    auto scheduled_training_finish_time = std::chrono::system_clock::to_time_t(
+        std::chrono::system_clock::now() + std::chrono::hours(max_waiting_hour));
+
     const string eval_type = config.get<string>("Train.evaluation_type");
     const unsigned eval_interval = config.get<unsigned>(
         "Train.evaluation_interval");
@@ -576,6 +580,8 @@ int main(int argc, char * argv[]) {
           FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
           FS::copy_file(model_dir / "latest.model.params", model_path);
           logger->info("Saved 'best_dev_log_ppl' model.");
+          scheduled_training_finish_time = std::chrono::system_clock::to_time_t(
+              std::chrono::system_clock::now() + std::chrono::hours(max_waiting_hour));
         } else {
           if (lr_decay_type == "logppl") {
             lr_decay *= lr_decay_ratio;
@@ -607,6 +613,12 @@ int main(int argc, char * argv[]) {
         next_eval_time = 
             std::chrono::system_clock::to_time_t(
             current_time + std::chrono::minutes(eval_interval));
+      }
+
+      // Training finish check
+      if (max_waiting_hour != 0 and
+        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) >= scheduled_training_finish_time) {
+          break;
       }
     }
 
