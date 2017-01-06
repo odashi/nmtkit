@@ -536,29 +536,29 @@ int main(int argc, char * argv[]) {
         const float dev_log_ppl = ::evaluateLogPerplexity(
             encdec, dev_sampler, batch_converter);
         const auto fmt_dev_log_ppl = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d dev-log-ppl=%.6e")
-            % iteration % num_trained_words % elapsed_time_seconds % dev_log_ppl;
+            "Evaluated: batch=%d samples=%d words=%d elapsed-time(sec)=%d dev-log-ppl=%.6e")
+            % iteration % num_trained_samples % num_trained_words % elapsed_time_seconds % dev_log_ppl;
         logger->info(fmt_dev_log_ppl.str());
 
         const float dev_bleu = ::evaluateBLEU(
             *trg_vocab, encdec, dev_sampler, train_max_length);
         const auto fmt_dev_bleu = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d dev-bleu=%.6f")
-            % iteration % num_trained_words % elapsed_time_seconds % dev_bleu;
+            "Evaluated: batch=%d samples=%d words=%d elapsed-time(sec)=%d dev-bleu=%.6f")
+            % iteration % num_trained_samples % num_trained_words % elapsed_time_seconds % dev_bleu;
         logger->info(fmt_dev_bleu.str());
 
         const float test_log_ppl = ::evaluateLogPerplexity(
             encdec, test_sampler, batch_converter);
         const auto fmt_test_log_ppl = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d test-log-ppl=%.6e")
-            % iteration % num_trained_words % elapsed_time_seconds % test_log_ppl;
+            "Evaluated: batch=%d samples=%d words=%d elapsed-time(sec)=%d test-log-ppl=%.6e")
+            % iteration % num_trained_samples % num_trained_words % elapsed_time_seconds % test_log_ppl;
         logger->info(fmt_test_log_ppl.str());
 
         const float test_bleu = ::evaluateBLEU(
             *trg_vocab, encdec, test_sampler, train_max_length);
         const auto fmt_test_bleu = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d test-bleu=%.6f")
-            % iteration % num_trained_words % elapsed_time_seconds % test_bleu;
+            "Evaluated: batch=%d samples=%d words=%d elapsed-time(sec)=%d test-bleu=%.6f")
+            % iteration % num_trained_samples % num_trained_words % elapsed_time_seconds % test_bleu;
         logger->info(fmt_test_bleu.str());
 
         if (lr_decay_type == "eval") {
