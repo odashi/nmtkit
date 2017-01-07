@@ -29,6 +29,7 @@ vector<bool> FrequencyCode::getCode(const unsigned id) const {
 }
 
 unsigned FrequencyCode::getID(const vector<bool> & code) const {
+  NMTKIT_CHECK_EQ(num_bits_, code.size(), "Invalid length of code.");
   unsigned result = 0;
   for (unsigned i = 0; i < num_bits_; ++i) {
     result |= static_cast<unsigned>(code[i]) << i;

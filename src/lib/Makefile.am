@@ -28,6 +28,7 @@ libnmtkit_la_SOURCES = \
   forward_encoder.cc \
   frequency_code.cc \
   html_formatter.cc \
+  huffman_code.cc \
   identity_ecc.cc \
   inference_graph.cc \
   init.cc \

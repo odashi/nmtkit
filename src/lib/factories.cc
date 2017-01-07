@@ -17,6 +17,7 @@
 #include <nmtkit/binary_code_predictor.h>
 #include <nmtkit/softmax_predictor.h>
 
+#include <nmtkit/huffman_code.h>
 #include <nmtkit/frequency_code.h>
 
 #include <nmtkit/convolutional_ecc.h>
@@ -39,7 +40,10 @@ boost::shared_ptr<nmtkit::BinaryCode> createBinaryCode(
     const nmtkit::Vocabulary & vocab) {
   const string name = config.get<string>("Model.binary_code_type");
 
-  if (name == "frequency") {
+  if (name == "huffman") {
+    return boost::shared_ptr<nmtkit::BinaryCode>(
+        new nmtkit::HuffmanCode(vocab));
+  } else if (name == "frequency") {
     return boost::shared_ptr<nmtkit::BinaryCode>(
         new nmtkit::FrequencyCode(vocab));
   }
