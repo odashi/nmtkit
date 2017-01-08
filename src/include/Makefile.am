@@ -9,6 +9,7 @@ nobase_include_HEADERS = \
   nmtkit/bilinear_attention.h \
   nmtkit/binary_code.h \
   nmtkit/binary_code_predictor.h \
+  nmtkit/binary_code_predictor2.h \
   nmtkit/character_vocabulary.h \
   nmtkit/convolutional_ecc.h \
   nmtkit/corpus.h \

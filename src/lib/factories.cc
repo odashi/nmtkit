@@ -15,6 +15,7 @@
 #include <nmtkit/mlp_attention.h>
 
 #include <nmtkit/binary_code_predictor.h>
+#include <nmtkit/binary_code_predictor2.h>
 #include <nmtkit/softmax_predictor.h>
 
 #include <nmtkit/frequency_code.h>
@@ -170,6 +171,11 @@ boost::shared_ptr<Predictor> Factory::createPredictor(
     auto ecc = ::createErrorCorrectingCode(config);
     return boost::shared_ptr<Predictor>(
         new BinaryCodePredictor(decoder.getOutputSize(), bc, ecc, model));
+  } else if (name == "binary2") {
+    auto bc = ::createBinaryCode(config, vocab);
+    auto ecc = ::createErrorCorrectingCode(config);
+    return boost::shared_ptr<Predictor>(
+        new BinaryCodePredictor2(decoder.getOutputSize(), bc, ecc, model));
   } else if (name == "softmax") {
     return boost::shared_ptr<Predictor>(
         new SoftmaxPredictor(decoder.getOutputSize(), vocab.size(), model));

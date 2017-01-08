@@ -16,6 +16,7 @@ libnmtkit_la_SOURCES = \
   bilinear_attention.cc \
   binary_code.cc \
   binary_code_predictor.cc \
+  binary_code_predictor2.cc \
   character_vocabulary.cc \
   convolutional_ecc.cc \
   corpus.cc \
