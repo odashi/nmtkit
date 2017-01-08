@@ -14,6 +14,20 @@ struct Sample {
   std::vector<unsigned> target;
 };
 
+struct TestSample {
+  // Source sentence with word IDs
+  std::vector<unsigned> source;
+
+  // Target sentence with word IDs.
+  std::vector<unsigned> target;
+
+  // Source sentence string.
+  std::string source_string;
+
+  // Target sentence string.
+  std::string target_string;
+};
+
 struct Batch {
   // Source word ID table with shape (max_source_length, batch_size).
   std::vector<std::vector<unsigned>> source_ids;

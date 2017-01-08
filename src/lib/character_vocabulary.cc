@@ -122,6 +122,15 @@ vector<unsigned> CharacterVocabulary::convertToIDs(
   return ids;
 }
 
+vector<string> CharacterVocabulary::convertToTokens(
+    const string & sentence) const {
+  vector<string> tokens;
+  for (const string & letter : ::convertToLetters(sentence)) {
+    tokens.emplace_back(getWord(getID(letter)));
+  }
+  return tokens;
+}
+
 string CharacterVocabulary::convertToSentence(
     const vector<unsigned> & word_ids) const {
   vector<string> letters;
@@ -129,6 +138,15 @@ string CharacterVocabulary::convertToSentence(
     letters.emplace_back(getWord(word_id));
   }
   return boost::join(letters, "");
+}
+
+vector<string> CharacterVocabulary::convertToTokenizedSentence(
+    const vector<unsigned> & word_ids) const {
+  vector<string> letters;
+  for (const unsigned word_id : word_ids) {
+    letters.emplace_back(getWord(word_id));
+  }
+  return letters;
 }
 
 unsigned CharacterVocabulary::size() const {

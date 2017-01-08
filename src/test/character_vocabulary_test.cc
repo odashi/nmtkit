@@ -120,6 +120,39 @@ BOOST_AUTO_TEST_CASE(CheckConvertingToIDs) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(CheckConvertingToTokens) {
+  nmtkit::CharacterVocabulary vocab;
+  ::loadArchive("data/small.en.char.vocab", &vocab);
+  const vector<string> sentences {
+    "anything that can go wrong , will go wrong .",
+    "there is always light behind the clouds .",
+    "and yet it moves .",
+    "これ は 日本 語 の テスト 文 で す 。",
+  };
+  const vector<vector<string>> expected {
+    {"a", "n", "y", "t", "h", "i", "n", "g", " ", "t", "h", "a",
+     "t", " ", "c", "a", "n", " ", "g", "o", " ", "w", "r", "o",
+     "n", "g", " ", ",", " ", "w", "i", "l", "l", " ", "g", "o",
+     " ", "w", "r", "o", "n", "g", " ", "."},
+    {"t", "h", "e", "r", "e", " ", "i", "s", " ", "a", "l", "w",
+     "a", "y", "s", " ", "l", "i", "g", "h", "t", " ", "b", "e",
+     "h", "i", "n", "d", " ", "t", "h", "e", " ", "c", "l", "o",
+     "u", "d", "s", " ", "."},
+    {"a", "n", "d", " ", "y", "e", "t", " ", "i", "t", " ", "m",
+     "o", "v", "e", "s", " ", "."},
+    {"<unk>", "<unk>", " ", "<unk>", " ", "<unk>", "<unk>", " ",
+     "<unk>", " ", "<unk>", " ", "<unk>", "<unk>", "<unk>", " ",
+     "<unk>", " ", "<unk>", " ", "<unk>", " ", "<unk>"}
+  };
+
+  for (unsigned i = 0; i < sentences.size(); ++i) {
+    vector<string> observed = vocab.convertToTokens(sentences[i]);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected[i].begin(), expected[i].end(),
+        observed.begin(), observed.end());
+  }
+}
+
 BOOST_AUTO_TEST_CASE(CheckConvertingToSentence) {
   nmtkit::CharacterVocabulary vocab;
   ::loadArchive("data/small.en.char.vocab", &vocab);
@@ -146,6 +179,45 @@ BOOST_AUTO_TEST_CASE(CheckConvertingToSentence) {
   for (unsigned i = 0; i < word_ids.size(); ++i) {
     string observed = vocab.convertToSentence(word_ids[i]);
     BOOST_CHECK_EQUAL(expected[i], observed);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(CheckConvertingToTokenizedSentence) {
+  nmtkit::CharacterVocabulary vocab;
+  ::loadArchive("data/small.en.char.vocab", &vocab);
+  const vector<vector<unsigned>> word_ids {
+    { 7, 11, 17,  5,  9,  8, 11, 21,  3,  5,  9,  7,  5,  3, 20,  7,
+     11,  3, 21,  6,  3, 18, 12,  6, 11, 21,  3, 29,  3, 18,  8, 13,
+     13,  3, 21,  6,  3, 18, 12,  6, 11, 21,  3, 14},
+    { 5,  9,  4, 12,  4,  3,  8, 10,  3,  7, 13, 18,  7, 17, 10,  3,
+     13,  8, 21,  9,  5,  3, 24,  4,  9,  8, 11, 15,  3,  5,  9,  4,
+      3, 20, 13,  6, 16, 15, 10,  3, 14},
+    { 7, 11, 15,  3, 17,  4,  5,  3,  8,  5,  3, 19,  6, 26,  4, 10,
+      3, 14},
+    { 0,  0,  3,  0,  3,  0,  0,  3,  0,  3,  0,  3,  0,  0,  0,  3,
+      0,  3,  0,  3,  0,  3,  0},
+  };
+  const vector<vector<string>> expected {
+    {"a", "n", "y", "t", "h", "i", "n", "g", " ", "t", "h", "a",
+     "t", " ", "c", "a", "n", " ", "g", "o", " ", "w", "r", "o",
+     "n", "g", " ", ",", " ", "w", "i", "l", "l", " ", "g", "o",
+     " ", "w", "r", "o", "n", "g", " ", "."},
+    {"t", "h", "e", "r", "e", " ", "i", "s", " ", "a", "l", "w",
+     "a", "y", "s", " ", "l", "i", "g", "h", "t", " ", "b", "e",
+     "h", "i", "n", "d", " ", "t", "h", "e", " ", "c", "l", "o",
+     "u", "d", "s", " ", "."},
+    {"a", "n", "d", " ", "y", "e", "t", " ", "i", "t", " ", "m",
+     "o", "v", "e", "s", " ", "."},
+    {"<unk>", "<unk>", " ", "<unk>", " ", "<unk>", "<unk>", " ",
+     "<unk>", " ", "<unk>", " ", "<unk>", "<unk>", "<unk>", " ",
+     "<unk>", " ", "<unk>", " ", "<unk>", " ", "<unk>"}
+  };
+
+  for (unsigned i = 0; i < word_ids.size(); ++i) {
+    vector<string> observed = vocab.convertToTokenizedSentence(word_ids[i]);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected[i].begin(), expected[i].end(),
+        observed.begin(), observed.end());
   }
 }
 
