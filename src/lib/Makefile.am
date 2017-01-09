@@ -31,6 +31,7 @@ libnmtkit_la_SOURCES = \
   html_formatter.cc \
   huffman_code.cc \
   hybrid_predictor.cc \
+  hybrid_predictor2.cc \
   identity_ecc.cc \
   inference_graph.cc \
   init.cc \

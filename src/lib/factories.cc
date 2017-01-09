@@ -17,6 +17,7 @@
 #include <nmtkit/binary_code_predictor.h>
 #include <nmtkit/binary_code_predictor2.h>
 #include <nmtkit/hybrid_predictor.h>
+#include <nmtkit/hybrid_predictor2.h>
 #include <nmtkit/softmax_predictor.h>
 
 #include <nmtkit/huffman_code.h>
@@ -188,6 +189,14 @@ boost::shared_ptr<Predictor> Factory::createPredictor(
         "Model.hybrid_softmax_size");
     return boost::shared_ptr<Predictor>(
         new HybridPredictor(
+          decoder.getOutputSize(), softmax_size, bc, ecc, model));
+  } else if (name == "hybrid2") {
+    auto bc = ::createBinaryCode(config, vocab);
+    auto ecc = ::createErrorCorrectingCode(config);
+    const unsigned softmax_size = config.get<unsigned>(
+        "Model.hybrid_softmax_size");
+    return boost::shared_ptr<Predictor>(
+        new HybridPredictor2(
           decoder.getOutputSize(), softmax_size, bc, ecc, model));
   } else if (name == "softmax") {
     return boost::shared_ptr<Predictor>(
