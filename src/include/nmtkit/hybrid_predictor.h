@@ -1,5 +1,5 @@
-#ifndef NMTKIT_BINARY_CODE_PREDICTOR_H_
-#define NMTKIT_BINARY_CODE_PREDICTOR_H_
+#ifndef NMTKIT_HYBRID_PREDICTOR_H_
+#define NMTKIT_HYBRID_PREDICTOR_H_
 
 #include <boost/shared_ptr.hpp>
 #include <boost/serialization/access.hpp>
@@ -13,31 +13,33 @@
 
 namespace nmtkit {
 
-// Word predictor using binary code outputs.
-class BinaryCodePredictor : public Predictor {
-  BinaryCodePredictor(const BinaryCodePredictor &) = delete;
-  BinaryCodePredictor(BinaryCodePredictor &&) = delete;
-  BinaryCodePredictor & operator=(const BinaryCodePredictor &) = delete;
-  BinaryCodePredictor & operator=(BinaryCodePredictor &&) = delete;
+// Word predictor using both softmax and binary code outputs.
+class HybridPredictor : public Predictor {
+  HybridPredictor(const HybridPredictor &) = delete;
+  HybridPredictor(HybridPredictor &&) = delete;
+  HybridPredictor & operator=(const HybridPredictor &) = delete;
+  HybridPredictor & operator=(HybridPredictor &&) = delete;
 
 public:
   // Initializes an empty predictor.
-  BinaryCodePredictor() {}
+  HybridPredictor() {}
 
   // Initializes the predictor.
   //
   // Arguments:
   //   input_size: Number of units in the input vector.
+  //   softmax_size: Number of words which would be directly predicted.
   //   bc: Pointer to a BinaryCode object.
   //   ecc: Pointer to a ErrorCorrectingCode object.
   //   model: Model object for training.
-  BinaryCodePredictor(
+  HybridPredictor(
       const unsigned input_size,
+      const unsigned softmax_size,
       boost::shared_ptr<BinaryCode> & bc,
       boost::shared_ptr<ErrorCorrectingCode> & ecc,
       dynet::Model * model);
 
-  ~BinaryCodePredictor() override {}
+  ~HybridPredictor() override {}
 
   void prepare(dynet::ComputationGraph * cg) override;
 
@@ -62,6 +64,7 @@ private:
   template <class Archive>
   void serialize(Archive & ar, const unsigned) {
     ar & boost::serialization::base_object<Predictor>(*this);
+    ar & softmax_size_;
     ar & num_original_bits_;
     ar & num_encoded_bits_;
     ar & bc_;
@@ -69,6 +72,7 @@ private:
     ar & converter_;
   }
 
+  unsigned softmax_size_;
   unsigned num_original_bits_;
   unsigned num_encoded_bits_;
   boost::shared_ptr<BinaryCode> bc_;
@@ -78,6 +82,6 @@ private:
 
 }  // namespace nmtkit
 
-NMTKIT_SERIALIZATION_DECL(nmtkit::BinaryCodePredictor);
+NMTKIT_SERIALIZATION_DECL(nmtkit::HybridPredictor);
 
-#endif  // NMTKIT_BINARY_CODE_PREDICTOR_H_
+#endif  // NMTKIT_HYBRID_PREDICTOR_H_

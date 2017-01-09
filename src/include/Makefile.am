@@ -25,6 +25,7 @@ nobase_include_HEADERS = \
   nmtkit/frequency_code.h \
   nmtkit/html_formatter.h \
   nmtkit/huffman_code.h \
+  nmtkit/hybrid_predictor.h \
   nmtkit/identity_ecc.h \
   nmtkit/inference_graph.h \
   nmtkit/init.h \
