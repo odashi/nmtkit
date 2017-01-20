@@ -2,6 +2,7 @@
 #define NMTKIT_SINGLE_TEXT_FORMATTER_H_
 
 #include <nmtkit/formatter.h>
+#include <fstream>
 
 namespace nmtkit {
 
@@ -18,6 +19,7 @@ public:
 
   void initialize(std::ostream * os) override {}
   void finalize(std::ostream * os) override {}
+  void setReferencePath(std::string ref_file_path) override;
 
   void write(
       const std::string & source_line,
@@ -25,6 +27,9 @@ public:
       const Vocabulary & source_vocab,
       const Vocabulary & target_vocab,
       std::ostream * os) override;
+
+private:
+  std::ifstream ref_ifs_;
 };
 
 }  // namespace nmtkit

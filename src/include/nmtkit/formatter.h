@@ -40,6 +40,9 @@ public:
   //   os: Target output stream.
   virtual void finalize(std::ostream * os) = 0;
 
+  // TODO write explanation
+  virtual void setReferencePath(std::string ref_file_path) = 0;
+
   // Writes output information into a stream.
   //
   // Arguments:
