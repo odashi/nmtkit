@@ -50,8 +50,10 @@ namespace nmtkit {
 
 CharacterVocabulary::CharacterVocabulary(
     const string & corpus_filename,
+    unsigned unk_frequency,
     unsigned size) {
-  NMTKIT_CHECK(size >= 3, "Size should be equal or greater than 3.");
+  NMTKIT_CHECK(!(unk_frequency == 0 && size == 0), "Either size or unk_frequency must be specified.");
+  NMTKIT_CHECK(unk_frequency > 0 || size >= 3, "Size should be equal or greater than 3.");
   ifstream ifs(corpus_filename);
   NMTKIT_CHECK(
       ifs.is_open(),
@@ -88,7 +90,13 @@ CharacterVocabulary::CharacterVocabulary(
   freq_.emplace_back(num_letters);
   freq_.emplace_back(num_lines);
   freq_.emplace_back(num_lines);
-  for (unsigned i = 3; i < size && i - 3 < entries.size(); ++i) {
+
+  unsigned longest_size = size;
+  if (unk_frequency > 0) {
+    longest_size = entries.size();
+  }
+
+  for (unsigned i = 3; i < longest_size && i - 3 < entries.size() && entries[i-3].first > unk_frequency; ++i) {
     const auto & entry = entries[i - 3];
     stoi_[entry.second] = i;
     itos_.emplace_back(entry.second);
