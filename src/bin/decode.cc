@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -47,6 +48,9 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
      "Available options:\n"
      "  text : One-best tokens in each line.\n"
      "  html : HTML document with detailed information.")
+    ("reference",
+     PO::value<string>(),
+     "Location of the reference text file.")
     ("force", "Force to run the command regardless the amount of the memory.")
     ("beam-width",
      PO::value<unsigned>()->default_value(1),
@@ -178,13 +182,25 @@ int main(int argc, char * argv[]) {
 
     formatter->initialize(&cout);
 
+    // Loads reference texts.
+    std::ifstream ref_ifs;
+    if (!!args.count("reference")) {
+      ref_ifs.open(args["reference"].as<string>());
+      NMTKIT_CHECK(
+          ref_ifs.is_open(), "Could not open the reference file to load: " + args["reference"].as<string>());
+    }
+
     // Consumes input lines and decodes them.
-    string input_line;
+    string input_line = "";
+    string ref_line = "";
     while (nmtkit::Corpus::readLine(&cin, &input_line)) {
+      if (ref_ifs.is_open()) {
+        nmtkit::Corpus::readLine(&ref_ifs, &ref_line);
+      }
       vector<unsigned> input_ids = src_vocab->convertToIDs(input_line);
       nmtkit::InferenceGraph ig = encdec.infer(
           input_ids, bos_id, eos_id, max_length, beam_width, word_penalty);
-      formatter->write(input_line, ig, *src_vocab, *trg_vocab, &cout);
+      formatter->write(input_line, ref_line, ig, *src_vocab, *trg_vocab, &cout);
     }
 
     formatter->finalize(&cout);

@@ -7,7 +7,6 @@
 #include <regex>
 #include <boost/format.hpp>
 #include <nmtkit/exception.h>
-#include <nmtkit/corpus.h>
 
 using namespace std;
 
@@ -197,15 +196,9 @@ void HTMLFormatter::finalize(std::ostream * os) {
 )";
 }
 
-void HTMLFormatter::setReferencePath(std::string ref_file_path) {
-  // Loads reference texts.
-  ref_ifs_.open(ref_file_path);
-  NMTKIT_CHECK(
-      ref_ifs_.is_open(), "Could not open the reference file to load: " + ref_file_path);
-}
-
 void HTMLFormatter::write(
     const string & source_line,
+    const string & ref_line,
     const InferenceGraph & ig,
     const Vocabulary & source_vocab,
     const Vocabulary & target_vocab,
@@ -258,13 +251,11 @@ void HTMLFormatter::write(
       << ::escape(target_vocab.convertToSentence(target_word_ids))
       << "</span></p>\n";
 
-  if (ref_ifs_.is_open()) {
-    string ref_line;
-    nmtkit::Corpus::readLine(&ref_ifs_, &ref_line);
+  if (ref_line != "") {
     *os << "<h3>Reference line</h3>\n";
     *os << "<p><span class=\"word\">"
-      << ::escape(ref_line)
-      << "</span></p>\n";
+        << ::escape(ref_line)
+        << "</span></p>\n";
   }
 
   *os << "<h3>Word probabilities</h3>\n";

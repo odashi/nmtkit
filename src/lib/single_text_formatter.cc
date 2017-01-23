@@ -10,6 +10,7 @@ namespace nmtkit {
 
 void SingleTextFormatter::write(
     const string & source_line,
+    const string & ref_line,
     const InferenceGraph & ig,
     const Vocabulary & source_vocab,
     const Vocabulary & target_vocab,
@@ -27,13 +28,6 @@ void SingleTextFormatter::write(
   }
 
   *os << target_vocab.convertToSentence(word_ids) << endl;
-}
-
-void SingleTextFormatter::setReferencePath(std::string ref_file_path) {
-  // Loads reference texts.
-  ref_ifs_.open(ref_file_path);
-  NMTKIT_CHECK(
-      ref_ifs_.is_open(), "Could not open the reference file to load: " + ref_file_path);
 }
 
 }  // namespace nmtkit

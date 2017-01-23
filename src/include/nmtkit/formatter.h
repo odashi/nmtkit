@@ -40,22 +40,18 @@ public:
   //   os: Target output stream.
   virtual void finalize(std::ostream * os) = 0;
 
-  // Set the reference text file path.
-  //
-  // Arguments:
-  //   ref_file_path: Path to reference text file.
-  virtual void setReferencePath(std::string ref_file_path) = 0;
-
   // Writes output information into a stream.
   //
   // Arguments:
   //   source_line: Source sentence.
+  //   ref_line: Reference sentence.
   //   ig: Inference graph object which has the output information.
   //   source_vocab: Vocabulary object for the source language.
   //   target_vocab: Vocabulary object for the target language.
   //   os: Target output stream.
   virtual void write(
       const std::string & source_line,
+      const std::string & ref_line,
       const InferenceGraph & ig,
       const Vocabulary & source_vocab,
       const Vocabulary & target_vocab,

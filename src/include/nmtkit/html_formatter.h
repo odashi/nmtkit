@@ -2,7 +2,6 @@
 #define NMTKIT_HTML_FORMATTER_H_
 
 #include <nmtkit/formatter.h>
-#include <fstream>
 
 namespace nmtkit {
 
@@ -20,10 +19,10 @@ public:
 
   void initialize(std::ostream * os) override;
   void finalize(std::ostream * os) override;
-  void setReferencePath(std::string ref_file_path) override;
 
   void write(
       const std::string & source_line,
+      const std::string & ref_line,
       const InferenceGraph & ig,
       const Vocabulary & source_vocab,
       const Vocabulary & target_vocab,
@@ -31,7 +30,6 @@ public:
 
 private:
   unsigned num_outputs_;
-  std::ifstream ref_ifs_;
 };
 
 }  // namespace nmtkit
