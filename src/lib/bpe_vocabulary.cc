@@ -213,10 +213,11 @@ vector<pair<string, string>> getPairs(vector<string> word) {
 }
 
 vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes,
-    map<string, vector<string>> bpe_cache) {
+    map<string, vector<string>> * bpe_cache) {
   // if exists in bpe_cache
-  if (bpe_cache.find(orig) != bpe_cache.end()) {
-    return bpe_cache[orig];
+  const auto &entry = bpe_cache->find(orig);
+  if (entry != bpe_cache->end()) {
+    return entry->second;
   }
 
   vector<string> word = convertToLetters(orig);
@@ -265,7 +266,7 @@ vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes
     }
   }
 
-  bpe_cache[orig] = word;
+  (*bpe_cache)[orig] = word;
   return word;
 }
 
@@ -409,7 +410,7 @@ vector<unsigned> BPEVocabulary::convertToIDs(const string & sentence) const {
       words, sentence, boost::is_space(), boost::algorithm::token_compress_on);
   vector<unsigned> ids;
   for (const string & word : words) {
-    vector<string> new_words = encode(word, bpe_codes_, bpe_cache_);
+    vector<string> new_words = encode(word, bpe_codes_, &bpe_cache_);
     for (const string & new_word : new_words) {
       ids.emplace_back(getID(new_word));
     }

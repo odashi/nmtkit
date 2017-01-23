@@ -59,7 +59,10 @@ private:
   std::vector<std::string> itos_;
   std::vector<unsigned> freq_;
   std::map<std::pair<std::string, std::string>, unsigned> bpe_codes_;
-  std::map<std::string, std::vector<std::string>> bpe_cache_;
+
+  // Store BPE converted words
+  // Converting words may take some time, so we store converted words that we observed once
+  mutable std::map<std::string, std::vector<std::string>> bpe_cache_;
 };
 
 }  // namespace nmtkit
