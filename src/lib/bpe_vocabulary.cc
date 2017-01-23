@@ -368,9 +368,9 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
     stoi_[boost::join(most_frequent_index, "")] = i + num_letter_vocab;
     freq_.emplace_back(stats[most_frequent_index]);
     
-    // update character vocabulary frequency
+    // update vocabulary frequency
     for (const string & word : most_frequent_index) {
-      if (stoi_[word] < num_letter_vocab) {
+      if (stoi_.count(word) != 0) {
         freq_[stoi_[word]] -= stats[most_frequent_index];
       }
     }
