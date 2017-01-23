@@ -198,6 +198,7 @@ void HTMLFormatter::finalize(std::ostream * os) {
 
 void HTMLFormatter::write(
     const string & source_line,
+    const string & ref_line,
     const InferenceGraph & ig,
     const Vocabulary & source_vocab,
     const Vocabulary & target_vocab,
@@ -249,6 +250,13 @@ void HTMLFormatter::write(
   *os << "<p><span class=\"word\">"
       << ::escape(target_vocab.convertToSentence(target_word_ids))
       << "</span></p>\n";
+
+  if (ref_line != "") {
+    *os << "<h3>Reference line</h3>\n";
+    *os << "<p><span class=\"word\">"
+        << ::escape(ref_line)
+        << "</span></p>\n";
+  }
 
   *os << "<h3>Word probabilities</h3>\n";
   *os << "<table>\n";

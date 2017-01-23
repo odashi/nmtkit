@@ -21,6 +21,7 @@ public:
 
   void write(
       const std::string & source_line,
+      const std::string & ref_line,
       const InferenceGraph & ig,
       const Vocabulary & source_vocab,
       const Vocabulary & target_vocab,

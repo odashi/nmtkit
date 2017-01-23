@@ -10,6 +10,7 @@ namespace nmtkit {
 
 void SingleTextFormatter::write(
     const string & source_line,
+    const string & ref_line,
     const InferenceGraph & ig,
     const Vocabulary & source_vocab,
     const Vocabulary & target_vocab,
