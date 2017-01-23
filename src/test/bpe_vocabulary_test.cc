@@ -6,8 +6,10 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <nmtkit/serialization_utils.h>
+#include <nmtkit/corpus.h>
 #include <nmtkit/bpe_vocabulary.h>
+#include <nmtkit/exception.h>
+#include <nmtkit/serialization_utils.h>
 
 using namespace std;
 
@@ -139,6 +141,29 @@ BOOST_AUTO_TEST_CASE(CheckConvertingToSentence) {
     string observed = vocab.convertToSentence(word_ids[i]);
     BOOST_CHECK_EQUAL(expected[i], observed);
   }
+}
+
+BOOST_AUTO_TEST_CASE(CheckFrequencyCalculation_En) {
+  nmtkit::BPEVocabulary vocab;
+  ::loadArchive("data/small.en.bpe.vocab", &vocab);
+
+  unsigned freq_sum = 0;
+  for (unsigned i = 3; i < vocab.size(); i++) {
+    freq_sum += vocab.getFrequency(i);
+  }
+
+  ifstream ifs("data/small.en.tok");  
+  NMTKIT_CHECK(
+      ifs.is_open(), "Could not open file to read: data/small.en.tok");
+  string input_line;
+
+  unsigned num_words_sum = 0;
+  while (nmtkit::Corpus::readLine(&ifs, &input_line)) {
+    vector<unsigned> input_ids = vocab.convertToIDs(input_line);
+    num_words_sum += input_ids.size();
+  }
+
+  BOOST_CHECK_EQUAL(freq_sum, num_words_sum);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
