@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_En) {
   BOOST_CHECK_EQUAL(0, vocab.getFrequency(0));
   BOOST_CHECK_EQUAL(500, vocab.getFrequency(1));
   BOOST_CHECK_EQUAL(500, vocab.getFrequency(2));
-  BOOST_CHECK_EQUAL(3371, vocab.getFrequency(3));
+  BOOST_CHECK_EQUAL(140, vocab.getFrequency(3));
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromVocabularyFile_Ja) {
   BOOST_CHECK_EQUAL(0, vocab.getFrequency(0));
   BOOST_CHECK_EQUAL(500, vocab.getFrequency(1));
   BOOST_CHECK_EQUAL(500, vocab.getFrequency(2));
-  BOOST_CHECK_EQUAL(5126, vocab.getFrequency(3));
+  BOOST_CHECK_EQUAL(371, vocab.getFrequency(3));
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_En) {
   BOOST_CHECK_EQUAL(0, vocab.getFrequency(0));
   BOOST_CHECK_EQUAL(500, vocab.getFrequency(1));
   BOOST_CHECK_EQUAL(500, vocab.getFrequency(2));
-  BOOST_CHECK_EQUAL(3371, vocab.getFrequency(3));
+  BOOST_CHECK_EQUAL(140, vocab.getFrequency(3));
 }
 
 BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(CheckLoadFromCorpus_Ja) {
   BOOST_CHECK_EQUAL(0, vocab.getFrequency(0));
   BOOST_CHECK_EQUAL(500, vocab.getFrequency(1));
   BOOST_CHECK_EQUAL(500, vocab.getFrequency(2));
-  BOOST_CHECK_EQUAL(5126, vocab.getFrequency(3));
+  BOOST_CHECK_EQUAL(371, vocab.getFrequency(3));
 }
 
 BOOST_AUTO_TEST_CASE(CheckConvertingToIDs) {

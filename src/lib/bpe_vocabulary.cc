@@ -287,6 +287,7 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
   unsigned num_letters = 0;
   while (Corpus::readLine(&ifs, &line)) {
     ++num_lines;
+    line += " ";  // to add </w> at the end of sentence
     vector<string> letters = ::convertToLetters(line);
     num_letters += letters.size();
     for (string & letter : letters) {
@@ -347,8 +348,8 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
   map<vector<string>, int> big_stats = stats;
   int threshold = stats[findMax(stats)] / 10;
 
-  unsigned letter_size = stoi_.size();
-  for (unsigned i = 0; i < size - letter_size; i++) {
+  unsigned num_letter_vocab = stoi_.size();
+  for (unsigned i = 0; i < size - num_letter_vocab; i++) {
     vector<string> most_frequent_index;
     if (!stats.empty()) {
       most_frequent_index = findMax(stats);
@@ -364,8 +365,15 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
     // Store entries
     bpe_codes_[pair<string, string>(most_frequent_index[0], most_frequent_index[1])] = i;
     itos_.emplace_back(boost::join(most_frequent_index, ""));
-    stoi_[boost::join(most_frequent_index, "")] = i + letter_size;
+    stoi_[boost::join(most_frequent_index, "")] = i + num_letter_vocab;
     freq_.emplace_back(stats[most_frequent_index]);
+    
+    // update character vocabulary frequency
+    for (const string & word : most_frequent_index) {
+      if (stoi_[word] < num_letter_vocab) {
+        freq_[stoi_[word]] -= stats[most_frequent_index];
+      }
+    }
 
     vector<Change> changes = 
       replacePair(most_frequent_index, vector_vocab, indices[most_frequent_index]);
