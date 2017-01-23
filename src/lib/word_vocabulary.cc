@@ -89,6 +89,17 @@ vector<unsigned> WordVocabulary::convertToIDs(const string & sentence) const {
   return ids;
 }
 
+vector<string> WordVocabulary::convertToTokens(const string & sentence) const {
+  vector<string> words;
+  boost::split(
+      words, sentence, boost::is_space(), boost::algorithm::token_compress_on);
+  vector<string> tokens;
+  for (const string & word : words) {
+    tokens.emplace_back(getWord(getID(word)));
+  }
+  return tokens;
+}
+
 string WordVocabulary::convertToSentence(
     const vector<unsigned> & word_ids) const {
   vector<string> words;
@@ -96,6 +107,15 @@ string WordVocabulary::convertToSentence(
     words.emplace_back(getWord(word_id));
   }
   return boost::join(words, " ");
+}
+
+vector<string> WordVocabulary::convertToTokenizedSentence(
+    const vector<unsigned> & word_ids) const {
+  vector<string> words;
+  for (const unsigned word_id : word_ids) {
+    words.emplace_back(getWord(word_id));
+  }
+  return words;
 }
 
 unsigned WordVocabulary::size() const {

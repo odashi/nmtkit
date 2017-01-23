@@ -35,6 +35,8 @@ libnmtkit_la_SOURCES = \
   single_text_formatter.cc \
   softmax_predictor.cc \
   sorted_random_sampler.cc \
+  test_corpus.cc \
+  test_sampler.cc \
   vocabulary.cc \
   word_vocabulary.cc
 

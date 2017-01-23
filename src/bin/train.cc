@@ -21,6 +21,7 @@
 #include <dynet/tensor.h>
 #include <dynet/training.h>
 #include <mteval/EvaluatorFactory.h>
+#include <mteval/Dictionary.h>
 #include <nmtkit/batch_converter.h>
 #include <nmtkit/bpe_vocabulary.h>
 #include <nmtkit/character_vocabulary.h>
@@ -31,6 +32,7 @@
 #include <nmtkit/init.h>
 #include <nmtkit/monotone_sampler.h>
 #include <nmtkit/sorted_random_sampler.h>
+#include <nmtkit/test_sampler.h>
 #include <nmtkit/word_vocabulary.h>
 #include <spdlog/spdlog.h>
 
@@ -273,7 +275,7 @@ void saveArchive(
 //   The log perplexity score.
 float evaluateLogPerplexity(
     nmtkit::EncoderDecoder & encdec,
-    nmtkit::MonotoneSampler & sampler,
+    nmtkit::TestSampler & sampler,
     nmtkit::BatchConverter & converter) {
   unsigned num_outputs = 0;
   float total_loss = 0.0f;
@@ -305,15 +307,16 @@ float evaluateLogPerplexity(
 float evaluateBLEU(
     const nmtkit::Vocabulary & trg_vocab,
     nmtkit::EncoderDecoder & encdec,
-    nmtkit::MonotoneSampler & sampler,
+    nmtkit::TestSampler & sampler,
     const unsigned max_length) {
   const auto evaluator = MTEval::EvaluatorFactory::create("BLEU");
   const unsigned bos_id = trg_vocab.getID("<s>");
   const unsigned eos_id = trg_vocab.getID("</s>");
+  MTEval::Dictionary dict;
   MTEval::Statistics stats;
   sampler.rewind();
   while (sampler.hasSamples()) {
-    vector<nmtkit::Sample> samples = sampler.getSamples();
+    vector<nmtkit::TestSample> samples = sampler.getTestSamples();
     nmtkit::InferenceGraph ig = encdec.infer(
         samples[0].source, bos_id, eos_id, max_length, 1, 0.0f);
     const auto hyp_nodes = ig.findOneBestPath(bos_id, eos_id);
@@ -322,7 +325,10 @@ float evaluateBLEU(
     for (unsigned i = 1; i < hyp_nodes.size() - 1; ++i) {
       hyp_ids.emplace_back(hyp_nodes[i]->label().word_id);
     }
-    MTEval::Sample eval_sample {hyp_ids, {samples[0].target}};
+    const string string_hyp = trg_vocab.convertToSentence(hyp_ids);
+    const MTEval::Sentence sent_hyp = dict.getSentence(string_hyp);
+    const MTEval::Sentence sent_ref = dict.getSentence(samples[0].target_string);
+    MTEval::Sample eval_sample {sent_hyp, {sent_ref}};
     stats += evaluator->map(eval_sample);
   }
   return evaluator->integrate(stats);
@@ -384,10 +390,8 @@ int main(int argc, char * argv[]) {
 
     // Maximum lengths
     const unsigned train_max_length = config.get<unsigned>("Batch.max_length");
-    const unsigned test_max_length = 1024;
     const float train_max_length_ratio = config.get<float>(
         "Batch.max_length_ratio");
-    const float test_max_length_ratio = 1e10;
 
     // Creates samplers and batch converter.
     nmtkit::SortedRandomSampler train_sampler(
@@ -401,15 +405,15 @@ int main(int argc, char * argv[]) {
         config.get<unsigned>("Global.random_seed"));
     const unsigned corpus_size = train_sampler.getNumSamples();
     logger->info("Loaded 'train' corpus.");
-    nmtkit::MonotoneSampler dev_sampler(
+    nmtkit::TestSampler dev_sampler(
         config.get<string>("Corpus.dev_source"),
         config.get<string>("Corpus.dev_target"),
-        *src_vocab, *trg_vocab, test_max_length, test_max_length_ratio, 1);
+        *src_vocab, *trg_vocab, 1);
     logger->info("Loaded 'dev' corpus.");
-    nmtkit::MonotoneSampler test_sampler(
+    nmtkit::TestSampler test_sampler(
         config.get<string>("Corpus.test_source"),
         config.get<string>("Corpus.test_target"),
-        *src_vocab, *trg_vocab, test_max_length, test_max_length_ratio, 1);
+        *src_vocab, *trg_vocab, 1);
     logger->info("Loaded 'test' corpus.");
     const auto fmt_corpus_size = boost::format(
         "Cleaned corpus size: train=%d dev=%d test=%d")

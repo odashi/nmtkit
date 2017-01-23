@@ -41,7 +41,11 @@ public:
   unsigned getFrequency(const unsigned id) const override;
   std::vector<unsigned> convertToIDs(
       const std::string & sentence) const override;
+  std::vector<std::string> convertToTokens(
+      const std::string & sentence) const override;
   std::string convertToSentence(
+      const std::vector<unsigned> & word_ids) const override;
+  std::vector<std::string> convertToTokenizedSentence(
       const std::vector<unsigned> & word_ids) const override;
   unsigned size() const override;
 
