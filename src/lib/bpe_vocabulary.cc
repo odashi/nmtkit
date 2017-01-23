@@ -51,6 +51,12 @@ vector<string> convertToLetters(const string & str) {
   return letters;
 }
 
+// Calculate character bigram frequency.
+//
+// Arguments:
+//   vocab: vector bigram frequency.
+//   stats: sum of bigram frequency.
+//   indices: index of stats (key=bigram)
 void getPairStatistics(vector<pair<vector<string>, int>> vocab,
     map<vector<string>, int> & stats,
     map<vector<string>, map<unsigned, int>> & indices) {
@@ -69,6 +75,13 @@ void getPairStatistics(vector<pair<vector<string>, int>> vocab,
   }
 }
 
+// Find max frequency in stats.
+//
+// Arguments:
+//   stats: sum of bigram frequency
+//
+// Returns:
+//   most frequent bigram
 vector<string> findMax(const map<vector<string>, int> stats) {
   int current_max = -1e5;
   vector<string> current_argmax;
@@ -81,6 +94,15 @@ vector<string> findMax(const map<vector<string>, int> stats) {
   return current_argmax;
 }
 
+// Find replaceable word pairs.
+//
+// Arguments:
+//   replace_words: words that are going to concatenate
+//   vocab: vector vocabulary
+//   indices: stats indices of repalce_words
+//
+// Returns:
+//   vector of replaceable pairs
 vector<Change> replacePair(const vector<string> replace_words,
     vector<pair<vector<string>, int>> & vocab,
     const map<unsigned, int> indices) {
@@ -110,12 +132,28 @@ vector<Change> replacePair(const vector<string> replace_words,
   return changes;
 }
 
+// Find index of the specific word from the vector
+//
+// Arguments:
+//   word: vector of words
+//   search_word: search query word
+//   start_index: start finding from this index
+//
+// Returns:
+//   index of the specific word
 int findIndex(vector<string> word, string search_word, unsigned start_index) {
   auto iter = find(word.begin() + start_index, word.end(), search_word);
   size_t index = distance(word.begin(), iter);
   return index;
 }
 
+// Update stats based on changes
+//
+// Arguments:
+//   replace_words: words that are going to concatenate
+//   changes: return value of replacePair()
+//   stats: sum of bigram frequency.
+//   indices: index of stats (key=bigram)
 void updatePairStatistics(const vector<string> replace_words,
     const vector<Change> changes, 
     map<vector<string>, int> & stats,
@@ -179,6 +217,12 @@ void updatePairStatistics(const vector<string> replace_words,
   }
 }
 
+// Prune low frequency words from stats
+//
+// Arguments:
+//   stats: sum of bigram frequency.
+//   big_stats: sum of bigram frequency (not pruned).
+//   threshold: words that frequency is less than this threshold will be pruned
 void pruneStats(
     map<vector<string>, int> & stats,
     map<vector<string>, int> & big_stats,
@@ -202,6 +246,13 @@ void pruneStats(
   }
 }
 
+// Make character bigram from the word.
+//
+// Arguments:
+//   word: word vector that is splitted to character level.
+//
+// Returns:
+//   pairs of character bigram
 vector<pair<string, string>> getPairs(vector<string> word) {
   vector<pair<string, string>> pairs;
   string prev_char = word[0];
@@ -212,6 +263,14 @@ vector<pair<string, string>> getPairs(vector<string> word) {
   return pairs;
 }
 
+// Encode a word to BPE converted words.
+//
+// Arguments:
+//   orig: original word
+//   bpe_codes: bpe_codes made by this class
+//   bpe_cache: BPE converted words
+// Returns:
+//   BPE words
 vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes,
     map<string, vector<string>> * bpe_cache) {
   // if exists in bpe_cache
