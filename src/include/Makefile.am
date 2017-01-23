@@ -32,5 +32,6 @@ nobase_include_HEADERS = \
   nmtkit/single_text_formatter.h \
   nmtkit/softmax_predictor.h \
   nmtkit/sorted_random_sampler.h \
+  nmtkit/unicode.h \
   nmtkit/vocabulary.h \
   nmtkit/word_vocabulary.h

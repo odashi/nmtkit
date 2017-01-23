@@ -8,43 +8,10 @@
 #include <nmtkit/array.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
+#include <nmtkit/unicode.h>
 
 using namespace std;
-
-namespace {
-
-// Check whether the character is a UTF-8 first byte or not.
-//
-// Arguments:
-//   c: Target character.
-//
-// Returns:
-//   true if `c` is a UTF-8 first byte, false otherwise.
-bool isUTF8FirstByte(char c) {
-  return (c & 0x80) == 0 || (c & 0xc0) == 0xc0;
-}
-
-// Separates UTF-8 string into its letters.
-//
-// Arguments:
-//   str: Target string.
-//
-// Returns:
-//   A list of UTF-8 letters.
-vector<string> convertToLetters(const string & str) {
-  const unsigned len = str.size();
-  unsigned prev = 0;
-  vector<string> letters;
-  while (prev < len) {
-    unsigned next = prev + 1;
-    while (next < len && !isUTF8FirstByte(str[next])) ++next;
-    letters.emplace_back(str.substr(prev, next - prev));
-    prev = next;
-  }
-  return letters;
-}
-
-}  // namespace
+using nmtkit::UTF8;
 
 namespace nmtkit {
 
@@ -64,7 +31,7 @@ CharacterVocabulary::CharacterVocabulary(
   unsigned num_letters = 0;
   while (Corpus::readLine(&ifs, &line)) {
     ++num_lines;
-    const vector<string> letters = ::convertToLetters(line);
+    const vector<string> letters = UTF8::getLetters(line);
     num_letters += letters.size();
     for (const string & letter : letters) {
       ++freq[letter];
@@ -116,7 +83,7 @@ unsigned CharacterVocabulary::getFrequency(const unsigned id) const {
 vector<unsigned> CharacterVocabulary::convertToIDs(
     const string & sentence) const {
   vector<unsigned> ids;
-  for (const string & letter : ::convertToLetters(sentence)) {
+  for (const string & letter : UTF8::getLetters(sentence)) {
     ids.emplace_back(getID(letter));
   }
   return ids;

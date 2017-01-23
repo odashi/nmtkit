@@ -8,8 +8,10 @@
 #include <nmtkit/array.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
+#include <nmtkit/unicode.h>
 
 using namespace std;
+using nmtkit::UTF8;
 
 namespace {
 
@@ -19,37 +21,6 @@ struct Change {
   vector<string> old_word;
   int freq;
 };
-
-// Check whether the character is a UTF-8 first byte or not.
-//
-// Arguments:
-//   c: Target character.
-//
-// Returns:
-//   true if `c` is a UTF-8 first byte, false otherwise.
-bool isUTF8FirstByte(char c) {
-  return (c & 0x80) == 0 || (c & 0xc0) == 0xc0;
-}
-
-// Separates UTF-8 string into its letters.
-//
-// Arguments:
-//   str: Target string.
-//
-// Returns:
-//   A list of UTF-8 letters.
-vector<string> convertToLetters(const string & str) {
-  const unsigned len = str.size();
-  unsigned prev = 0;
-  vector<string> letters;
-  while (prev < len) {
-    unsigned next = prev + 1;
-    while (next < len && !isUTF8FirstByte(str[next])) ++next;
-    letters.emplace_back(str.substr(prev, next - prev));
-    prev = next;
-  }
-  return letters;
-}
 
 // Calculate character bigram frequency.
 //
@@ -87,7 +58,7 @@ vector<string> findMax(const map<vector<string>, int> stats) {
   vector<string> current_argmax;
   for (auto elm : stats) {
     if (elm.second > current_max) {
-      current_max = elm.second; 
+      current_max = elm.second;
       current_argmax = elm.first;
     }
   }
@@ -155,7 +126,7 @@ int findIndex(vector<string> word, string search_word, unsigned start_index) {
 //   stats: sum of bigram frequency.
 //   indices: index of stats (key=bigram)
 void updatePairStatistics(const vector<string> replace_words,
-    const vector<Change> changes, 
+    const vector<Change> changes,
     map<vector<string>, int> & stats,
     map<vector<string>, map<unsigned, int>> & indices) {
   stats.erase(replace_words);
@@ -279,7 +250,7 @@ vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes
     return entry->second;
   }
 
-  vector<string> word = convertToLetters(orig);
+  vector<string> word = UTF8::getLetters(orig);
   word.emplace_back("</w>");
   vector<pair<string, string>> pairs = getPairs(word);
 
@@ -348,7 +319,7 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
   while (Corpus::readLine(&ifs, &line)) {
     ++num_lines;
     line += " ";  // to add </w> at the end of sentence
-    vector<string> letters = ::convertToLetters(line);
+    vector<string> letters = UTF8::getLetters(line);
     num_letters += letters.size();
     for (string & letter : letters) {
       if (letter == " ") {
@@ -392,7 +363,7 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
     boost::split(
         words, line, boost::is_space(), boost::algorithm::token_compress_on);
     for (const string & word : words) {
-      vector<string> key = ::convertToLetters(word);
+      vector<string> key = UTF8::getLetters(word);
       key.emplace_back("</w>");
       ++vocab[key];
     }
@@ -427,7 +398,7 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
     itos_.emplace_back(boost::join(most_frequent_index, ""));
     stoi_[boost::join(most_frequent_index, "")] = i + num_letter_vocab;
     freq_.emplace_back(stats[most_frequent_index]);
-    
+
     // update vocabulary frequency
     for (const string & word : most_frequent_index) {
       if (stoi_.count(word) != 0) {
@@ -435,7 +406,7 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
       }
     }
 
-    vector<Change> changes = 
+    vector<Change> changes =
       replacePair(most_frequent_index, vector_vocab, indices[most_frequent_index]);
     updatePairStatistics(most_frequent_index, changes, stats, indices);
     stats[most_frequent_index] = 0;

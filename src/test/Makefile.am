@@ -23,6 +23,7 @@ check_PROGRAMS = \
   monotone_sampler_test \
   random_test \
   sorted_random_sampler_test \
+  unicode_test \
 	word_vocabulary_test
 
 TESTS = \
@@ -35,6 +36,7 @@ TESTS = \
   monotone_sampler_test \
   random_test \
   sorted_random_sampler_test \
+  unicode_test \
 	word_vocabulary_test
 
 array_test_SOURCES = array_test.cc
@@ -46,4 +48,5 @@ inference_graph_test_SOURCES = inference_graph_test.cc
 monotone_sampler_test_SOURCES = monotone_sampler_test.cc
 random_test_SOURCES = random_test.cc
 sorted_random_sampler_test_SOURCES = sorted_random_sampler_test.cc
+unicode_test_SOURCES = unicode_test.cc
 word_vocabulary_test_SOURCES = word_vocabulary_test.cc
