@@ -24,7 +24,16 @@
 #include <nmtkit/single_text_formatter.h>
 #include <nmtkit/vocabulary.h>
 
-using namespace std;
+using std::cerr;
+using std::cin;
+using std::cout;
+using std::endl;
+using std::exception;
+using std::ifstream;
+using std::istream;
+using std::string;
+using std::unique_ptr;
+using std::vector;
 
 namespace FS = boost::filesystem;
 namespace PO = boost::program_options;

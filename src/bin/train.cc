@@ -34,7 +34,12 @@
 #include <nmtkit/word_vocabulary.h>
 #include <spdlog/spdlog.h>
 
-using namespace std;
+using std::cerr;
+using std::endl;
+using std::exception;
+using std::ofstream;
+using std::string;
+using std::vector;
 
 namespace FS = boost::filesystem;
 namespace PO = boost::program_options;
@@ -413,7 +418,7 @@ int main(int argc, char * argv[]) {
     logger->info("Loaded 'test' corpus.");
     const auto fmt_corpus_size = boost::format(
         "Cleaned corpus size: train=%d dev=%d test=%d")
-        % train_sampler.getNumSamples() % dev_sampler.getNumSamples() 
+        % train_sampler.getNumSamples() % dev_sampler.getNumSamples()
         % test_sampler.getNumSamples();
     logger->info(fmt_corpus_size.str());
     nmtkit::BatchConverter batch_converter(*src_vocab, *trg_vocab);
@@ -427,7 +432,7 @@ int main(int argc, char * argv[]) {
     // However, if we use sparse updates with a momentum optimization function
     // such as Adam, the updates are not strictly correct.
     // To deal with this problem, we disable sparse udpates function.
-    // For more details, see 
+    // For more details, see
     // http://dynet.readthedocs.io/en/latest/unorthodox.html#sparse-updates
     trainer->sparse_updates_enabled = false;
     logger->info("Created new trainer.");
@@ -467,7 +472,7 @@ int main(int argc, char * argv[]) {
     }
 
     std::chrono::system_clock::time_point current_time = std::chrono::system_clock::now();
-    auto next_eval_time = 
+    auto next_eval_time =
         std::chrono::system_clock::to_time_t(
         (current_time + std::chrono::minutes(eval_interval)));
     std::chrono::system_clock::time_point training_start_time = current_time;
@@ -515,7 +520,7 @@ int main(int argc, char * argv[]) {
       bool do_eval = false;
       do_eval = do_eval or (eval_type == "step" and iteration % eval_interval == 0);
       do_eval = do_eval or (eval_type == "word" and num_trained_words >= next_eval_words);
-      do_eval = do_eval or (eval_type == "time" and 
+      do_eval = do_eval or (eval_type == "time" and
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) >= next_eval_time);
       do_eval = do_eval or ((eval_type == "corpus" or eval_type == "sample") and num_trained_samples >= next_eval_samples);
 
@@ -607,7 +612,7 @@ int main(int argc, char * argv[]) {
 
         num_trained_words = 0;
         training_start_time = current_time;
-        next_eval_time = 
+        next_eval_time =
             std::chrono::system_clock::to_time_t(
             current_time + std::chrono::minutes(eval_interval));
       }
