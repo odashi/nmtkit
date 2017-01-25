@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = submodules src
+SUBDIRS = submodules new_src
 
 EXTRA_DIST = \
 	doc \

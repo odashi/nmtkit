@@ -4,7 +4,7 @@
 AC_PREREQ([2.69])
 AC_INIT([nmtkit], [0.1.0], [yus.takara@gmail.com])
 AM_INIT_AUTOMAKE()
-AC_CONFIG_SRCDIR([src/bin/train.cc])
+AC_CONFIG_SRCDIR([new_src/lib/init.cc])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
@@ -31,11 +31,11 @@ CXXFLAGS="$CXXFLAGS -O2"
 # Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
-                 src/Makefile
-                 src/bin/Makefile
-                 src/include/Makefile
-                 src/lib/Makefile
-                 src/test/Makefile
+                 new_src/Makefile
+                 new_src/bin/Makefile
+                 new_src/include/Makefile
+                 new_src/lib/Makefile
+                 new_src/test/Makefile
                  submodules/Makefile
 ])
 
