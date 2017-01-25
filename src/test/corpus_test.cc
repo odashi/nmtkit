@@ -10,7 +10,11 @@
 #include <nmtkit/corpus.h>
 #include <nmtkit/word_vocabulary.h>
 
-using namespace std;
+using std::ifstream;
+using std::max;
+using std::min;
+using std::string;
+using std::vector;
 
 namespace {
 

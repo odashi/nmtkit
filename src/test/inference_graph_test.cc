@@ -6,7 +6,7 @@
 #include <vector>
 #include <nmtkit/inference_graph.h>
 
-using namespace std;
+using std::vector;
 
 namespace {
 

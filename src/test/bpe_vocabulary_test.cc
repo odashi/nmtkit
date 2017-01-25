@@ -11,7 +11,9 @@
 #include <nmtkit/exception.h>
 #include <nmtkit/serialization_utils.h>
 
-using namespace std;
+using std::ifstream;
+using std::string;
+using std::vector;
 
 namespace {
 
@@ -152,9 +154,8 @@ BOOST_AUTO_TEST_CASE(CheckFrequencyCalculation_En) {
     freq_sum += vocab.getFrequency(i);
   }
 
-  ifstream ifs("data/small.en.tok");  
-  NMTKIT_CHECK(
-      ifs.is_open(), "Could not open file to read: data/small.en.tok");
+  ifstream ifs("data/small.en.tok");
+  BOOST_REQUIRE(ifs.is_open());
   string input_line;
 
   unsigned num_words_sum = 0;

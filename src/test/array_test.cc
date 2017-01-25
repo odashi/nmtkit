@@ -3,14 +3,15 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
-#include <functional>
 #include <numeric>
 #include <string>
 #include <vector>
 #include <nmtkit/array.h>
-#include <nmtkit/random.h>
 
-using namespace std;
+using std::greater;
+using std::less;
+using std::string;
+using std::vector;
 
 BOOST_AUTO_TEST_SUITE(ArrayTest)
 

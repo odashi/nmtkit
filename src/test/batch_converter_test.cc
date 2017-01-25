@@ -8,7 +8,9 @@
 #include <nmtkit/batch_converter.h>
 #include <nmtkit/word_vocabulary.h>
 
-using namespace std;
+using std::ifstream;
+using std::string;
+using std::vector;
 
 namespace {
 

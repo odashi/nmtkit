@@ -9,7 +9,9 @@
 #include <nmtkit/character_vocabulary.h>
 #include <nmtkit/serialization_utils.h>
 
-using namespace std;
+using std::ifstream;
+using std::string;
+using std::vector;
 
 namespace {
 

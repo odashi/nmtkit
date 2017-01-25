@@ -10,7 +10,10 @@
 #include <nmtkit/sorted_random_sampler.h>
 #include <nmtkit/word_vocabulary.h>
 
-using namespace std;
+using std::ifstream;
+using std::max;
+using std::string;
+using std::vector;
 
 namespace globals {
 

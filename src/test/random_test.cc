@@ -3,11 +3,10 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
-#include <numeric>
 #include <vector>
 #include <nmtkit/random.h>
 
-using namespace std;
+using std::vector;
 
 BOOST_AUTO_TEST_SUITE(RandomTest)
 
