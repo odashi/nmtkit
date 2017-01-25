@@ -5,7 +5,8 @@
 #include <algorithm>
 #include <utility>
 
-using namespace std;
+using std::max;
+using std::vector;
 
 namespace nmtkit {
 

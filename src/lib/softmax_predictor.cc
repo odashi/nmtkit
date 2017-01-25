@@ -6,7 +6,7 @@
 #include <nmtkit/array.h>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::vector;
 
 namespace DE = dynet::expr;
 

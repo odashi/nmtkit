@@ -3,7 +3,7 @@
 #include <nmtkit/bahdanau_decoder.h>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::vector;
 
 namespace DE = dynet::expr;
 

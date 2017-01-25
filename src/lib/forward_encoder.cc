@@ -2,7 +2,7 @@
 
 #include <nmtkit/forward_encoder.h>
 
-using namespace std;
+using std::vector;
 
 namespace DE = dynet::expr;
 

@@ -5,7 +5,8 @@
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::string;
+using std::vector;
 
 namespace nmtkit {
 

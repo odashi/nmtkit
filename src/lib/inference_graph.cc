@@ -7,7 +7,7 @@
 #include <nmtkit/array.h>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::vector;
 
 namespace nmtkit {
 
@@ -45,7 +45,7 @@ void InferenceGraph::connect(Node * prev, Node * next) {
 }
 
 vector<const InferenceGraph::Node *> InferenceGraph::findNodes(
-    function<bool(const Node &)> cond) const {
+    std::function<bool(const Node &)> cond) const {
   vector<const Node *> results;
   for (const Node * node : nodes_) {
     if (cond(*node)) {
@@ -88,7 +88,7 @@ vector<const InferenceGraph::Node *> InferenceGraph::findOneBestPath(
 
   // Traverses the path.
   vector<const Node *> results {best_node};
-  set<const Node *> visited {best_node};
+  std::set<const Node *> visited {best_node};
   while (best_node != bos_node) {
     NMTKIT_CHECK_EQ(
         best_node->prev().size(), 1,

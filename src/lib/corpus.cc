@@ -7,7 +7,11 @@
 #include <boost/algorithm/string.hpp>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::ifstream;
+using std::istream;
+using std::string;
+using std::swap;
+using std::vector;
 
 namespace {
 

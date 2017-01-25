@@ -15,8 +15,8 @@
  *                                            Decoder Outputs
  */
 
-using namespace std;
 using dynet::expr::Expression;
+using std::vector;
 
 namespace DE = dynet::expr;
 
@@ -27,7 +27,7 @@ EncoderDecoder::EncoderDecoder(
     boost::shared_ptr<Decoder> & decoder,
     boost::shared_ptr<Attention> & attention,
     boost::shared_ptr<Predictor> & predictor,
-    const string & loss_integration_type)
+    const std::string & loss_integration_type)
 : encoder_(encoder)
 , decoder_(decoder)
 , attention_(attention)
@@ -157,7 +157,7 @@ InferenceGraph EncoderDecoder::beamSearch(
     // Obtains top-k candidates.
     vector<unsigned> kbest_ids = Array::kbest(
         next_cands,
-        min(beam_width, static_cast<unsigned>(next_cands.size())),
+        std::min(beam_width, static_cast<unsigned>(next_cands.size())),
         [](const Candidate & a, const Candidate & b) {
             return a.label.accum_log_prob > b.label.accum_log_prob;
         });

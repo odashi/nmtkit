@@ -4,7 +4,8 @@
 
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::string;
+using std::vector;
 
 namespace nmtkit {
 
@@ -27,7 +28,7 @@ void SingleTextFormatter::write(
     word_ids.emplace_back(nodes[i]->label().word_id);
   }
 
-  *os << target_vocab.convertToSentence(word_ids) << endl;
+  *os << target_vocab.convertToSentence(word_ids) << std::endl;
 }
 
 }  // namespace nmtkit

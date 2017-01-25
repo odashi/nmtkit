@@ -5,8 +5,6 @@
 #include <algorithm>
 #include <nmtkit/exception.h>
 
-using namespace std;
-
 namespace nmtkit {
 
 Random::Random() : gen_() {
@@ -20,7 +18,7 @@ Random::Random() : gen_() {
 
 void Random::reset(unsigned seed) {
   if (seed == 0) {
-    random_device rd;
+    std::random_device rd;
     gen_.seed(rd());
   } else {
     gen_.seed(seed);

@@ -8,7 +8,8 @@
 #include <dynet/init.h>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::cerr;
+using std::endl;
 
 namespace {
 
@@ -84,7 +85,7 @@ void initialize(const GlobalConfig & config) {
   const unsigned MAX_GPUS = 1024;
   params.gpu_mask = vector<int>(MAX_GPUS, 0);
 #endif  // HAVE_CUDA
-  
+
   dynet::initialize(params);
   ::initialized = true;
 }

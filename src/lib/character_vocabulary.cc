@@ -10,8 +10,13 @@
 #include <nmtkit/exception.h>
 #include <nmtkit/unicode.h>
 
-using namespace std;
 using nmtkit::UTF8;
+using std::greater;
+using std::ifstream;
+using std::map;
+using std::pair;
+using std::string;
+using std::vector;
 
 namespace nmtkit {
 

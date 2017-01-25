@@ -3,25 +3,26 @@
 #include <nmtkit/word_vocabulary.h>
 
 #include <fstream>
-#include <functional>
+#include <utility>
 #include <boost/algorithm/string.hpp>
 #include <nmtkit/array.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::string;
+using std::vector;
 
 namespace nmtkit {
 
 WordVocabulary::WordVocabulary(const string & corpus_filename, unsigned size) {
   NMTKIT_CHECK(size >= 3, "Size should be equal or greater than 3.");
-  ifstream ifs(corpus_filename);
+  std::ifstream ifs(corpus_filename);
   NMTKIT_CHECK(
       ifs.is_open(),
       "Could not open corpus file to load: " + corpus_filename);
 
   // Counts word frequencies.
-  map<string, unsigned> freq;
+  std::map<string, unsigned> freq;
   string line;
   unsigned num_lines = 0;
   unsigned num_words = 0;
@@ -37,11 +38,11 @@ WordVocabulary::WordVocabulary(const string & corpus_filename, unsigned size) {
   }
 
   // Selects most frequent words.
-  vector<pair<unsigned, string>> entries;
+  vector<std::pair<unsigned, string>> entries;
   for (const auto & entry : freq) {
-    entries.emplace_back(make_pair(entry.second, entry.first));
+    entries.emplace_back(std::make_pair(entry.second, entry.first));
   }
-  Array::sort(&entries, greater<pair<unsigned, string>>());
+  Array::sort(&entries, std::greater<std::pair<unsigned, string>>());
 
   // Store entries.
   stoi_["<unk>"] = 0;

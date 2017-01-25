@@ -8,25 +8,26 @@
 #include <boost/format.hpp>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::string;
+using std::vector;
 
 namespace {
 
 // Excapes given text.
 string escape(const string & text) {
-  string result = regex_replace(text, regex(R"(&)"), "&amp;");
-  result = regex_replace(result, regex(R"(<)"), "&lt;");
-  result = regex_replace(result, regex(R"(>)"), "&gt;");
-  return regex_replace(result, regex(R"(")"), "&quot;");
+  string result = std::regex_replace(text, std::regex(R"(&)"), "&amp;");
+  result = std::regex_replace(result, std::regex(R"(<)"), "&lt;");
+  result = std::regex_replace(result, std::regex(R"(>)"), "&gt;");
+  return std::regex_replace(result, std::regex(R"(")"), "&quot;");
 }
 
 string js_escape(const string & text) {
-  return regex_replace(text, regex(R"(")"), R"(\")");
+  return std::regex_replace(text, std::regex(R"(")"), R"(\")");
 }
 
 // Computes background color of the attention matrix.
 string attenBGColor(float prob) {
-  const int col = min(255, max(0, static_cast<int>(256.0 * prob)));
+  const int col = std::min(255, std::max(0, static_cast<int>(256.0 * prob)));
   return (boost::format("#%02x%02x%02x") % col % col % col).str();
 }
 
@@ -53,7 +54,7 @@ unsigned virtualHeight(const nmtkit::InferenceGraph::Node * node) {
   for (const auto next : node->next()) {
     height += virtualHeight(next);
   }
-  return max(height, 1u);
+  return std::max(height, 1u);
 }
 
 // Javascript utilities.
@@ -319,7 +320,7 @@ ctx.textAlign = "center";
   *os << ::fill_color_fmt(255, 255, 255, 1.0);
   *os << ::rect_fmt(0, 0, width, height);
 
-  function<unsigned(float, float, const InferenceGraph::Node *)>
+  std::function<unsigned(float, float, const InferenceGraph::Node *)>
       write_subgraph =
       [&](float x, float y, const InferenceGraph::Node * node) {
     unsigned vh = 0;
@@ -350,7 +351,7 @@ ctx.textAlign = "center";
       *os << ::text_fmt(x, y2, word_str);
     }
 
-    return max(vh, 1u);
+    return std::max(vh, 1u);
   };
 
   write_subgraph(PADDING, PADDING, nodes[0]);

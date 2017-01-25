@@ -9,7 +9,9 @@
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::make_tuple;
+using std::string;
+using std::vector;
 
 namespace {
 
@@ -27,13 +29,13 @@ namespace {
 vector<nmtkit::SortedRandomSampler::Position> makePositionsByWords(
     const vector<nmtkit::Sample> & samples,
     const unsigned batch_size,
-    function<unsigned(const nmtkit::Sample &)> length_func) {
+    std::function<unsigned(const nmtkit::Sample &)> length_func) {
   unsigned prev_head = 0;
   unsigned prev_len = length_func(samples[0]);
   vector<nmtkit::SortedRandomSampler::Position> positions;
   for (unsigned i = 1; i < samples.size(); ++i) {
     const unsigned cur_len = length_func(samples[i]);
-    const unsigned max_len = max(prev_len, cur_len);
+    const unsigned max_len = std::max(prev_len, cur_len);
     if (max_len * (i + 1 - prev_head) > batch_size) {
       positions.emplace_back(
           nmtkit::SortedRandomSampler::Position {prev_head, i});
@@ -108,7 +110,8 @@ SortedRandomSampler::SortedRandomSampler(
   if (batch_method == "sentence") {
     const unsigned num_samples = samples_.size();
     for (unsigned i = 0; i < num_samples; i += batch_size) {
-      positions_.emplace_back(Position {i, min(i + batch_size, num_samples)});
+      positions_.emplace_back(Position {
+          i, std::min(i + batch_size, num_samples)});
     }
   } else if (batch_method == "both_word") {
     NMTKIT_CHECK(

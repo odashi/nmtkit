@@ -16,7 +16,7 @@
 
 #include <nmtkit/softmax_predictor.h>
 
-using namespace std;
+using std::string;
 
 namespace nmtkit {
 
