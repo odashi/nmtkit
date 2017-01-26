@@ -1,7 +1,7 @@
-#include "config.h"
-
-#include <nmtkit/exception.h>
 #include <nmtkit/unicode.h>
+
+#include <config.h>
+#include <nmtkit/exception.h>
 
 using std::string;
 using std::vector;

@@ -1,18 +1,25 @@
 #ifndef NMTKIT_ARRAY_H_
 #define NMTKIT_ARRAY_H_
 
+#include <nmtkit/exception.h>
+#include <nmtkit/random.h>
 #include <algorithm>
 #include <functional>
 #include <numeric>
 #include <utility>
-#include <nmtkit/exception.h>
-#include <nmtkit/random.h>
+#include <vector>
 
 namespace nmtkit {
 
 // Array manipulators.
 class Array {
-public:
+  Array() = delete;
+  Array(const Array &) = delete;
+  Array(Array &&) = delete;
+  Array & operator=(const Array &) = delete;
+  Array & operator=(Array &&) = delete;
+
+ public:
   // Reverse given vector.
   // Arguments:
   // arr: Target vector.

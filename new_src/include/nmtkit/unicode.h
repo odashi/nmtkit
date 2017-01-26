@@ -14,7 +14,7 @@ class UTF8 {
   UTF8 & operator=(const UTF8 &) = delete;
   UTF8 & operator=(UTF8 &&) = delete;
 
-public:
+ public:
   // Check whether the character is a UTF-8 first byte or not.
   //
   // Arguments:

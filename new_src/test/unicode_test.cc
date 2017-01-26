@@ -1,11 +1,10 @@
-#include "config.h"
-
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
+#include <config.h>
+#include <nmtkit/unicode.h>
 #include <string>
 #include <vector>
-#include <nmtkit/unicode.h>
 
 using std::string;
 using std::vector;
@@ -95,8 +94,7 @@ BOOST_AUTO_TEST_CASE(CheckUTF8_getLetters) {
     const vector<string> observed = UTF8::getLetters(inputs[i]);
     BOOST_CHECK_EQUAL_COLLECTIONS(
         expected[i].begin(), expected[i].end(),
-        observed.begin(), observed.end()
-    );
+        observed.begin(), observed.end());
   }
 }
 

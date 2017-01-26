@@ -1,13 +1,12 @@
-#include "config.h"
-
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
+#include <config.h>
+#include <nmtkit/basic_types.h>
+#include <nmtkit/simple_text_reader.h>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <nmtkit/basic_types.h>
-#include <nmtkit/simple_text_reader.h>
 
 using std::string;
 using std::vector;
@@ -18,7 +17,7 @@ BOOST_AUTO_TEST_SUITE(SimpleTextReaderTest)
 
 BOOST_AUTO_TEST_CASE(CheckReadingSrc) {
   const vector<vector<string>> expected {
-    { "i", "can", "'t", "tell" ,"who", "will", "arrive", "first", "." },
+    { "i", "can", "'t", "tell", "who", "will", "arrive", "first", "." },
     { "many", "animals", "have", "been", "destroyed", "by", "men", "." },
     { "i", "'m", "in", "the", "tennis", "club", "." },
     { "emi", "looks", "happy", "." },
@@ -89,7 +88,7 @@ BOOST_AUTO_TEST_CASE(CheckReadingTrg) {
 
 BOOST_AUTO_TEST_CASE(CheckReadingSrcTrg) {
   const vector<vector<string>> expected_src {
-    { "i", "can", "'t", "tell" ,"who", "will", "arrive", "first", "." },
+    { "i", "can", "'t", "tell", "who", "will", "arrive", "first", "." },
     { "many", "animals", "have", "been", "destroyed", "by", "men", "." },
     { "i", "'m", "in", "the", "tennis", "club", "." },
     { "emi", "looks", "happy", "." },

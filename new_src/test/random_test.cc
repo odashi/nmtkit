@@ -1,10 +1,9 @@
-#include "config.h"
-
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
-#include <vector>
+#include <config.h>
 #include <nmtkit/random.h>
+#include <vector>
 
 using std::vector;
 

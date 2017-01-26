@@ -1,12 +1,11 @@
-#include "config.h"
-
 #include <nmtkit/init.h>
 
-#include <iostream>
+#include <config.h>
 #include <sys/sysinfo.h>
 #include <boost/format.hpp>
 #include <dynet/init.h>
 #include <nmtkit/exception.h>
+#include <iostream>
 
 using std::cerr;
 using std::endl;
@@ -19,13 +18,13 @@ bool initialized = false;
 //
 // Arguments:
 //   requested_size: Size of the requested memory in bytes.
-void checkRequestedMemorySize(unsigned long requested_size) {
+void checkRequestedMemorySize(uint64_t requested_size) {
   struct sysinfo info;
   if (::sysinfo(&info) != 0) {
     NMTKIT_FATAL("Something wrong in ::sysinfo().");
   }
 
-  unsigned long total_ram = info.totalram * info.mem_unit;
+  const uint64_t total_ram = info.totalram * info.mem_unit;
   if (requested_size > total_ram * 2 / 3) {
     cerr << "Requested memory size exceeds the 2/3 of the total RAM:" << endl;
     cerr << "  Requested: " << (requested_size >> 20) << " MiB," << endl;
@@ -36,7 +35,7 @@ void checkRequestedMemorySize(unsigned long requested_size) {
     NMTKIT_FATAL("Requested memory size exceeds the limit (2/3 of total).");
   }
 
-  unsigned long free_ram = info.freeram * info.mem_unit;
+  const uint64_t free_ram = info.freeram * info.mem_unit;
   if (requested_size > free_ram) {
     cerr << "Requested memory size exceeds the current free RAM:" << endl;
     cerr << "  Requested: " << (requested_size >> 20) << " MiB," << endl;
@@ -58,7 +57,7 @@ void initialize(const GlobalConfig & config) {
 
   // Check memory size.
   if (!config.force_run) {
-    const unsigned long total_memory_mb =
+    const uint64_t total_memory_mb =
         config.forward_memory_mb +
         config.backward_memory_mb +
         config.parameter_memory_mb;
@@ -71,8 +70,7 @@ void initialize(const GlobalConfig & config) {
       boost::format("%d,%d,%d")
           % config.forward_memory_mb
           % config.backward_memory_mb
-          % config.parameter_memory_mb
-      ).str();
+          % config.parameter_memory_mb).str();
   params.weight_decay = 0.0f;
   params.shared_parameters = false;
 

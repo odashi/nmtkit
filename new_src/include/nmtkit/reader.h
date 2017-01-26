@@ -12,7 +12,7 @@ class Reader {
   Reader & operator=(const Reader &) = delete;
   Reader & operator=(Reader &&) = delete;
 
-public:
+ public:
   Reader() {}
   virtual ~Reader() {}
 

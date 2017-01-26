@@ -14,7 +14,7 @@ class Random {
   Random & operator=(const Random &) = delete;
   Random & operator=(Random &&) = delete;
 
-public:
+ public:
   Random();
 
   // Initializes all states.
@@ -32,7 +32,7 @@ public:
   //   Generated integer value.
   int uniform(int minval, int maxval);
 
-private:
+ private:
   std::mt19937 gen_;
 };
 

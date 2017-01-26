@@ -1,9 +1,9 @@
 #ifndef NMTKIT_SIMPLE_TEXT_READER_H_
 #define NMTKIT_SIMPLE_TEXT_READER_H_
 
+#include <nmtkit/reader.h>
 #include <fstream>
 #include <string>
-#include <nmtkit/reader.h>
 
 namespace nmtkit {
 
@@ -14,7 +14,7 @@ class SimpleTextReader : public Reader {
   SimpleTextReader & operator=(const SimpleTextReader &) = delete;
   SimpleTextReader & operator=(SimpleTextReader &&) = delete;
 
-public:
+ public:
   // Creates new reader object.
   //
   // Arguments:
@@ -36,7 +36,7 @@ public:
 
   bool read(SentencePair * sp) override;
 
-private:
+ private:
   std::ifstream src_ifs_;
   std::ifstream trg_ifs_;
 };

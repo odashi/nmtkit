@@ -1,9 +1,8 @@
-#include "config.h"
-
 #include <nmtkit/random.h>
 
-#include <algorithm>
+#include <config.h>
 #include <nmtkit/exception.h>
+#include <algorithm>
 
 namespace nmtkit {
 

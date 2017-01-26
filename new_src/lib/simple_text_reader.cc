@@ -1,10 +1,9 @@
-#include "config.h"
-
 #include <nmtkit/simple_text_reader.h>
 
-#include <utility>
+#include <config.h>
 #include <boost/algorithm/string.hpp>
 #include <nmtkit/exception.h>
+#include <utility>
 
 using std::string;
 using std::vector;

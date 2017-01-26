@@ -1,12 +1,11 @@
-#include "config.h"
-
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
+#include <config.h>
+#include <nmtkit/array.h>
 #include <numeric>
 #include <string>
 #include <vector>
-#include <nmtkit/array.h>
 
 using std::greater;
 using std::less;
@@ -26,7 +25,7 @@ BOOST_AUTO_TEST_CASE(CheckReversing) {
     {},
     {0},
     {1, 0},
-    {4, 3, 2, 1, 0,}
+    {4, 3, 2, 1, 0}
   };
 
   for (unsigned i = 0; i < test_data.size(); ++i) {
@@ -113,9 +112,10 @@ BOOST_AUTO_TEST_CASE(CheckShufflingPermutations) {
   const vector<unsigned> seeds {1, 10, 100};
   const vector<vector<vector<unsigned>>> expected_list {
     {{0}, {0}, {0}},
-    {{0,1}, {1,0}, {1,0}},
-    {{1,3,0,2}, {3,1,2,0}, {2,3,0,1}},
-    {{3,7,6,1,4,5,2,0}, {6,3,2,5,0,4,7,1}, {4,5,3,1,2,6,7,0}},
+    {{0, 1}, {1, 0}, {1, 0}},
+    {{1, 3, 0, 2}, {3, 1, 2, 0}, {2, 3, 0, 1}},
+    {{3, 7, 6, 1, 4, 5, 2, 0}, {6, 3, 2, 5, 0, 4, 7, 1},
+     {4, 5, 3, 1, 2, 6, 7, 0}},
   };
 
   for (unsigned l = 0; l < lengths.size(); ++l) {
