@@ -3,7 +3,8 @@
 #include <nmtkit/bpe_vocabulary.h>
 
 #include <fstream>
-#include <functional> #include <boost/algorithm/string.hpp>
+#include <functional>
+#include <boost/algorithm/string.hpp>
 #include <nmtkit/array.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
