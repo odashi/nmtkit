@@ -31,6 +31,7 @@
 #include <nmtkit/init.h>
 #include <nmtkit/monotone_sampler.h>
 #include <nmtkit/sorted_random_sampler.h>
+#include <nmtkit/vocabulary.h>
 #include <nmtkit/word_vocabulary.h>
 #include <spdlog/spdlog.h>
 
@@ -333,6 +334,23 @@ float evaluateBLEU(
   return evaluator->integrate(stats);
 }
 
+template <class T>
+void loadArchive(
+    const FS::path & filepath,
+    const string & archive_format,
+    T * obj) {
+  ifstream ifs(filepath.string());
+  NMTKIT_CHECK(
+      ifs.is_open(), "Could not open file to read: " + filepath.string());
+  if (archive_format == "binary") {
+    boost::archive::binary_iarchive iar(ifs);
+    iar >> *obj;
+  } else if (archive_format == "text") {
+    boost::archive::text_iarchive iar(ifs);
+    iar >> *obj;
+  }
+}
+
 }  // namespace
 
 int main(int argc, char * argv[]) {
@@ -374,16 +392,29 @@ int main(int argc, char * argv[]) {
     nmtkit::initialize(global_config);
 
     // Creates vocabularies.
-    boost::scoped_ptr<nmtkit::Vocabulary> src_vocab(
-        ::createVocabulary(
-            config.get<string>("Corpus.train_source"),
-            config.get<string>("Model.source_vocabulary_type"),
-            config.get<unsigned>("Model.source_vocabulary_size")));
-    boost::scoped_ptr<nmtkit::Vocabulary> trg_vocab(
-        ::createVocabulary(
-            config.get<string>("Corpus.train_target"),
-            config.get<string>("Model.target_vocabulary_type"),
-            config.get<unsigned>("Model.target_vocabulary_size")));
+    boost::scoped_ptr<nmtkit::Vocabulary> src_vocab, trg_vocab;
+    if (config.get<string>("Model.vocabulary_model") == "none") {
+      logger->info("Making source vocabulary.");
+      src_vocab.reset(::createVocabulary(
+          config.get<string>("Corpus.train_source"),
+          config.get<string>("Model.source_vocabulary_type"),
+          config.get<unsigned>("Model.source_vocabulary_size")));
+      logger->info("Making target vocabulary.");
+      trg_vocab.reset(::createVocabulary(
+          config.get<string>("Corpus.train_target"),
+          config.get<string>("Model.target_vocabulary_type"),
+          config.get<unsigned>("Model.target_vocabulary_size")));
+    } else {
+      FS::path vocab_model_dir(config.get<string>("Model.vocabulary_model"));
+      // Parses config file.
+      PT::ptree vocab_config;
+      PT::read_ini((vocab_model_dir / "config.ini").string(), vocab_config);
+      // Archive format to load models.
+      const string vocab_archive_format = vocab_config.get<string>("Global.archive_format");
+      ::loadArchive(vocab_model_dir / "source.vocab", vocab_archive_format, &src_vocab);
+      ::loadArchive(vocab_model_dir / "target.vocab", vocab_archive_format, &trg_vocab);
+      logger->info("Loaded vocabularies.");
+    }
     ::saveArchive(model_dir / "source.vocab", archive_format, src_vocab);
     ::saveArchive(model_dir / "target.vocab", archive_format, trg_vocab);
 
