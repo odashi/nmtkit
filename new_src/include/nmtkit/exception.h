@@ -4,15 +4,14 @@
 #include <stdexcept>
 #include <sstream>
 
-#define NMTKIT_FATAL(message) { \
+#define NMTKIT_FATAL(msg) { \
   std::ostringstream oss; \
-  oss << "FATAL: " << __FILE__ << ": " << __LINE__ << ": " << message; \
+  oss << "FATAL: " << __FILE__ << ": " << __LINE__ << ": " << (msg); \
   throw std::runtime_error(oss.str()); \
 }
 
-#define NMTKIT_CHECK(expr, message) if (!(expr)) { NMTKIT_FATAL(message); }
+#define NMTKIT_CHECK_MSG(cond, msg) { if (!(cond)) { NMTKIT_FATAL(msg); } }
 
-#define NMTKIT_CHECK_EQ(a, b, message) NMTKIT_CHECK((a) == (b), message)
-#define NMTKIT_CHECK_NE(a, b, message) NMTKIT_CHECK((a) != (b), message)
+#define NMTKIT_CHECK(cond) NMTKIT_CHECK_MSG((cond), #cond)
 
 #endif  // NMTKIT_EXCEPTION_H_

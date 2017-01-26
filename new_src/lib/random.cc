@@ -8,10 +8,11 @@
 namespace nmtkit {
 
 Random::Random() : gen_() {
-  NMTKIT_CHECK_EQ(
-      0, gen_.min(), "Minimum value of the random generator should be 0.");
-  NMTKIT_CHECK_EQ(
-      0xffffffff, gen_.max(),
+  NMTKIT_CHECK_MSG(
+      0 == gen_.min(),
+      "Minimum value of the random generator should be 0.");
+  NMTKIT_CHECK_MSG(
+      0xffffffff == gen_.max(),
       "Maximum value of the random generator should be 0xffffffff.");
   reset(0);  // default seed
 }
@@ -26,7 +27,9 @@ void Random::reset(unsigned seed) {
 }
 
 int Random::uniform(int minval, int maxval) {
-  NMTKIT_CHECK(minval < maxval, "Arguments should satisfy minval < maxval.");
+  NMTKIT_CHECK_MSG(
+      minval < maxval,
+      "Arguments should satisfy minval < maxval.");
 
   // NOTE: This calculation always rejects 0xffffffff from sampled values.
   const unsigned span = maxval - minval;

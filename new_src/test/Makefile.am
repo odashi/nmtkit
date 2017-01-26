@@ -16,13 +16,16 @@ LDADD = \
 check_PROGRAMS = \
   array_test \
   random_test \
+  simple_text_reader_test \
   unicode_test
 
 TESTS = \
   array_test \
   random_test \
+  simple_text_reader_test \
   unicode_test
 
 array_test_SOURCES = array_test.cc
 random_test_SOURCES = random_test.cc
+simple_text_reader_test_SOURCES = simple_text_reader_test.cc
 unicode_test_SOURCES = unicode_test.cc

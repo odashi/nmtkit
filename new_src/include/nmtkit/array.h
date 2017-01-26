@@ -92,7 +92,7 @@ public:
   //   Argmax index value.
   template <typename T, typename P>
   static unsigned argmax(const std::vector<T> & arr, P greater) {
-    NMTKIT_CHECK(arr.size() >= 1, "Given array is empty.");
+    NMTKIT_CHECK(arr.size() > 0);
     unsigned ret = 0;
     for (unsigned i = 1; i < arr.size(); ++i) {
       if (greater(arr[i], arr[ret])) {
@@ -129,9 +129,7 @@ public:
       P greater) {
     // Implementing based on heap sort
     const int n = arr.size();
-    NMTKIT_CHECK(
-        n >= static_cast<int>(num_results),
-        "Given array size should be greater than or equal to num_results.");
+    NMTKIT_CHECK(n >= static_cast<int>(num_results));
     std::vector<unsigned> ids(n);
     std::iota(ids.begin(), ids.end(), 0);
     auto downheap = [&](int k, int r) {

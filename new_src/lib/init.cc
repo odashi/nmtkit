@@ -54,7 +54,7 @@ void checkRequestedMemorySize(unsigned long requested_size) {
 namespace nmtkit {
 
 void initialize(const GlobalConfig & config) {
-  NMTKIT_CHECK(!::initialized, "NMTKit should not be initialized twice.");
+  NMTKIT_CHECK_MSG(!::initialized, "NMTKit should not be initialized twice.");
 
   // Check memory size.
   if (!config.force_run) {
@@ -91,7 +91,7 @@ void initialize(const GlobalConfig & config) {
 }
 
 void finalize() {
-  NMTKIT_CHECK(::initialized, "NMTKit is not yet initialized.");
+  NMTKIT_CHECK_MSG(::initialized, "NMTKit is not yet initialized.");
   dynet::cleanup();
   ::initialized = false;
 }

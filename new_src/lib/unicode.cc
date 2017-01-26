@@ -27,11 +27,11 @@ vector<string> UTF8::getLetters(const string & str) {
   unsigned prev = 0;
   vector<string> letters;
   while (prev < len) {
-    NMTKIT_CHECK(isFirstByte(str[prev]), "Invalid UTF-8 sequence.");
+    NMTKIT_CHECK_MSG(isFirstByte(str[prev]), "Invalid UTF-8 sequence.");
     const unsigned n = getNumBytes(str[prev]);
-    NMTKIT_CHECK(prev + n <= len, "Invalid UTF-8 sequence.");
+    NMTKIT_CHECK_MSG(prev + n <= len, "Invalid UTF-8 sequence.");
     for (unsigned i = 1; i < n; ++i) {
-      NMTKIT_CHECK(!isFirstByte(str[prev + i]), "Invalid UTF-8 sequence.");
+      NMTKIT_CHECK_MSG(!isFirstByte(str[prev + i]), "Invalid UTF-8 sequence.");
     }
     letters.emplace_back(str.substr(prev, n));
     prev += n;

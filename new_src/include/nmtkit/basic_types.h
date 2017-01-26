@@ -3,27 +3,30 @@
 
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 namespace nmtkit {
+
+// Structure to represent feature list.
+typedef std::unordered_map<std::string, std::string> FeatureMap;
 
 // Structure to represent one token.
 struct Token {
   std::string surface;
-  std::unordered_map<std::string, std::string> features;
+  FeatureMap features;
 };
 
 // Structure to represent one sentence.
 struct Sentence {
   std::vector<Token> tokens;
-  std::unordered_map<std:string, std::string> features;
+  FeatureMap features;
 };
 
 // Structure to represent one sentence pair.
 struct SentencePair {
   Sentence source;
   Sentence target;
-  std::unordered_map<std::string, std::string> features;
+  FeatureMap features;
 };
 
 }  // namespace nmtkit

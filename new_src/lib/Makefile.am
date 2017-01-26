@@ -10,5 +10,6 @@ AM_CXXFLAGS = \
 libnmtkit_la_SOURCES = \
   init.cc \
   random.cc \
+  simple_text_reader.cc \
   unicode.cc
 
