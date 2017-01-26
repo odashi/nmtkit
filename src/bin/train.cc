@@ -339,7 +339,7 @@ void loadArchive(
     const FS::path & filepath,
     const string & archive_format,
     T * obj) {
-  ifstream ifs(filepath.string());
+  std::ifstream ifs(filepath.string());
   NMTKIT_CHECK(
       ifs.is_open(), "Could not open file to read: " + filepath.string());
   if (archive_format == "binary") {
