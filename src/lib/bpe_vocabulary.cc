@@ -3,8 +3,7 @@
 #include <nmtkit/bpe_vocabulary.h>
 
 #include <fstream>
-#include <functional>
-#include <boost/algorithm/string.hpp>
+#include <functional> #include <boost/algorithm/string.hpp>
 #include <nmtkit/array.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/exception.h>
@@ -28,7 +27,7 @@ struct Change {
 //   vocab: vector bigram frequency.
 //   stats: sum of bigram frequency.
 //   indices: index of stats (key=bigram)
-void getPairStatistics(vector<pair<vector<string>, int>> vocab,
+void getPairStatistics(vector<pair<vector<string>, int>> & vocab,
     map<vector<string>, int> & stats,
     map<vector<string>, map<unsigned, int>> & indices) {
 
@@ -53,7 +52,7 @@ void getPairStatistics(vector<pair<vector<string>, int>> vocab,
 //
 // Returns:
 //   most frequent bigram
-vector<string> findMax(const map<vector<string>, int> stats) {
+vector<string> findMax(const map<vector<string>, int> & stats) {
   int current_max = -1e5;
   vector<string> current_argmax;
   for (auto elm : stats) {
@@ -74,9 +73,9 @@ vector<string> findMax(const map<vector<string>, int> stats) {
 //
 // Returns:
 //   vector of replaceable pairs
-vector<Change> replacePair(const vector<string> replace_words,
+vector<Change> replacePair(const vector<string> & replace_words,
     vector<pair<vector<string>, int>> & vocab,
-    const map<unsigned, int> indices) {
+    const map<unsigned, int> & indices) {
   string first = replace_words[0];
   string second = replace_words[1];
   string pair_str = boost::join(replace_words, "");
@@ -112,7 +111,7 @@ vector<Change> replacePair(const vector<string> replace_words,
 //
 // Returns:
 //   index of the specific word
-int findIndex(vector<string> word, string search_word, unsigned start_index) {
+int findIndex(vector<string> & word, string & search_word, unsigned start_index) {
   auto iter = find(word.begin() + start_index, word.end(), search_word);
   size_t index = distance(word.begin(), iter);
   return index;
@@ -125,8 +124,8 @@ int findIndex(vector<string> word, string search_word, unsigned start_index) {
 //   changes: return value of replacePair()
 //   stats: sum of bigram frequency.
 //   indices: index of stats (key=bigram)
-void updatePairStatistics(const vector<string> replace_words,
-    const vector<Change> changes,
+void updatePairStatistics(const vector<string> & replace_words,
+    const vector<Change> & changes,
     map<vector<string>, int> & stats,
     map<vector<string>, map<unsigned, int>> & indices) {
   stats.erase(replace_words);
@@ -224,7 +223,7 @@ void pruneStats(
 //
 // Returns:
 //   pairs of character bigram
-vector<pair<string, string>> getPairs(vector<string> word) {
+vector<pair<string, string>> getPairs(vector<string> & word) {
   vector<pair<string, string>> pairs;
   string prev_char = word[0];
   for (unsigned i = 1; i < word.size(); i++) {
@@ -242,15 +241,16 @@ vector<pair<string, string>> getPairs(vector<string> word) {
 //   bpe_cache: BPE converted words
 // Returns:
 //   BPE words
-vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes,
+vector<string> encode(const string * orig, 
+    const map<pair<string, string>, unsigned> * bpe_codes,
     map<string, vector<string>> * bpe_cache) {
   // if exists in bpe_cache
-  const auto &entry = bpe_cache->find(orig);
+  const auto &entry = bpe_cache->find(*orig);
   if (entry != bpe_cache->end()) {
     return entry->second;
   }
 
-  vector<string> word = UTF8::getLetters(orig);
+  vector<string> word = UTF8::getLetters(*orig);
   word.emplace_back("</w>");
   vector<pair<string, string>> pairs = getPairs(word);
 
@@ -258,9 +258,10 @@ vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes
     unsigned min_bigram = UINT_MAX;
     unsigned argmin_bigram = 0;
     for (unsigned i = 0; i < pairs.size(); i++) {
-      if (bpe_codes.find(pairs[i]) != bpe_codes.end() and
-          bpe_codes[pairs[i]] < min_bigram) {
-        min_bigram = bpe_codes[pairs[i]];
+      const auto &entry = bpe_codes->find(pairs[i]);
+      if (entry != bpe_codes->end() and
+          entry->second < min_bigram) {
+        min_bigram = entry->second;
         argmin_bigram = i;
       }
     }
@@ -296,7 +297,7 @@ vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes
     }
   }
 
-  (*bpe_cache)[orig] = word;
+  (*bpe_cache)[*orig] = word;
   return word;
 }
 
@@ -388,7 +389,7 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
     if (stats.empty() or (i != 0 and stats[most_frequent_index] < threshold)) {
       pruneStats(stats, big_stats, threshold);
       stats = big_stats;
-      vector<string> most_frequent_index = findMax(stats);
+      most_frequent_index = findMax(stats);
       threshold = stats[most_frequent_index] * i/(i+10000.0);
       pruneStats(stats, big_stats, threshold);
     }
@@ -440,7 +441,7 @@ vector<unsigned> BPEVocabulary::convertToIDs(const string & sentence) const {
       words, sentence, boost::is_space(), boost::algorithm::token_compress_on);
   vector<unsigned> ids;
   for (const string & word : words) {
-    vector<string> new_words = encode(word, bpe_codes_, &bpe_cache_);
+    vector<string> new_words = encode(&word, &bpe_codes_, &bpe_cache_);
     for (const string & new_word : new_words) {
       ids.emplace_back(getID(new_word));
     }
