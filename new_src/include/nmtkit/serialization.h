@@ -1,0 +1,23 @@
+#ifndef NMTKIT_SERIALIZATION_H_
+#define NMTKIT_SERIALIZATION_H_
+
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
+
+#define NMTKIT_SERIALIZATION_DECL(cls) BOOST_CLASS_EXPORT_KEY(cls)
+
+#define NMTKIT_SERIALIZATION_IMPL(cls) \
+  BOOST_CLASS_EXPORT_IMPLEMENT(cls) \
+  template void cls::serialize( \
+      boost::archive::binary_iarchive &, const unsigned); \
+  template void cls::serialize( \
+      boost::archive::binary_oarchive &, const unsigned); \
+  template void cls::serialize( \
+      boost::archive::text_iarchive &, const unsigned); \
+  template void cls::serialize( \
+      boost::archive::text_oarchive &, const unsigned);
+
+#endif  // NMTKIT_SERIALIZATION_H_
