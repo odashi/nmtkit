@@ -19,11 +19,11 @@ class Reader {
   // Read one sample from the stream.
   //
   // Arguments:
-  //   sp: Placeholder to store next sample.
+  //   sp: Placeholder to store next sentence
   //
   // Returns:
-  //   true if reading next sample is succeeded, false otherwise.
-  virtual bool read(SentencePair * sp) = 0;
+  //   true if reading next sentence is succeeded, false otherwise.
+  virtual bool read(Sentence * sentence) = 0;
 };
 
 }  // namespace nmtkit
