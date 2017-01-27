@@ -18,27 +18,15 @@ class SimpleTextReader : public Reader {
   // Creates new reader object.
   //
   // Arguments:
-  //   src_filepath: Location to the source token file.
-  //                 If this argument is empty, source sentences would not be
-  //                 included in returned samples.
-  //                 at least this argument or `trg_filepath` should be set as
-  //                 non-empty.
-  //   trg_filepath: Location to the target token file.
-  //                 If this argument is empty, target sentences would not be
-  //                 included in returned samples.
-  //                 at least this argument or `src_filepath` should be set as
-  //                 non-empty.
-  SimpleTextReader(
-      const std::string & src_filepath,
-      const std::string & trg_filepath);
+  //   sfilepath: Location to the token file.
+  SimpleTextReader(const std::string & filepath);
 
   ~SimpleTextReader() override;
 
-  bool read(SentencePair * sp) override;
+  bool read(Sentence * sentence) override;
 
  private:
-  std::ifstream src_ifs_;
-  std::ifstream trg_ifs_;
+  std::ifstream ifs_;
 };
 
 }  // namespace nmtkit
