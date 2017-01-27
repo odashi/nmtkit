@@ -19,26 +19,6 @@ struct Token {
   // Any-type features.
   FeatureMap features;
 
-  Token()
-    : surface(), features() {}
-  Token(const Token & src)
-    : surface(src.surface), features(src.features) {}
-  Token(Token && src)
-    : surface(std::move(src.surface)), features(std::move(src.features)) {}
-  explicit Token(const std::string & surface_)
-    : surface(surface_), features() {}
-  Token(const std::string & surface_, const FeatureMap & features_)
-    : surface(surface_), features(features_) {}
-
-  Token & operator=(const Token & src) {
-    surface = src.surface;
-    features = src.features;
-  }
-  Token & operator=(Token && src) {
-    surface = std::move(src.surface);
-    features = std::move(src.features);
-  }
-
   bool operator==(const Token & lhs) {
     return surface == src.surface && features == src.features;
   }
@@ -51,26 +31,6 @@ struct Sentence {
 
   // Any-type features.
   FeatureMap features;
-
-  Sentence()
-    : tokens(), features() {}
-  Sentence(const Sentence & src)
-    : tokens(src.tokens), features(src.features) {}
-  Sentence(Sentence && src)
-    : tokens(std::move(src.tokens)), features(std::move(src.features)) {}
-  explicit Sentence(const std::vector<Token> & tokens_)
-    : tokens(tokens_), features() {}
-  Sentence(const std::vector<Token> & tokens_, const FeatureMap & features)
-    : tokens(tokens_), features(features_) {}
-
-  Sentence & operator=(const Sentence & src) {
-    tokens = src.tokens;
-    features = src.features;
-  }
-  Sentence & operator=(Sentence && src) {
-    tokens = std::move(src.tokens);
-    features = std::move(src.features);
-  }
 
   bool operator==(const Sentence & lhs) {
     return tokens == src.tokens && features == src.features;
