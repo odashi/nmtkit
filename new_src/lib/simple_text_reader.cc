@@ -26,13 +26,7 @@ bool SimpleTextReader::read(Sentence * sentence) {
   boost::trim(line);
   boost::split(
       words, line, boost::is_space(), boost::algorithm::token_compress_on);
-
-  Sentence temp { vector<Token>(words.size()), FeatureMap() };
-  for (unsigned i = 0; i < words.size(); ++i) {
-    temp.tokens[i].surface = std::move(words[i]);
-  }
-
-  *sentence = std::move(temp);
+  *sentence = Sentence(words);
   return true;
 }
 

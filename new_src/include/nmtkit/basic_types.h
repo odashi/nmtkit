@@ -1,6 +1,7 @@
 #ifndef NMTKIT_BASIC_TYPES_H_
 #define NMTKIT_BASIC_TYPES_H_
 
+#include <ostream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -19,9 +20,8 @@ struct Token {
   // Any-type features.
   FeatureMap features;
 
-  bool operator==(const Token & lhs) {
-    return surface == src.surface && features == src.features;
-  }
+  Token() {}
+  explicit Token(const std::string surface_) : surface(surface_) {}
 };
 
 // Structure to represent one sentence.
@@ -32,10 +32,30 @@ struct Sentence {
   // Any-type features.
   FeatureMap features;
 
-  bool operator==(const Sentence & lhs) {
-    return tokens == src.tokens && features == src.features;
+  Sentence() {}
+
+  // Make a Sentence object from surface texts.
+  //
+  // Arguments:
+  //   surfaces: List of surface texts.
+  explicit Sentence(const std::vector<std::string> surfaces) {
+    for (const std::string & surf : surfaces) {
+      tokens.emplace_back(Token(surf));
+    }
   }
 };
+
+inline bool operator==(const Token & a, const Token & b) {
+  return a.surface == b.surface && a.features == b.features;
+}
+
+inline bool operator==(const Sentence & a, const Sentence & b) {
+  return a.tokens == b.tokens && a.features == b.features;
+}
+
+std::ostream & operator<<(std::ostream & os, const FeatureMap & x);
+std::ostream & operator<<(std::ostream & os, const Token & x);
+std::ostream & operator<<(std::ostream & os, const Sentence & x);
 
 }  // namespace nmtkit
 

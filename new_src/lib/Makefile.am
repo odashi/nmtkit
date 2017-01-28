@@ -8,9 +8,12 @@ AM_CXXFLAGS = \
   $(CUDA_CPPFLAGS)
 
 libnmtkit_la_SOURCES = \
+  basic_types.cc \
+  character_vocabulary.cc \
   init.cc \
   random.cc \
   simple_text_reader.cc \
   unicode.cc \
-  vocabulary.cc
+  vocabulary.cc \
+  word_vocabulary.cc
 

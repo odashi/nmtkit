@@ -29,3 +29,7 @@ src/bin/decode
 src/bin/train
 src/test/*_test
 
+new_src/bin/decode
+new_src/bin/train
+new_src/test/*_test
+

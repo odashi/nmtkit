@@ -19,7 +19,7 @@ class SimpleTextReader : public Reader {
   //
   // Arguments:
   //   sfilepath: Location to the token file.
-  SimpleTextReader(const std::string & filepath);
+  explicit SimpleTextReader(const std::string & filepath);
 
   ~SimpleTextReader() override;
 

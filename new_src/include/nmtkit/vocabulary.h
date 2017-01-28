@@ -4,6 +4,7 @@
 #include <boost/serialization/access.hpp>
 #include <nmtkit/basic_types.h>
 #include <nmtkit/serialization.h>
+#include <string>
 #include <vector>
 
 namespace nmtkit {
@@ -19,6 +20,17 @@ class Vocabulary {
   Vocabulary() {}
   virtual ~Vocabulary() {}
 
+  // Retrieves a list of token IDs corresponding to given Token object.
+  // This function may return more than 1 IDs according to the policy of each
+  // vocabulary.
+  //
+  // Arguments:
+  //   token: A Token object.
+  //
+  // Returns:
+  //   List of corresponding token IDs.
+  virtual std::vector<unsigned> convertToIDs(const Token & token) const = 0;
+
   // Retrieves a list of token IDs corresponding to given Sentence object.
   // This function may modify input sequences according to the policy of each
   // vocabulary, i.e., the length of given Sentence and returned vector may
@@ -29,18 +41,32 @@ class Vocabulary {
   //
   // Returns:
   //   List of corresponding token IDs.
-  virtual std::vector<unsigned> encode(const Sentence & sentence) const = 0;
+  virtual std::vector<unsigned> convertToIDs(
+      const Sentence & sentence) const = 0;
 
   // Restores the Sentence object from given token IDs.
   // This function may return a Sentence object which have different number of
-  // Token objects from the input vector, because of same reason of `encode()`.
+  // Token objects from the input vector, because of same reason of
+  // `convertToIDs()`.
   //
   // Arguments:
   //   ids: List of token IDs.
   //
   // Returns:
   //   Sentence object.
-  virtual Sentence decode(const std::vector<unsigned> ids) const = 0;
+  virtual Sentence convertToSentence(
+      const std::vector<unsigned> & ids) const = 0;
+
+  // Retrieves surface text of given token ID.
+  // Returned texts only represents the visual of the internal token and may not
+  // represent actual words.
+  //
+  // Arguments:
+  //   id: A token ID.
+  //
+  // Returns:
+  //   Surface text of tiven token ID.
+  virtual std::string getSurface(const unsigned id) const = 0;
 
   // Retrieves expected frequency of given token ID in the corpus.
   // Usually, this value would be calculated using the training corpus when
@@ -55,7 +81,7 @@ class Vocabulary {
 
   // Retrieves the size of the vocabulary.
   // Each token ID should satisfy that:
-  //   0 <= (token ID) < Vocabulary::size()
+  //   0 <= (token ID) < Vocabulary::size().
   virtual unsigned size() const = 0;
 
  private:
