@@ -10,6 +10,7 @@
 
 using std::cerr;
 using std::endl;
+using std::vector;
 
 namespace {
 
