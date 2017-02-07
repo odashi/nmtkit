@@ -449,6 +449,13 @@ int main(int argc, char * argv[]) {
         config.get<string>("Train.loss_integration_type"));
     logger->info("Created new encoder-decoder model.");
 
+    // Gradient clipping
+    const unsigned gradient_clipping = config.get<unsigned>("Train.gradient_clipping");
+    if (gradient_clipping != 0) {
+        trainer->clipping_enabled = true;
+        trainer->clip_threshold = gradient_clipping;
+    }
+
     const string lr_decay_type = config.get<string>("Train.lr_decay_type");
 
     // Decaying factors
