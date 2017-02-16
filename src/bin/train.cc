@@ -452,9 +452,9 @@ int main(int argc, char * argv[]) {
     // Gradient clipping
     const float gradient_clipping = config.get<float>("Train.gradient_clipping");
     NMTKIT_CHECK(
-        gradient_clipping >= 0.0,
+        gradient_clipping >= 0.0f,
         "gradient_clipping should be greater than 0.0");
-    if (gradient_clipping != 0.0) {
+    if (gradient_clipping != 0.0f) {
         trainer->clipping_enabled = true;
         trainer->clip_threshold = gradient_clipping;
     }
