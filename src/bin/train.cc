@@ -450,8 +450,11 @@ int main(int argc, char * argv[]) {
     logger->info("Created new encoder-decoder model.");
 
     // Gradient clipping
-    const unsigned gradient_clipping = config.get<unsigned>("Train.gradient_clipping");
-    if (gradient_clipping != 0) {
+    const float gradient_clipping = config.get<float>("Train.gradient_clipping");
+    NMTKIT_CHECK(
+        gradient_clipping >= 0.0,
+        "gradient_clipping should be greater than 0.0");
+    if (gradient_clipping != 0.0) {
         trainer->clipping_enabled = true;
         trainer->clip_threshold = gradient_clipping;
     }
