@@ -454,6 +454,11 @@ int main(int argc, char * argv[]) {
     NMTKIT_CHECK(
         gradient_clipping >= 0.0f,
         "gradient_clipping should be greater than 0.0");
+    
+    // NOTE(odashi):
+    //   It is better to avoid a direct comparison of float equivalences.
+    //   But this would work for now, because 0.0f might be able to be
+    //   represented without errors.
     if (gradient_clipping != 0.0f) {
         trainer->clipping_enabled = true;
         trainer->clip_threshold = gradient_clipping;
