@@ -22,12 +22,12 @@ AC_ARG_WITH([dynet],
 if test "x$dynet_dir" != "x"; then
   if test "x$cuda_dir" != "x"; then
     # DyNet with CUDA.
-    DYNET_CPPFLAGS="-I${dynet_dir}"
-    DYNET_LDFLAGS="-L${dynet_dir}/build/dynet/ -lgdynet -ldynetcuda"
+    DYNET_CPPFLAGS="-I${dynet_dir}/include"
+    DYNET_LDFLAGS="-L${dynet_dir}/lib -lgdynet -ldynetcuda"
   else
     # DyNet with CPU.
-    DYNET_CPPFLAGS="-I${dynet_dir}"
-    DYNET_LDFLAGS="-L${dynet_dir}/build/dynet/ -ldynet"
+    DYNET_CPPFLAGS="-I${dynet_dir}/include"
+    DYNET_LDFLAGS="-L${dynet_dir}/lib -ldynet"
   fi
 else
   AS_ERROR(Must specify --with-dynet=DIR)
