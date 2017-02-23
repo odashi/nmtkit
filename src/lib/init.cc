@@ -3,7 +3,15 @@
 #include <nmtkit/init.h>
 
 #include <iostream>
+#if defined(__APPLE__) && defined(__MACH__)
+#include <sys/sysctl.h>
+#include <mach/vm_statistics.h>
+#include <mach/mach_types.h>
+#include <mach/mach_init.h>
+#include <mach/mach_host.h>
+#else
 #include <sys/sysinfo.h>
+#endif
 #include <boost/format.hpp>
 #include <dynet/init.h>
 #include <nmtkit/exception.h>
@@ -21,12 +29,34 @@ bool initialized = false;
 // Arguments:
 //   requested_size: Size of the requested memory in bytes.
 void checkRequestedMemorySize(unsigned long requested_size) {
+#if defined(__APPLE__) && defined(__MACH__)
+  int mib[2];
+  mib[0] = CTL_HW;
+  mib[1] = HW_MEMSIZE;
+  unsigned long total_ram = 0, free_ram = 0;
+  size_t length = sizeof(unsigned long);
+  sysctl(mib, 2, &total_ram, &length, NULL, 0);
+
+  vm_size_t page_size;
+  mach_port_t mach_port;
+  mach_msg_type_number_t count;
+  vm_statistics64_data_t vm_stats;
+
+  mach_port = mach_host_self();
+  count = sizeof(vm_stats) / sizeof(natural_t);
+  if (KERN_SUCCESS == host_page_size(mach_port, &page_size) &&
+      KERN_SUCCESS == host_statistics64(mach_port, HOST_VM_INFO, (host_info64_t)&vm_stats, &count)) {
+        free_ram = (unsigned long)vm_stats.free_count * (unsigned long)page_size;
+  }
+#else
   struct sysinfo info;
   if (::sysinfo(&info) != 0) {
     NMTKIT_FATAL("Something wrong in ::sysinfo().");
   }
-
   unsigned long total_ram = info.totalram * info.mem_unit;
+  unsigned long free_ram = info.freeram * info.mem_unit;
+#endif
+
   if (requested_size > total_ram * 2 / 3) {
     cerr << "Requested memory size exceeds the 2/3 of the total RAM:" << endl;
     cerr << "  Requested: " << (requested_size >> 20) << " MiB," << endl;
@@ -37,7 +67,6 @@ void checkRequestedMemorySize(unsigned long requested_size) {
     NMTKIT_FATAL("Requested memory size exceeds the limit (2/3 of total).");
   }
 
-  unsigned long free_ram = info.freeram * info.mem_unit;
   if (requested_size > free_ram) {
     cerr << "Requested memory size exceeds the current free RAM:" << endl;
     cerr << "  Requested: " << (requested_size >> 20) << " MiB," << endl;
