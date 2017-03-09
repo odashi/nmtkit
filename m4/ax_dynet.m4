@@ -23,7 +23,7 @@ if test "x$dynet_dir" != "x"; then
   if test "x$cuda_dir" != "x"; then
     # DyNet with CUDA.
     DYNET_CPPFLAGS="-I${dynet_dir}/include"
-    DYNET_LDFLAGS="-L${dynet_dir}/lib -lgdynet -ldynetcuda"
+    DYNET_LDFLAGS="-L${dynet_dir}/lib -lgdynet"
   else
     # DyNet with CPU.
     DYNET_CPPFLAGS="-I${dynet_dir}/include"
