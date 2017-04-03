@@ -13,11 +13,11 @@ NMTKitは以下のライブラリに依存しています。
 * **DyNet** ... v1.0-rc1
 * **CUDA** ... v7.5 以降
 
-またインストール作業のために以下のツールが必要です。
+またインストール作業のために以下のツールが必要かもしれません。
 
 * **Git**
 * **Mercurial**
-* **autotools**
+* **autotools(autoconf, automake), libtool**
 * **CMake**
 
 
