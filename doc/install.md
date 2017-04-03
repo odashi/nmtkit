@@ -14,11 +14,11 @@ NMTKit needs following libraries:
 * **CUDA** ... v7.5 or later
 
 
-And the installation process requires following tools:
+And the installation process may require following tools:
 
 * **Git**
 * **Mercurial**
-* **autotools**
+* **autotools (autoconf, automake), libtool**
 * **CMake**.
 
 
