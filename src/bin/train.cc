@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <functional>
 #include <string>
 #include <vector>
 #include <boost/archive/binary_oarchive.hpp>
@@ -72,8 +73,10 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     ("log-to-stderr",
      "Print logs to the stderr as well as the 'training.log' file.")
     ("config",
-     PO::value<string>(),
-     "(required) Location of the training configuration file.")
+     PO::value<vector<string>>()->multitoken(),
+     "(required) Location of the training configuration file(s). "
+     "If multiple files are specified, they are merged into one configuration object. "
+     "Each property is overwritten by the latest definition.")
     ("model",
      PO::value<string>(),
      "(required) Location of the model directory.")
@@ -93,7 +96,12 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     cerr << "NMTKit trainer." << endl;
     cerr << "Author: Yusuke Oda (http://github.com/odashi/)" << endl;
     cerr << "Usage:" << endl;
-    cerr << "  train --config CONFIG_FILE --model MODEL_DIRECTORY" << endl;
+    cerr << endl;
+    cerr << "  (make an NMT model)" << endl;
+    cerr << "  train --config CONFIG_FILE1 CONFIG_FILE2 ... \\\\" << endl;
+    cerr << "        --model MODEL_DIRECTORY" << endl;
+    cerr << endl;
+    cerr << "  (show this manual)" << endl;
     cerr << "  train --help" << endl;
     cerr << opt << endl;
     exit(1);
@@ -198,6 +206,33 @@ nmtkit::Vocabulary * createVocabulary(
     return new nmtkit::BPEVocabulary(corpus_filepath, vocab_size);
   }
   NMTKIT_FATAL("Invalid vocabulary type: " + vocab_type);
+}
+
+// Merge multiple configurations into one property tree.
+//
+// Arguments:
+//   cfg_filepaths: Locations to the configuration files.
+//
+// Returns:
+//   An merged ptree object.
+PT::ptree mergeConfigs(const vector<string> & cfg_filepaths) {
+  PT::ptree cfg;
+  for (const string path : cfg_filepaths) {
+    PT::ptree additional;
+    PT::read_ini(path, additional);
+
+    std::function<void(
+        const PT::ptree::path_type &, const PT::ptree &)> traverse = [&](
+        const PT::ptree::path_type & child_path, const PT::ptree & child) {
+      cfg.put(child_path, child.data());
+      for (const auto gch : child) {
+        const auto gch_path = child_path / PT::ptree::path_type(gch.first);
+        traverse(gch_path, gch.second);
+      }
+    };
+    traverse("", additional);
+  }
+  return cfg;
 }
 
 // Initializes a trainer object.
@@ -353,9 +388,8 @@ int main(int argc, char * argv[]) {
 
     // Copies and parses the config file.
     FS::path cfg_filepath = model_dir / "config.ini";
-    FS::copy_file(args["config"].as<string>(), cfg_filepath);
-    PT::ptree config;
-    PT::read_ini(cfg_filepath.string(), config);
+    PT::ptree config = ::mergeConfigs(args["config"].as<vector<string>>());
+    PT::write_ini(cfg_filepath.string(), config);
 
     // Archive format to save models.
     const string archive_format = config.get<string>("Global.archive_format");
