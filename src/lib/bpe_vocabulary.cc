@@ -32,19 +32,19 @@ struct Change {
 //   vocab: vector bigram frequency.
 //   stats: sum of bigram frequency.
 //   indices: index of stats (key=bigram)
-void getPairStatistics(vector<pair<vector<string>, int>> vocab,
-    map<vector<string>, int> & stats,
-    map<vector<string>, map<unsigned, int>> & indices) {
+void getPairStatistics(vector<pair<vector<string>, int>> * vocab,
+    map<vector<string>, int> * stats,
+    map<vector<string>, map<unsigned, int>> * indices) {
 
-  for (unsigned i = 0; i < vocab.size(); i++) {
-    const vector<string> word = vocab[i].first;
-    const int freq = vocab[i].second;
+  for (unsigned i = 0; i < vocab->size(); i++) {
+    const vector<string> word = (*vocab)[i].first;
+    const int freq = (*vocab)[i].second;
     string prev_char = word[0];
     for (unsigned j = 1; j < word.size(); j++) {
       const string current_char = word[j];
       const vector<string> key = {prev_char, current_char};
-      stats[key] += freq;
-      indices[key][i] += 1;
+      (*stats)[key] += freq;
+      (*indices)[key][i] += 1;
       prev_char = current_char;
     }
   }
@@ -57,10 +57,10 @@ void getPairStatistics(vector<pair<vector<string>, int>> vocab,
 //
 // Returns:
 //   most frequent bigram
-vector<string> findMax(const map<vector<string>, int> stats) {
+vector<string> findMax(const map<vector<string>, int> * stats) {
   int current_max = -1e5;
   vector<string> current_argmax;
-  for (auto elm : stats) {
+  for (auto elm : (*stats)) {
     if (elm.second > current_max) {
       current_max = elm.second;
       current_argmax = elm.first;
@@ -78,29 +78,29 @@ vector<string> findMax(const map<vector<string>, int> stats) {
 //
 // Returns:
 //   vector of replaceable pairs
-vector<Change> replacePair(const vector<string> replace_words,
-    vector<pair<vector<string>, int>> & vocab,
-    const map<unsigned, int> indices) {
-  string first = replace_words[0];
-  string second = replace_words[1];
-  string pair_str = boost::join(replace_words, "");
+vector<Change> replacePair(const vector<string> * replace_words,
+    vector<pair<vector<string>, int>> * vocab,
+    const map<unsigned, int> * indices) {
+  string first = (*replace_words)[0];
+  string second = (*replace_words)[1];
+  string pair_str = boost::join((*replace_words), "");
   vector<Change> changes;
 
-  for (const auto index : indices) {
+  for (const auto index : (*indices)) {
     unsigned j = index.first;
     int freq = index.second;
     if (freq < 1) {
         continue;
     }
 
-    vector<string> word = vocab[j].first;
-    freq = vocab[j].second;
+    vector<string> word = (*vocab)[j].first;
+    freq = (*vocab)[j].second;
     string new_word = boost::join(word, " ");
     boost::replace_all(new_word, first + " " + second, pair_str);
     vector<string> vector_new_word;
     boost::split(
         vector_new_word, new_word, boost::is_space(), boost::algorithm::token_compress_on);
-    vocab[j] = pair<vector<string>, int>(vector_new_word, freq);
+    (*vocab)[j] = pair<vector<string>, int>(vector_new_word, freq);
     changes.emplace_back( Change{j, vector_new_word, word, freq} );
   }
 
@@ -116,9 +116,9 @@ vector<Change> replacePair(const vector<string> replace_words,
 //
 // Returns:
 //   index of the specific word
-int findIndex(vector<string> word, string search_word, unsigned start_index) {
-  auto iter = find(word.begin() + start_index, word.end(), search_word);
-  size_t index = distance(word.begin(), iter);
+int findIndex(vector<string> * word, string * search_word, unsigned start_index) {
+  auto iter = find(word->begin() + start_index, word->end(), (*search_word));
+  size_t index = distance(word->begin(), iter);
   return index;
 }
 
@@ -129,39 +129,39 @@ int findIndex(vector<string> word, string search_word, unsigned start_index) {
 //   changes: return value of replacePair()
 //   stats: sum of bigram frequency.
 //   indices: index of stats (key=bigram)
-void updatePairStatistics(const vector<string> replace_words,
-    const vector<Change> changes,
-    map<vector<string>, int> & stats,
-    map<vector<string>, map<unsigned, int>> & indices) {
-  stats.erase(replace_words);
-  indices.erase(replace_words);
-  string first = replace_words[0];
-  string second = replace_words[1];
+void updatePairStatistics(const vector<string> * replace_words,
+    const vector<Change> * changes,
+    map<vector<string>, int> * stats,
+    map<vector<string>, map<unsigned, int>> * indices) {
+  stats->erase((*replace_words));
+  indices->erase((*replace_words));
+  string first = (*replace_words)[0];
+  string second = (*replace_words)[1];
   string new_pair = first + second;
 
-  for (unsigned i = 0; i < changes.size(); i++) {
-    unsigned j = changes[i].index;
-    vector<string> new_word = changes[i].new_word;
-    vector<string> old_word = changes[i].old_word;
-    int freq = changes[i].freq;
+  for (unsigned i = 0; i < changes->size(); i++) {
+    unsigned j = (*changes)[i].index;
+    vector<string> new_word = (*changes)[i].new_word;
+    vector<string> old_word = (*changes)[i].old_word;
+    int freq = (*changes)[i].freq;
 
     unsigned k = 0;
     while(true) {
-      k = findIndex(old_word, first, k);
+      k = findIndex(&old_word, &first, k);
       if (k == old_word.size()) {
         break;
       }
       if (k < old_word.size() - 1 and old_word[k+1] == second) {
         if (k != 0) {
           vector<string> prev = {old_word[k-1], old_word[k]};
-          stats[prev] -= freq;
-          indices[prev][j] -= 1;
+          (*stats)[prev] -= freq;
+          (*indices)[prev][j] -= 1;
         }
         if (k < old_word.size() - 2) {
           if (old_word[k+2] != first or k >= old_word.size() - 3 or old_word[k+3] != second) {
             vector<string> nex = {old_word[k+1], old_word[k+2]};
-            stats[nex] -= freq;
-            indices[nex][j] -= 1;
+            (*stats)[nex] -= freq;
+            (*indices)[nex][j] -= 1;
           }
         }
         k += 2;
@@ -173,19 +173,19 @@ void updatePairStatistics(const vector<string> replace_words,
 
     k = 0;
     while(true) {
-      k = findIndex(new_word, new_pair, k);
+      k = findIndex(&new_word, &new_pair, k);
       if (k == new_word.size()) {
         break;
       }
       if (k != 0) {
         vector<string> prev = {new_word[k-1], new_word[k]};
-        stats[prev] += freq;
-        indices[prev][j] += 1;
+        (*stats)[prev] += freq;
+        (*indices)[prev][j] += 1;
       }
       if (k < new_word.size() - 1 and new_word[k+1] != new_pair) {
         vector<string> nex = {new_word[k], new_word[k+1]};
-        stats[nex] += freq;
-        indices[nex][j] += 1;
+        (*stats)[nex] += freq;
+        (*indices)[nex][j] += 1;
       }
       k += 1;
     }
@@ -199,20 +199,20 @@ void updatePairStatistics(const vector<string> replace_words,
 //   big_stats: sum of bigram frequency (not pruned).
 //   threshold: words that frequency is less than this threshold will be pruned
 void pruneStats(
-    map<vector<string>, int> & stats,
-    map<vector<string>, int> & big_stats,
+    map<vector<string>, int> * stats,
+    map<vector<string>, int> * big_stats,
     const int threshold) {
-  map<vector<string>, int>::iterator it = stats.begin();
-  while (it != stats.end()) {
+  map<vector<string>, int>::iterator it = stats->begin();
+  while (it != stats->end()) {
     vector<string> item = it->first;
     int freq = it->second;
     if (freq < threshold) {
-      stats.erase(it++);
+      stats->erase(it++);
       if (freq < 0) {
-        big_stats[item] += freq;
+        (*big_stats)[item] += freq;
       }
       else {
-        big_stats[item] = freq;
+        (*big_stats)[item] = freq;
       }
     }
     else {
@@ -228,12 +228,12 @@ void pruneStats(
 //
 // Returns:
 //   pairs of character bigram
-vector<pair<string, string>> getPairs(vector<string> word) {
+vector<pair<string, string>> getPairs(vector<string> * word) {
   vector<pair<string, string>> pairs;
-  string prev_char = word[0];
-  for (unsigned i = 1; i < word.size(); i++) {
-    pairs.emplace_back(pair<string, string>(prev_char, word[i]));
-    prev_char = word[i];
+  string prev_char = (*word)[0];
+  for (unsigned i = 1; i < word->size(); i++) {
+    pairs.emplace_back(pair<string, string>(prev_char, (*word)[i]));
+    prev_char = (*word)[i];
   }
   return pairs;
 }
@@ -246,25 +246,27 @@ vector<pair<string, string>> getPairs(vector<string> word) {
 //   bpe_cache: BPE converted words
 // Returns:
 //   BPE words
-vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes,
+vector<string> encode(const string * orig, 
+    const map<pair<string, string>, unsigned> * bpe_codes,
     map<string, vector<string>> * bpe_cache) {
   // if exists in bpe_cache
-  const auto &entry = bpe_cache->find(orig);
+  const auto &entry = bpe_cache->find(*orig);
   if (entry != bpe_cache->end()) {
     return entry->second;
   }
 
-  vector<string> word = UTF8::getLetters(orig);
+  vector<string> word = UTF8::getLetters(*orig);
   word.emplace_back("</w>");
-  vector<pair<string, string>> pairs = getPairs(word);
+  vector<pair<string, string>> pairs = getPairs(&word);
 
   while (true) {
     unsigned min_bigram = UINT_MAX;
     unsigned argmin_bigram = 0;
     for (unsigned i = 0; i < pairs.size(); i++) {
-      if (bpe_codes.find(pairs[i]) != bpe_codes.end() and
-          bpe_codes[pairs[i]] < min_bigram) {
-        min_bigram = bpe_codes[pairs[i]];
+      const auto &entry = bpe_codes->find(pairs[i]);
+      if (entry != bpe_codes->end() and
+          entry->second < min_bigram) {
+        min_bigram = entry->second;
         argmin_bigram = i;
       }
     }
@@ -276,7 +278,7 @@ vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes
     vector<string> new_word;
     unsigned i = 0;
     while (i < word.size()) {
-      unsigned j = findIndex(word, first, i);
+      unsigned j = findIndex(&word, &first, i);
       if (j == word.size()) {
         copy(word.begin() + i, word.end(), back_inserter(new_word));
         break;
@@ -296,11 +298,11 @@ vector<string> encode(string orig, map<pair<string, string>, unsigned> bpe_codes
     if (word.size() == 1) {
       break;
     } else {
-      pairs = getPairs(word);
+      pairs = getPairs(&word);
     }
   }
 
-  (*bpe_cache)[orig] = word;
+  (*bpe_cache)[*orig] = word;
   return word;
 }
 
@@ -379,22 +381,22 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
 
   map<vector<string>, int> stats;
   map<vector<string>, map<unsigned, int>> indices;
-  getPairStatistics(vector_vocab, stats, indices);
+  getPairStatistics(&vector_vocab, &stats, &indices);
   map<vector<string>, int> big_stats = stats;
-  int threshold = stats[findMax(stats)] / 10;
+  int threshold = stats[findMax(&stats)] / 10;
 
   unsigned num_letter_vocab = stoi_.size();
   for (unsigned i = 0; i < size - num_letter_vocab; i++) {
     vector<string> most_frequent_index;
     if (!stats.empty()) {
-      most_frequent_index = findMax(stats);
+      most_frequent_index = findMax(&stats);
     }
     if (stats.empty() or (i != 0 and stats[most_frequent_index] < threshold)) {
-      pruneStats(stats, big_stats, threshold);
+      pruneStats(&stats, &big_stats, threshold);
       stats = big_stats;
-      vector<string> most_frequent_index = findMax(stats);
+      most_frequent_index = findMax(&stats);
       threshold = stats[most_frequent_index] * i/(i+10000.0);
-      pruneStats(stats, big_stats, threshold);
+      pruneStats(&stats, &big_stats, threshold);
     }
 
     // Store entries
@@ -411,12 +413,12 @@ BPEVocabulary::BPEVocabulary(const string & corpus_filename, unsigned size) {
     }
 
     vector<Change> changes =
-      replacePair(most_frequent_index, vector_vocab, indices[most_frequent_index]);
-    updatePairStatistics(most_frequent_index, changes, stats, indices);
+      replacePair(&most_frequent_index, &vector_vocab, &indices[most_frequent_index]);
+    updatePairStatistics(&most_frequent_index, &changes, &stats, &indices);
     stats[most_frequent_index] = 0;
 
     if (i % 100 == 0) {
-      pruneStats(stats, big_stats, threshold);
+      pruneStats(&stats, &big_stats, threshold);
     }
   }
   // end making BPE codes
@@ -444,7 +446,7 @@ vector<unsigned> BPEVocabulary::convertToIDs(const string & sentence) const {
       words, sentence, boost::is_space(), boost::algorithm::token_compress_on);
   vector<unsigned> ids;
   for (const string & word : words) {
-    vector<string> new_words = encode(word, bpe_codes_, &bpe_cache_);
+    vector<string> new_words = encode(&word, &bpe_codes_, &bpe_cache_);
     for (const string & new_word : new_words) {
       ids.emplace_back(getID(new_word));
     }
