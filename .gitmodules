@@ -1,7 +1,6 @@
 [submodule "submodules/mteval"]
 	path = submodules/mteval
 	url = https://github.com/odashi/mteval.git
-  ignore = dirty
 [submodule "submodules/small_parallel_enja"]
 	path = submodules/small_parallel_enja
 	url = https://github.com/odashi/small_parallel_enja.git
