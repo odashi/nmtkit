@@ -5,9 +5,9 @@ project(nmtkit VERSION 0.1.0 LANGUAGES CXX)
 add_subdirectory(submodules/dynet)
 add_subdirectory(submodules/mteval)
 
-#enable_testing()
+enable_testing()
 
 # nmtkit sources
 add_subdirectory(bin)
 add_subdirectory(nmtkit)
-#add_subdirectory(test)
+add_subdirectory(test)
