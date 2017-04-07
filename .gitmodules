@@ -11,3 +11,6 @@
 [submodule "submodules/google_styleguide"]
 	path = submodules/google_styleguide
 	url = https://github.com/google/styleguide
+[submodule "submodules/dynet"]
+	path = submodules/dynet
+	url = https://github.com/clab/dynet
