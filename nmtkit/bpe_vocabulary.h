@@ -30,7 +30,9 @@ public:
   // Arguments:
   //   corpus_filename: Location of the corpus file to be analyzed.
   //   size: Size of the vocabulary.
-  BPEVocabulary(const std::string & corpus_filename, unsigned size);
+  BPEVocabulary(
+      const std::string & corpus_filename,
+      const unsigned size);
 
   ~BPEVocabulary() override {}
 
