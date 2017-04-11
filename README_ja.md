@@ -2,7 +2,7 @@ NMTKit
 ======
 
 
-(English version is available [here](https://github.com/odashi/nmtkit/tree/master/README.md))
+(English is [here](https://github.com/odashi/nmtkit/tree/master/README.md))
 
 
 **NMTKit**はニューラルネットワークを用いた統計的機械翻訳のツールキットです。
@@ -12,7 +12,6 @@ NMTKit
 NMTKitを使うには
 [doc](https://github.com/odashi/nmtkit/tree/master/doc)
 ディレクトリ以下のドキュメントを参照して下さい。
-このディレクトリには英語と日本語で同内容の文書が含まれています。
 
 
 連絡先
