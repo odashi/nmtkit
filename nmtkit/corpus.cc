@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/corpus.h>
 
 #include <algorithm>

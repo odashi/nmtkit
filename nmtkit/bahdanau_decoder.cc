@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/bahdanau_decoder.h>
 #include <nmtkit/exception.h>
 

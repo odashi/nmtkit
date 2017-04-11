@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/default_decoder.h>
 #include <nmtkit/exception.h>
 

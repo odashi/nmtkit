@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/softmax_predictor.h>
 
 #include <dynet/tensor.h>

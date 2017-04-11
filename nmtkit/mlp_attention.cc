@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/mlp_attention.h>
 
 #include <nmtkit/exception.h>

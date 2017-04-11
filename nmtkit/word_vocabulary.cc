@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/word_vocabulary.h>
 
 #include <fstream>

@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/multilayer_perceptron.h>
 
 #include <nmtkit/exception.h>

@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/luong_decoder.h>
 #include <nmtkit/exception.h>
 

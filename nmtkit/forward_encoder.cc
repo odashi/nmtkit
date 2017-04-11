@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/forward_encoder.h>
 
 using std::vector;

@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/sorted_random_sampler.h>
 
 #include <algorithm>

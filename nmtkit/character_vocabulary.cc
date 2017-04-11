@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/character_vocabulary.h>
 
 #include <fstream>

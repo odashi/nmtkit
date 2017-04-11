@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/backward_encoder.h>
 
 #include <nmtkit/array.h>

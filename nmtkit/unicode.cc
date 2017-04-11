@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/exception.h>
 #include <nmtkit/unicode.h>
 

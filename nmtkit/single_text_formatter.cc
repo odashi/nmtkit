@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <nmtkit/single_text_formatter.h>
 
 #include <nmtkit/exception.h>
