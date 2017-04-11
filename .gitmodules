@@ -1,6 +1,3 @@
-[submodule "submodules/mteval"]
-	path = submodules/mteval
-	url = https://github.com/odashi/mteval.git
 [submodule "submodules/small_parallel_enja"]
 	path = submodules/small_parallel_enja
 	url = https://github.com/odashi/small_parallel_enja.git
@@ -10,6 +7,3 @@
 [submodule "submodules/google_styleguide"]
 	path = submodules/google_styleguide
 	url = https://github.com/google/styleguide
-[submodule "submodules/dynet"]
-	path = submodules/dynet
-	url = https://github.com/clab/dynet
