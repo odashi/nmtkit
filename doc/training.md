@@ -63,8 +63,8 @@ the location of the output directory.
 
 To launch the trainer with the sample corpus, type following lines:
 
-    src/bin/train \
-        --config sample_data/sample_config.ini \
+    $ /path/to/train \
+        --config /path/to/nmtkit/sample_data/sample_config.ini \
         --model model
 
 `train` command modifies only files in the output directory specified by the
@@ -92,7 +92,7 @@ The prefix of the `*.params` files means:
 We also could output similar contents as `training.log` to stderr by specifying
 `--log-to-stderr` option:
 
-    src/bin/train \
-        --config sample_data/sample_config.ini \
+    $ /path/to/train \
+        --config /path/to/nmtkit/sample_data/sample_config.ini \
         --model model \
         --log-to-stderr
