@@ -79,6 +79,8 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
      PO::value<string>(),
      "(required) Location of the model directory.")
     ("force", "Force to run the command regardless the amount of the memory.")
+    ("skip-saving",
+     "Never save any model parameters to the file.")
     ;
 
   PO::options_description opt;
@@ -525,6 +527,8 @@ int main(int argc, char * argv[]) {
     std::chrono::system_clock::time_point training_start_time = current_time;
     std::chrono::system_clock::time_point epoch_start_time = current_time;
 
+    const bool skip_saving = static_cast<bool>(args.count("skip-saving"));
+
     float best_dev_log_ppl = 1e100;
     float best_dev_bleu = -1e100;
     logger->info("Start training.");
@@ -616,21 +620,25 @@ int main(int argc, char * argv[]) {
           lr_decay *= lr_decay_ratio;
         }
 
-        ::saveArchive(
-            model_dir / "latest.trainer.params", archive_format, trainer);
-        ::saveArchive(
-            model_dir / "latest.model.params", archive_format, encdec);
-        logger->info("Saved 'latest' model.");
+        if (!skip_saving) {
+          ::saveArchive(
+              model_dir / "latest.trainer.params", archive_format, trainer);
+          ::saveArchive(
+              model_dir / "latest.model.params", archive_format, encdec);
+          logger->info("Saved 'latest' model.");
+        }
 
         if (dev_log_ppl < best_dev_log_ppl) {
           best_dev_log_ppl = dev_log_ppl;
-          FS::path trainer_path = model_dir / "best_dev_log_ppl.trainer.params";
-          FS::path model_path = model_dir / "best_dev_log_ppl.model.params";
-          FS::remove(trainer_path);
-          FS::remove(model_path);
-          FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
-          FS::copy_file(model_dir / "latest.model.params", model_path);
-          logger->info("Saved 'best_dev_log_ppl' model.");
+          if (!skip_saving) {
+            FS::path trainer_path = model_dir / "best_dev_log_ppl.trainer.params";
+            FS::path model_path = model_dir / "best_dev_log_ppl.model.params";
+            FS::remove(trainer_path);
+            FS::remove(model_path);
+            FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
+            FS::copy_file(model_dir / "latest.model.params", model_path);
+            logger->info("Saved 'best_dev_log_ppl' model.");
+          }
         } else {
           if (lr_decay_type == "logppl") {
             lr_decay *= lr_decay_ratio;
@@ -639,13 +647,15 @@ int main(int argc, char * argv[]) {
 
         if (dev_bleu > best_dev_bleu) {
           best_dev_bleu = dev_bleu;
-          FS::path trainer_path = model_dir / "best_dev_bleu.trainer.params";
-          FS::path model_path = model_dir / "best_dev_bleu.model.params";
-          FS::remove(trainer_path);
-          FS::remove(model_path);
-          FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
-          FS::copy_file(model_dir / "latest.model.params", model_path);
-          logger->info("Saved 'best_dev_bleu' model.");
+          if (!skip_saving) {
+            FS::path trainer_path = model_dir / "best_dev_bleu.trainer.params";
+            FS::path model_path = model_dir / "best_dev_bleu.model.params";
+            FS::remove(trainer_path);
+            FS::remove(model_path);
+            FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
+            FS::copy_file(model_dir / "latest.model.params", model_path);
+            logger->info("Saved 'best_dev_bleu' model.");
+          }
         } else {
           if (lr_decay_type == "bleu") {
             lr_decay *= lr_decay_ratio;
