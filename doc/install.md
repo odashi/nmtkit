@@ -87,7 +87,7 @@ And configure makefiles with all library locations:
         -DDYNET_INCLUDE_DIR=/path/to/dynet \
         -DDYNET_LIBRARY_DIR=/path/to/dynet/build/dynet \
         -DMTEVAL_INCLUDE_DIR=/path/to/mteval \
-        -DMTEVAL_LIBRARY_DIR=/path/to/mteval/build/mteval \
+        -DMTEVAL_LIBRARY_DIR=/path/to/mteval/build/mteval
 
 And then:
 
