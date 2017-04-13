@@ -23,14 +23,8 @@
 #include <nmtkit/vocabulary.h>
 
 using std::cerr;
-using std::cin;
-using std::cout;
 using std::endl;
-using std::exception;
-using std::ifstream;
-using std::istream;
 using std::string;
-using std::unique_ptr;
 using std::vector;
 
 namespace FS = boost::filesystem;
@@ -55,16 +49,27 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
      "Available options:\n"
      "  text : One-best tokens in each line.\n"
      "  html : HTML document with detailed information.")
-    ("reference",
-     PO::value<string>(),
-     "Location of the reference text file.")
     ("force", "Force to run the command regardless the amount of the memory.")
+    ("force-decoding",
+     "Forcely decode given reference texts.\n"
+     "This flag also require specifying --reference.")
     ("beam-width",
      PO::value<unsigned>()->default_value(1),
      "Beam search width in the decoder inference.")
     ("word-penalty",
      PO::value<float>()->default_value(0.0f),
      "Positive bias value of the log word probability.")
+    ("input",
+     PO::value<string>(),
+     "Location of the input text file. "
+     "If this option is not set, STDIN would be used.")
+    ("output",
+     PO::value<string>(),
+     "Location of the output file. "
+     "If this option is not set, STDOUT would be used.")
+    ("reference",
+     PO::value<string>(),
+     "Location of the reference text file.")
     ;
 
   PO::options_description opt;
@@ -80,17 +85,33 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     cerr << "NMTKit decoder." << endl;
     cerr << "Author: Yusuke Oda (http://github.com/odashi/)" << endl;
     cerr << "Usage:" << endl;
+    cerr << endl;
+    cerr << "  (one-best/beam search)" << endl;
     cerr << "  decode [options]" << endl;
     cerr << "         --model MODEL_DIRECTORY" << endl;
-    cerr << "         < INPUT_FILE" << endl;
-    cerr << "         > OUTPUT_FILE" << endl;
+    cerr << "         < INPUT_FILE (--input INPUT_FILE)" << endl;
+    cerr << "         > OUTPUT_FILE (--output OUTPUT_FILE)" << endl;
+    cerr << endl;
+    cerr << "  (force decoding)" << endl;
+    cerr << "  decode [options]" << endl;
+    cerr << "         --force-decoding" << endl;
+    cerr << "         --model MODEL_DIRECTORY" << endl;
+    cerr << "         --reference REFERENCE_FILE" << endl;
+    cerr << "         < INPUT_FILE (--input INPUT_FILE)" << endl;
+    cerr << "         > OUTPUT_FILE (--output OUTPUT_FILE)" << endl;
+    cerr << endl;
+    cerr << "  (show this manual)" << endl;
     cerr << "  decode --help" << endl;
     cerr << opt << endl;
     exit(1);
   }
 
   // Checks required arguments
-  const vector<string> required_args = {"format", "model", "beam-width"};
+  vector<string> required_args = {"format", "model", "beam-width"};
+  if (args.count("force-decoding")) {
+    required_args.emplace_back("reference");
+  }
+
   bool ok = true;
   for (const string & arg : required_args) {
     if (!args.count(arg)) {
@@ -106,11 +127,11 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
   return args;
 }
 
-unique_ptr<nmtkit::Formatter> getFormatter(const std::string & name) {
+std::shared_ptr<nmtkit::Formatter> getFormatter(const std::string & name) {
   if (name == "text") {
-    return unique_ptr<nmtkit::Formatter>(new nmtkit::SingleTextFormatter());
+    return std::shared_ptr<nmtkit::Formatter>(new nmtkit::SingleTextFormatter());
   } else if (name == "html") {
-    return unique_ptr<nmtkit::Formatter>(new nmtkit::HTMLFormatter());
+    return std::shared_ptr<nmtkit::Formatter>(new nmtkit::HTMLFormatter());
   }
   NMTKIT_FATAL("Unknown formatter name: " + name);
 }
@@ -120,7 +141,7 @@ void loadArchive(
     const FS::path & filepath,
     const string & archive_format,
     T * obj) {
-  ifstream ifs(filepath.string());
+  std::ifstream ifs(filepath.string());
   NMTKIT_CHECK(
       ifs.is_open(), "Could not open file to read: " + filepath.string());
   if (archive_format == "binary") {
@@ -187,32 +208,71 @@ int main(int argc, char * argv[]) {
         model_dir / (model_prefix + ".model.params"),
         archive_format, &encdec);
 
-    formatter->initialize(&cout);
+    // Open input/output/reference files.
+    std::shared_ptr<std::istream> in_is, ref_is;
+    std::shared_ptr<std::ostream> out_os;
+    const bool has_reference = !!args.count("reference");
 
-    // Loads reference texts.
-    std::ifstream ref_ifs;
-    if (!!args.count("reference")) {
-      ref_ifs.open(args["reference"].as<string>());
+    if (!!args.count("input")) {
+      const string filename = args["input"].as<string>();
+      std::ifstream * ifs = new std::ifstream(filename);
+      in_is.reset(ifs);
       NMTKIT_CHECK(
-          ref_ifs.is_open(), "Could not open the reference file to load: " + args["reference"].as<string>());
+          ifs->is_open(), "Could not open an input file: " + filename);
+    } else {
+      in_is.reset(&std::cin, [](...){});
     }
+    if (has_reference) {
+      const string filename = args["reference"].as<string>();
+      std::ifstream * ifs = new std::ifstream(filename);
+      ref_is.reset(ifs);
+      NMTKIT_CHECK(
+          ifs->is_open(), "Could not open a reference file: " + filename);
+    }
+    if (!!args.count("output")) {
+      const string filename = args["output"].as<string>();
+      std::ofstream * ofs = new std::ofstream(filename);
+      out_os.reset(ofs);
+      NMTKIT_CHECK(
+          ofs->is_open(), "Could not open an output file: " + filename);
+    } else {
+      out_os.reset(&std::cout, [](...){});
+    }
+
+    const bool force_decoding = !!args.count("force-decoding");
+
+    formatter->initialize(out_os.get());
 
     // Consumes input lines and decodes them.
-    string input_line = "";
-    string ref_line = "";
-    while (nmtkit::Corpus::readLine(&cin, &input_line)) {
-      if (ref_ifs.is_open()) {
-        nmtkit::Corpus::readLine(&ref_ifs, &ref_line);
+    string input_line;
+    while (nmtkit::Corpus::readLine(in_is.get(), &input_line)) {
+      // Convert input/reference texts into word IDs.
+      const vector<unsigned> input_ids = src_vocab->convertToIDs(input_line);
+      string ref_line;
+      vector<unsigned> ref_ids;
+      if (has_reference) {
+        NMTKIT_CHECK(
+            nmtkit::Corpus::readLine(ref_is.get(), &ref_line),
+            "Could not read a next reference line.");
+        ref_ids = trg_vocab->convertToIDs(ref_line);
       }
-      vector<unsigned> input_ids = src_vocab->convertToIDs(input_line);
-      nmtkit::InferenceGraph ig = encdec.infer(
-          input_ids, bos_id, eos_id, max_length, beam_width, word_penalty);
-      formatter->write(input_line, ref_line, ig, *src_vocab, *trg_vocab, &cout);
+
+      // Obtain results.
+      nmtkit::InferenceGraph ig =
+          force_decoding ?
+          encdec.forceDecode(
+              input_ids, ref_ids, bos_id, eos_id) :
+          encdec.infer(
+              input_ids, bos_id, eos_id, max_length, beam_width, word_penalty);
+
+      // Write results.
+      formatter->write(
+          input_line, ref_line, ig, *src_vocab, *trg_vocab, out_os.get());
     }
 
-    formatter->finalize(&cout);
+    formatter->finalize(out_os.get());
 
-  } catch (exception & ex) {
+  } catch (std::exception & ex) {
     cerr << ex.what() << endl;
     if (nmtkit::isInitialized()) {
       nmtkit::finalize();

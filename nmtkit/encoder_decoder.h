@@ -83,6 +83,22 @@ public:
       const unsigned beam_width,
       const float word_penalty);
 
+  // Forcely decode given sentence.
+  //
+  // Arguments:
+  //   source_ids: List of source word IDs.
+  //   target_ids: List of target word IDs.
+  //   bos_id: "<s>" ID in the target language.
+  //   eos_id: "</s>" ID in the target language.
+  //
+  // Returns:
+  //   Inference graph representing the decoder results.
+  InferenceGraph forceDecode(
+      const std::vector<unsigned> & source_ids,
+      const std::vector<unsigned> & target_ids,
+      const unsigned bos_id,
+      const unsigned eos_id);
+
 private:
   // Generates output sequence using encoder results.
   //

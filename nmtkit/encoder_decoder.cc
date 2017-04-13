@@ -187,8 +187,7 @@ InferenceGraph EncoderDecoder::infer(
     const float word_penalty) {
 
   // Make batch data.
-  vector<vector<unsigned>> source_ids_inner;
-  source_ids_inner.emplace_back(vector<unsigned> {bos_id});
+  vector<vector<unsigned>> source_ids_inner {{bos_id}};
   for (const unsigned s : source_ids) {
     source_ids_inner.emplace_back(vector<unsigned> {s});
   }
@@ -206,6 +205,76 @@ InferenceGraph EncoderDecoder::infer(
   predictor_->prepare(&cg);
   return beamSearch(
       bos_id, eos_id, max_length, beam_width, word_penalty, &cg);
+}
+
+InferenceGraph EncoderDecoder::forceDecode(
+    const vector<unsigned> & source_ids,
+    const vector<unsigned> & target_ids,
+    const unsigned bos_id,
+    const unsigned eos_id) {
+
+  // Make batch data.
+  vector<vector<unsigned>> source_ids_inner {{bos_id}};
+  vector<vector<unsigned>> target_ids_inner {{bos_id}};
+  for (const unsigned s : source_ids) {
+    source_ids_inner.emplace_back(vector<unsigned> {s});
+  }
+  for (const unsigned s : target_ids) {
+    target_ids_inner.emplace_back(vector<unsigned> {s});
+  }
+  source_ids_inner.emplace_back(vector<unsigned> {eos_id});
+  target_ids_inner.emplace_back(vector<unsigned> {eos_id});
+
+  dynet::ComputationGraph cg;
+
+  // Encode
+  encoder_->prepare(0.0f, &cg);
+  const vector<Expression> enc_outputs = encoder_->compute(
+      source_ids_inner, &cg);
+
+  // Prepare decoding.
+  attention_->prepare(enc_outputs, &cg);
+  predictor_->prepare(&cg);
+  Decoder::State state = decoder_->prepare(encoder_->getStates(), 0.0f, &cg);
+  InferenceGraph ig;
+  InferenceGraph::Label prev_label {bos_id, 0.0, 0.0, {}};
+  auto prev_node = ig.addNode(prev_label);
+
+  // Do force decoding.
+  for (unsigned i = 0; i < target_ids_inner.size() - 1; ++i) {
+    // Expands the node.
+    Expression atten_probs;
+    Expression out_embed;
+    state = decoder_->oneStep(
+        state, target_ids_inner[i], attention_.get(),
+        &cg, &atten_probs, &out_embed);
+
+    // Obtains attention probabilities.
+    const vector<dynet::real> atten_probs_values = dynet::as_vector(
+        cg.incremental_forward(atten_probs));
+    vector<float> out_atten_probs;
+    for (const dynet::real p : atten_probs_values) {
+      out_atten_probs.emplace_back(static_cast<float>(p));
+    }
+
+    // Obtains next word.
+    const vector<Predictor::Result> kbest = predictor_->predictByIDs(
+        out_embed, {target_ids_inner[i+1][0]}, &cg);
+
+    // Make next node.
+    InferenceGraph::Label next_label {
+      target_ids_inner[i+1][0],
+      kbest[0].log_prob,
+      prev_label.accum_log_prob + kbest[0].log_prob,
+      out_atten_probs,
+    };
+    auto next_node = ig.addNode(next_label);
+    ig.connect(prev_node, next_node);
+    prev_label = std::move(next_label);
+    prev_node = std::move(next_node);
+  }
+
+  return ig;
 }
 
 }  // namespace nmtkit
