@@ -319,9 +319,8 @@ float evaluateLogPerplexity(
   float total_loss = 0.0f;
   sampler.rewind();
   while (sampler.hasSamples()) {
-    vector<nmtkit::Sample> samples = sampler.getSamples();
-    nmtkit::Batch batch;
-    converter.convert(samples, &batch);
+    const vector<nmtkit::Sample> samples = sampler.getSamples();
+    const nmtkit::Batch batch = converter.convert(samples);
     dynet::ComputationGraph cg;
     dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
         batch, 0.0, &cg);
@@ -536,9 +535,8 @@ int main(int argc, char * argv[]) {
     for (unsigned iteration = 1; iteration <= max_iteration; ++iteration) {
       // Training
       {
-        vector<nmtkit::Sample> samples = train_sampler.getSamples();
-        nmtkit::Batch batch;
-        batch_converter.convert(samples, &batch);
+        const vector<nmtkit::Sample> samples = train_sampler.getSamples();
+        const nmtkit::Batch batch = batch_converter.convert(samples);
         dynet::ComputationGraph cg;
         dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
             batch, dropout_ratio, &cg);

@@ -24,10 +24,10 @@ public:
   // Converts Sample into Batch.
   // Arguments:
   //   samples: Input Sample vector.
-  //   eos_id: End-of-sentence word ID.
-  //   batch: Output Batch object. Previous data will be deleted before storing
-  //          new data.
-  void convert(const std::vector<Sample> & samples, Batch * batch);
+  //
+  // Returns:
+  //   Output Batch object.
+  Batch convert(const std::vector<Sample> & samples);
 
 private:
   unsigned src_bos_id_;

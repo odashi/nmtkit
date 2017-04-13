@@ -14,14 +14,16 @@ namespace nmtkit {
 class Array {
 public:
   // Reverse given vector.
+  //
   // Arguments:
-  // arr: Target vector.
+  //   arr: Target vector.
   template <typename T>
   static void reverse(std::vector<T> * arr) {
     std::reverse(arr->begin(), arr->end());
   }
 
   // Sort given vector using less (<) function.
+  //
   // Arguments:
   //   arr: Target vector.
   template <typename T>
@@ -30,6 +32,7 @@ public:
   }
 
   // Sort given vector.
+  //
   // Arguments:
   //   arr: Target vector.
   //   less: Predicate indicating first arg < second arg.
@@ -57,6 +60,7 @@ public:
   }
 
   // Shuffles given vector.
+  //
   // Arguments:
   //   arr: Target vector.
   //   rnd: Random object to be used.
@@ -73,6 +77,7 @@ public:
   }
 
   // Retrieves argmax value of given vector using greater(>) function.
+  //
   // Arguments:
   //   arr: Target vector.
   //
@@ -84,6 +89,7 @@ public:
   }
 
   // Retrieves argmax value of given vector.
+  //
   // Arguments:
   //   arr: Target vector.
   //   greater: Predicate indicating first-arg > second-arg.
@@ -103,9 +109,11 @@ public:
   }
 
   // Retrieves k-best indices of given vector using greater(>) function.
+  //
   // Arguments:
   //   arr: Target vector.
   //   num_results: Number of results to be obtained.
+  //
   // Returns:
   //   K-best indices.
   template <typename T>
@@ -116,10 +124,12 @@ public:
   }
 
   // Retrieves k-best indices of given vector.
+  //
   // Arguments:
   //   arr: Target vector.
   //   num_results: Number of results to be obtained.
   //   greater: Predicate indicating first-arg > second-arg.
+  //
   // Returns:
   //   K-best indices.
   template <typename T, typename P>

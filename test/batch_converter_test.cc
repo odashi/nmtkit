@@ -53,8 +53,7 @@ BOOST_AUTO_TEST_CASE(CheckConvertion) {
   ::loadArchive("data/small.ja.vocab", &trg_vocab);
 
   nmtkit::BatchConverter conv(src_vocab, trg_vocab);
-  nmtkit::Batch observed;
-  conv.convert(input, &observed);
+  const nmtkit::Batch observed = conv.convert(input);
   for (unsigned i = 0; i < expected.source_ids.size(); ++i) {
     BOOST_CHECK_EQUAL_COLLECTIONS(
         expected.source_ids[i].begin(), expected.source_ids[i].end(),

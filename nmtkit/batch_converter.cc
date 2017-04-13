@@ -19,13 +19,15 @@ BatchConverter::BatchConverter(
   trg_eos_id_(trg_vocab.getID("</s>")) {
 }
 
-void BatchConverter::convert(const vector<Sample> & samples, Batch * batch) {
+Batch BatchConverter::convert(const vector<Sample> & samples) {
+  // Find maximum source/target lengths.
   unsigned sl = 0, tl = 0, bs = samples.size();
   for (const Sample & s : samples) {
     sl = max(sl, static_cast<unsigned>(s.source.size()));
     tl = max(tl, static_cast<unsigned>(s.target.size()));
   }
 
+  // Make source/target arrays.
   vector<vector<unsigned>> src(sl + 2, vector<unsigned>(bs));
   vector<vector<unsigned>> trg(tl + 2, vector<unsigned>(bs));
 
@@ -45,8 +47,7 @@ void BatchConverter::convert(const vector<Sample> & samples, Batch * batch) {
     }
   }
 
-  batch->source_ids = std::move(src);
-  batch->target_ids = std::move(trg);
+  return Batch {std::move(src), std::move(trg)};
 }
 
 }  // namespace nmtkit
