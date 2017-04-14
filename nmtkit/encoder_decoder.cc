@@ -180,18 +180,20 @@ InferenceGraph EncoderDecoder::beamSearch(
 
 InferenceGraph EncoderDecoder::infer(
     const vector<unsigned> & source_ids,
-    const unsigned bos_id,
-    const unsigned eos_id,
+    const unsigned source_bos_id,
+    const unsigned source_eos_id,
+    const unsigned target_bos_id,
+    const unsigned target_eos_id,
     const unsigned max_length,
     const unsigned beam_width,
     const float word_penalty) {
 
   // Make batch data.
-  vector<vector<unsigned>> source_ids_inner {{bos_id}};
+  vector<vector<unsigned>> source_ids_inner {{source_bos_id}};
   for (const unsigned s : source_ids) {
     source_ids_inner.emplace_back(vector<unsigned> {s});
   }
-  source_ids_inner.emplace_back(vector<unsigned> {eos_id});
+  source_ids_inner.emplace_back(vector<unsigned> {source_eos_id});
 
   dynet::ComputationGraph cg;
 
@@ -204,26 +206,28 @@ InferenceGraph EncoderDecoder::infer(
   attention_->prepare(enc_outputs, &cg);
   predictor_->prepare(&cg);
   return beamSearch(
-      bos_id, eos_id, max_length, beam_width, word_penalty, &cg);
+      target_bos_id, target_eos_id, max_length, beam_width, word_penalty, &cg);
 }
 
 InferenceGraph EncoderDecoder::forceDecode(
     const vector<unsigned> & source_ids,
     const vector<unsigned> & target_ids,
-    const unsigned bos_id,
-    const unsigned eos_id) {
+    const unsigned source_bos_id,
+    const unsigned source_eos_id,
+    const unsigned target_bos_id,
+    const unsigned target_eos_id) {
 
   // Make batch data.
-  vector<vector<unsigned>> source_ids_inner {{bos_id}};
-  vector<vector<unsigned>> target_ids_inner {{bos_id}};
+  vector<vector<unsigned>> source_ids_inner {{source_bos_id}};
+  vector<vector<unsigned>> target_ids_inner {{target_bos_id}};
   for (const unsigned s : source_ids) {
     source_ids_inner.emplace_back(vector<unsigned> {s});
   }
   for (const unsigned s : target_ids) {
     target_ids_inner.emplace_back(vector<unsigned> {s});
   }
-  source_ids_inner.emplace_back(vector<unsigned> {eos_id});
-  target_ids_inner.emplace_back(vector<unsigned> {eos_id});
+  source_ids_inner.emplace_back(vector<unsigned> {source_eos_id});
+  target_ids_inner.emplace_back(vector<unsigned> {target_eos_id});
 
   dynet::ComputationGraph cg;
 
@@ -237,7 +241,7 @@ InferenceGraph EncoderDecoder::forceDecode(
   predictor_->prepare(&cg);
   Decoder::State state = decoder_->prepare(encoder_->getStates(), 0.0f, &cg);
   InferenceGraph ig;
-  InferenceGraph::Label prev_label {bos_id, 0.0, 0.0, {}};
+  InferenceGraph::Label prev_label {target_bos_id, 0.0, 0.0, {}};
   auto prev_node = ig.addNode(prev_label);
 
   // Do force decoding.

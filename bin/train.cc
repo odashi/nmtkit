@@ -334,6 +334,7 @@ float evaluateLogPerplexity(
 // Calculates the BLEU score of given encoder-decoder model.
 //
 // Arguments:
+//   src_vocab: Vocabulary object for the source language.
 //   trg_vocab: Vocabulary object for the target language.
 //   encdec: Target encoder-decoder object.
 //   sampler: Sampler object for the corpus to be evaluated.
@@ -342,20 +343,26 @@ float evaluateLogPerplexity(
 // Returns:
 //   The BLEU score.
 float evaluateBLEU(
+    const nmtkit::Vocabulary & src_vocab,
     const nmtkit::Vocabulary & trg_vocab,
     nmtkit::EncoderDecoder & encdec,
     nmtkit::MonotoneSampler & sampler,
     const unsigned max_length) {
   const auto evaluator = MTEval::EvaluatorFactory::create("BLEU");
-  const unsigned bos_id = trg_vocab.getID("<s>");
-  const unsigned eos_id = trg_vocab.getID("</s>");
+  const unsigned src_bos_id = src_vocab.getID("<s>");
+  const unsigned src_eos_id = src_vocab.getID("</s>");
+  const unsigned trg_bos_id = trg_vocab.getID("<s>");
+  const unsigned trg_eos_id = trg_vocab.getID("</s>");
   MTEval::Statistics stats;
   sampler.rewind();
   while (sampler.hasSamples()) {
     vector<nmtkit::Sample> samples = sampler.getSamples();
     nmtkit::InferenceGraph ig = encdec.infer(
-        samples[0].source, bos_id, eos_id, max_length, 1, 0.0f);
-    const auto hyp_nodes = ig.findOneBestPath(bos_id, eos_id);
+        samples[0].source,
+        src_bos_id, src_eos_id,
+        trg_bos_id, trg_eos_id,
+        max_length, 1, 0.0f);
+    const auto hyp_nodes = ig.findOneBestPath(trg_bos_id, trg_eos_id);
     vector<unsigned> hyp_ids;
     // Note: Ignore <s> and </s>.
     for (unsigned i = 1; i < hyp_nodes.size() - 1; ++i) {
@@ -594,7 +601,7 @@ int main(int argc, char * argv[]) {
         logger->info(fmt_dev_log_ppl.str());
 
         const float dev_bleu = ::evaluateBLEU(
-            *trg_vocab, encdec, dev_sampler, train_max_length);
+            *src_vocab, *trg_vocab, encdec, dev_sampler, train_max_length);
         const auto fmt_dev_bleu = boost::format(
             "Evaluated: batch=%d words=%d elapsed-time(sec)=%d dev-bleu=%.6f")
             % iteration % num_trained_words % elapsed_time_seconds % dev_bleu;
@@ -608,7 +615,7 @@ int main(int argc, char * argv[]) {
         logger->info(fmt_test_log_ppl.str());
 
         const float test_bleu = ::evaluateBLEU(
-            *trg_vocab, encdec, test_sampler, train_max_length);
+            *src_vocab, *trg_vocab, encdec, test_sampler, train_max_length);
         const auto fmt_test_bleu = boost::format(
             "Evaluated: batch=%d words=%d elapsed-time(sec)=%d test-bleu=%.6f")
             % iteration % num_trained_words % elapsed_time_seconds % test_bleu;

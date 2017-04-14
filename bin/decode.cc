@@ -191,8 +191,10 @@ int main(int argc, char * argv[]) {
     ::loadArchive(model_dir / "target.vocab", archive_format, &trg_vocab);
 
     // "<s>" and "</s>" IDs
-    const unsigned bos_id = trg_vocab->getID("<s>");
-    const unsigned eos_id = trg_vocab->getID("</s>");
+    const unsigned src_bos_id = src_vocab->getID("<s>");
+    const unsigned src_eos_id = src_vocab->getID("</s>");
+    const unsigned trg_bos_id = trg_vocab->getID("<s>");
+    const unsigned trg_eos_id = trg_vocab->getID("</s>");
 
     // Decoder settings
     const unsigned max_length = config.get<unsigned>("Batch.max_length");
@@ -261,9 +263,14 @@ int main(int argc, char * argv[]) {
       nmtkit::InferenceGraph ig =
           force_decoding ?
           encdec.forceDecode(
-              input_ids, ref_ids, bos_id, eos_id) :
+              input_ids, ref_ids,
+              src_bos_id, src_eos_id,
+              trg_bos_id, trg_eos_id) :
           encdec.infer(
-              input_ids, bos_id, eos_id, max_length, beam_width, word_penalty);
+              input_ids,
+              src_bos_id, src_eos_id,
+              trg_bos_id, trg_eos_id,
+              max_length, beam_width, word_penalty);
 
       // Write results.
       formatter->write(

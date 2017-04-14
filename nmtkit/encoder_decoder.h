@@ -67,8 +67,10 @@ public:
   //
   // Arguments:
   //   source_ids: List of source word IDs.
-  //   bos_id: "<s>" ID in the target language.
-  //   eos_id: "</s>" ID in the target language.
+  //   source_bos_id: "<s>" ID in the source language.
+  //   source_eos_id: "</s>" ID in the source language.
+  //   target_bos_id: "<s>" ID in the target language.
+  //   target_eos_id: "</s>" ID in the target language.
   //   max_length: Maximum number of words (except "<s>") to be generated.
   //   beam_width: Beam width.
   //   word_penalty: Word penalty.
@@ -77,8 +79,10 @@ public:
   //   Inference graph representing the decoder results.
   InferenceGraph infer(
       const std::vector<unsigned> & source_ids,
-      const unsigned bos_id,
-      const unsigned eos_id,
+      const unsigned source_bos_id,
+      const unsigned source_eos_id,
+      const unsigned target_bos_id,
+      const unsigned target_eos_id,
       const unsigned max_length,
       const unsigned beam_width,
       const float word_penalty);
@@ -88,16 +92,20 @@ public:
   // Arguments:
   //   source_ids: List of source word IDs.
   //   target_ids: List of target word IDs.
-  //   bos_id: "<s>" ID in the target language.
-  //   eos_id: "</s>" ID in the target language.
+  //   source_bos_id: "<s>" ID in the source language.
+  //   source_eos_id: "</s>" ID in the source language.
+  //   target_bos_id: "<s>" ID in the target language.
+  //   target_eos_id: "</s>" ID in the target language.
   //
   // Returns:
   //   Inference graph representing the decoder results.
   InferenceGraph forceDecode(
       const std::vector<unsigned> & source_ids,
       const std::vector<unsigned> & target_ids,
-      const unsigned bos_id,
-      const unsigned eos_id);
+      const unsigned source_bos_id,
+      const unsigned source_eos_id,
+      const unsigned target_bos_id,
+      const unsigned target_eos_id);
 
 private:
   // Generates output sequence using encoder results.
