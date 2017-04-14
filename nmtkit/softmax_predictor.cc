@@ -44,6 +44,10 @@ vector<Predictor::Result> SoftmaxPredictor::predictKBest(
   const DE::Expression log_probs_expr = DE::log_softmax(score);
   vector<float> log_probs = dynet::as_vector(
       cg->incremental_forward(log_probs_expr));
+  NMTKIT_CHECK(
+      log_probs.size() == vocab_size_,
+      "Size of resulting log-prob array is incorrect. "
+      "Attempting to decode multiple sentences?");
 
   vector<Predictor::Result> results;
   for (const unsigned word_id : Array::kbest(log_probs, num_results)) {
@@ -61,6 +65,10 @@ vector<Predictor::Result> SoftmaxPredictor::predictByIDs(
   const DE::Expression log_probs_expr = DE::log_softmax(score);
   vector<float> log_probs = dynet::as_vector(
       cg->incremental_forward(log_probs_expr));
+  NMTKIT_CHECK(
+      log_probs.size() == vocab_size_,
+      "Size of resulting log-prob array is incorrect. "
+      "Attempting to decode multiple sentences?");
 
   vector<Predictor::Result> results;
   for (const unsigned word_id : word_ids) {
