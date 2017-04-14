@@ -42,13 +42,12 @@ vector<Predictor::Result> SoftmaxPredictor::predictKBest(
 
   const DE::Expression score = converter_.compute(input);
   const DE::Expression log_probs_expr = DE::log_softmax(score);
-  vector<dynet::real> log_probs = dynet::as_vector(
+  vector<float> log_probs = dynet::as_vector(
       cg->incremental_forward(log_probs_expr));
 
   vector<Predictor::Result> results;
   for (const unsigned word_id : Array::kbest(log_probs, num_results)) {
-    float log_prob = static_cast<float>(log_probs[word_id]);
-    results.emplace_back(Predictor::Result {word_id, log_prob});
+    results.emplace_back(Predictor::Result {word_id, log_probs[word_id]});
   }
 
   return results;
@@ -60,7 +59,7 @@ vector<Predictor::Result> SoftmaxPredictor::predictByIDs(
     dynet::ComputationGraph * cg) {
   const DE::Expression score = converter_.compute(input);
   const DE::Expression log_probs_expr = DE::log_softmax(score);
-  vector<dynet::real> log_probs = dynet::as_vector(
+  vector<float> log_probs = dynet::as_vector(
       cg->incremental_forward(log_probs_expr));
 
   vector<Predictor::Result> results;
@@ -68,8 +67,7 @@ vector<Predictor::Result> SoftmaxPredictor::predictByIDs(
     NMTKIT_CHECK(
         word_id < vocab_size_,
         "Each word_id should be less than vocab_size.");
-    float log_prob = static_cast<float>(log_probs[word_id]);
-    results.emplace_back(Predictor::Result {word_id, log_prob});
+    results.emplace_back(Predictor::Result {word_id, log_probs[word_id]});
   }
 
   return results;

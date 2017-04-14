@@ -122,12 +122,8 @@ InferenceGraph EncoderDecoder::beamSearch(
             prev.state, inputs, attention_.get(), cg, &atten_probs, &out_embed);
 
         // Obtains attention probabilities.
-        const vector<dynet::real> atten_probs_values = dynet::as_vector(
+        const vector<float> out_atten_probs = dynet::as_vector(
             cg->incremental_forward(atten_probs));
-        vector<float> out_atten_probs;
-        for (const dynet::real p : atten_probs_values) {
-          out_atten_probs.emplace_back(static_cast<float>(p));
-        }
 
         // Predict next words.
         const vector<Predictor::Result> kbest =
@@ -254,12 +250,8 @@ InferenceGraph EncoderDecoder::forceDecode(
         &cg, &atten_probs, &out_embed);
 
     // Obtains attention probabilities.
-    const vector<dynet::real> atten_probs_values = dynet::as_vector(
+    const vector<float> out_atten_probs = dynet::as_vector(
         cg.incremental_forward(atten_probs));
-    vector<float> out_atten_probs;
-    for (const dynet::real p : atten_probs_values) {
-      out_atten_probs.emplace_back(static_cast<float>(p));
-    }
 
     // Obtains next word.
     const vector<Predictor::Result> kbest = predictor_->predictByIDs(
