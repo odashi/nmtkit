@@ -66,8 +66,8 @@ private:
   unsigned vocab_size_;
   unsigned embed_size_;
   unsigned hidden_size_;
-  dynet::LSTMBuilder rnn_fw_;
-  dynet::LSTMBuilder rnn_bw_;
+  LSTM_MODULE rnn_fw_;
+  LSTM_MODULE rnn_bw_;
   dynet::LookupParameter p_lookup_;
 };
 
