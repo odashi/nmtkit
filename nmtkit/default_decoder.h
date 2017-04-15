@@ -84,7 +84,7 @@ private:
   unsigned seed_size_;
   unsigned context_size_;
   std::vector<MultilayerPerceptron> enc2dec_;
-  dynet::LSTMBuilder rnn_;
+  LSTM_MODULE rnn_;
   dynet::LookupParameter p_lookup_;
 };
 

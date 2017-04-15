@@ -42,7 +42,14 @@ my_check_option(MTEVAL_INCLUDE_DIR)
 my_check_option(MTEVAL_LIBRARY_DIR)
 
 # options
-option(USE_GPU "If ON, NMTKit will use the CUDA backend." OFF)
+option(USE_GPU
+  "If ON, NMTKit would use the CUDA backend."
+  OFF
+)
+option(USE_VANILLA_LSTM
+  "If ON, NMTKit would use VanillaLSTMBuilder module instead of LSTMBuilder."
+  OFF
+)
 
 # CUDA
 if(USE_GPU)

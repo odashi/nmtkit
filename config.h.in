@@ -1,6 +1,15 @@
+// configurations for GPUs
 #cmakedefine USE_GPU
 #ifdef USE_GPU
   #define HAVE_CUDA 1
 #else
   #define HAVE_CUDA 0
+#endif
+
+// configurations for the LSTM module.
+#cmakedefine USE_VANILLA_LSTM
+#ifdef USE_VANILLA_LSTM
+  #define LSTM_MODULE dynet::VanillaLSTMBuilder
+#else
+  #define LSTM_MODULE dynet::LSTMBuilder
 #endif
