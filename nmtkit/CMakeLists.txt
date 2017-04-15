@@ -1,0 +1,96 @@
+# nmtkit library
+
+set(nmtkit_LIBRARY_HDRS
+  array.h
+  attention.h
+  backward_encoder.h
+  bahdanau_decoder.h
+  basic_types.h
+  batch_converter.h
+  bidirectional_encoder.h
+  bilinear_attention.h
+  binary_code.h
+  binary_code_predictor.h
+  binary_code_predictor2.h
+  bpe_vocabulary.h
+  character_vocabulary.h
+  convolutional_ecc.h
+  corpus.h
+  decoder.h
+  default_decoder.h
+  encoder.h
+  encoder_decoder.h
+  error_correcting_code.h
+  exception.h
+  factories.h
+  formatter.h
+  forward_encoder.h
+  frequency_code.h
+  html_formatter.h
+  huffman_code.h
+  hybrid_predictor.h
+  hybrid_predictor2.h
+  identity_ecc.h
+  inference_graph.h
+  init.h
+  luong_decoder.h
+  mlp_attention.h
+  monotone_sampler.h
+  multilayer_perceptron.h
+  predictor.h
+  random.h
+  sampler.h
+  serialization_utils.h
+  single_text_formatter.h
+  softmax_predictor.h
+  sorted_random_sampler.h
+  unicode.h
+  vocabulary.h
+  word_vocabulary.h
+)
+
+set(nmtkit_LIBRARY_SRCS
+  attention.cc
+  backward_encoder.cc
+  bahdanau_decoder.cc
+  batch_converter.cc
+  bidirectional_encoder.cc
+  bilinear_attention.cc
+  binary_code.cc
+  binary_code_predictor.cc
+  binary_code_predictor2.cc
+  bpe_vocabulary.cc
+  character_vocabulary.cc
+  convolutional_ecc.cc
+  corpus.cc
+  decoder.cc
+  default_decoder.cc
+  encoder.cc
+  encoder_decoder.cc
+  error_correcting_code.cc
+  factories.cc
+  forward_encoder.cc
+  frequency_code.cc
+  html_formatter.cc
+  huffman_code.cc
+  hybrid_predictor.cc
+  hybrid_predictor2.cc
+  identity_ecc.cc
+  inference_graph.cc
+  init.cc
+  luong_decoder.cc
+  mlp_attention.cc
+  monotone_sampler.cc
+  multilayer_perceptron.cc
+  predictor.cc
+  random.cc
+  single_text_formatter.cc
+  softmax_predictor.cc
+  sorted_random_sampler.cc
+  unicode.cc
+  vocabulary.cc
+  word_vocabulary.cc
+)
+
+add_library(nmtkit ${nmtkit_LIBRARY_HDRS} ${nmtkit_LIBRARY_SRCS})
+target_link_libraries(nmtkit ${Boost_LIBRARIES} ${DYNET_LIBRARIES})
