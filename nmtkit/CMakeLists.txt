@@ -11,7 +11,6 @@ set(nmtkit_LIBRARY_HDRS
   bilinear_attention.h
   binary_code.h
   binary_code_predictor.h
-  binary_code_predictor2.h
   bpe_vocabulary.h
   character_vocabulary.h
   convolutional_ecc.h
@@ -29,7 +28,6 @@ set(nmtkit_LIBRARY_HDRS
   html_formatter.h
   huffman_code.h
   hybrid_predictor.h
-  hybrid_predictor2.h
   identity_ecc.h
   inference_graph.h
   init.h
@@ -58,7 +56,6 @@ set(nmtkit_LIBRARY_SRCS
   bilinear_attention.cc
   binary_code.cc
   binary_code_predictor.cc
-  binary_code_predictor2.cc
   bpe_vocabulary.cc
   character_vocabulary.cc
   convolutional_ecc.cc
@@ -74,7 +71,6 @@ set(nmtkit_LIBRARY_SRCS
   html_formatter.cc
   huffman_code.cc
   hybrid_predictor.cc
-  hybrid_predictor2.cc
   identity_ecc.cc
   inference_graph.cc
   init.cc

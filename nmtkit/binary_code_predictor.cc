@@ -16,11 +16,13 @@ BinaryCodePredictor::BinaryCodePredictor(
     const unsigned input_size,
     boost::shared_ptr<BinaryCode> & bc,
     boost::shared_ptr<ErrorCorrectingCode> & ecc,
+    const string & loss_type,
     dynet::Model * model)
 : num_original_bits_(bc->getNumBits())
 , num_encoded_bits_(ecc->getNumBits(bc->getNumBits()))
 , bc_(bc)
 , ecc_(ecc)
+, loss_type_(loss_type)
 , converter_({input_size, ecc->getNumBits(bc->getNumBits())}, model) {}
 
 void BinaryCodePredictor::prepare(dynet::ComputationGraph * cg) {
@@ -47,7 +49,13 @@ DE::Expression BinaryCodePredictor::computeLoss(
   const DE::Expression output_expr = DE::logistic(converter_.compute(input));
   const DE::Expression target_expr = DE::input(
       *cg, dynet::Dim({num_encoded_bits_}, batch_size), target_bits);
-  return DE::squared_distance(output_expr, target_expr);
+  if (loss_type_ == "squared") {
+    return DE::squared_distance(output_expr, target_expr);
+  } else if (loss_type_ == "xent") {
+    return DE::binary_log_loss(output_expr, target_expr);
+  } else {
+    NMTKIT_FATAL("unknown loss type: " + loss_type_);
+  }
 }
 
 vector<Predictor::Result> BinaryCodePredictor::predictKBest(

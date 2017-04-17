@@ -18,12 +18,14 @@ HybridPredictor::HybridPredictor(
     const unsigned softmax_size,
     boost::shared_ptr<BinaryCode> & bc,
     boost::shared_ptr<ErrorCorrectingCode> & ecc,
+    const string & loss_type,
     dynet::Model * model)
 : softmax_size_(softmax_size)
 , num_original_bits_(bc->getNumBits())
 , num_encoded_bits_(ecc->getNumBits(bc->getNumBits()))
 , bc_(bc)
 , ecc_(ecc)
+, loss_type_(loss_type)
 , converter_(
     {input_size, softmax_size + ecc->getNumBits(bc->getNumBits())}, model) {}
 
@@ -68,8 +70,15 @@ DE::Expression HybridPredictor::computeLoss(
   const DE::Expression binary_probs = DE::logistic(binary_logits);
   const DE::Expression target_probs = DE::input(
       *cg, dynet::Dim({num_encoded_bits_}, batch_size), target_bits);
-  const DE::Expression binary_loss = DE::squared_distance(
-      binary_probs, target_probs);
+
+  DE::Expression binary_loss;
+  if (loss_type_ == "squared") {
+    binary_loss = DE::squared_distance(binary_probs, target_probs);
+  } else if (loss_type_ == "xent") {
+    binary_loss = DE::binary_log_loss(binary_probs, target_probs);
+  } else {
+    NMTKIT_FATAL("unknown loss type: " + loss_type_);
+  }
 
   const DE::Expression weight = DE::input(
       *cg, dynet::Dim({1}, batch_size), binary_weights);

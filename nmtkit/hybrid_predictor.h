@@ -31,12 +31,17 @@ public:
   //   softmax_size: Number of words which would be directly predicted.
   //   bc: Pointer to a BinaryCode object.
   //   ecc: Pointer to a ErrorCorrectingCode object.
+  //   loss_type: Type of the loss function for binary prediction.
+  //              Available values:
+  //                "squared": Squared loss
+  //                "xent": Cross entropy loss
   //   model: Model object for training.
   HybridPredictor(
       const unsigned input_size,
       const unsigned softmax_size,
       boost::shared_ptr<BinaryCode> & bc,
       boost::shared_ptr<ErrorCorrectingCode> & ecc,
+      const std::string & loss_type,
       dynet::Model * model);
 
   ~HybridPredictor() override {}
@@ -69,6 +74,7 @@ private:
     ar & num_encoded_bits_;
     ar & bc_;
     ar & ecc_;
+    ar & loss_type_;
     ar & converter_;
   }
 
@@ -77,6 +83,7 @@ private:
   unsigned num_encoded_bits_;
   boost::shared_ptr<BinaryCode> bc_;
   boost::shared_ptr<ErrorCorrectingCode> ecc_;
+  std::string loss_type_;
   MultilayerPerceptron converter_;
 };
 

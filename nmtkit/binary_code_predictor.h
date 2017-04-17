@@ -30,11 +30,16 @@ public:
   //   input_size: Number of units in the input vector.
   //   bc: Pointer to a BinaryCode object.
   //   ecc: Pointer to a ErrorCorrectingCode object.
+  //   loss_type: Type of the loss function for binary prediction.
+  //              Available values:
+  //                "squared": Squared loss
+  //                "xent": Cross entropy loss
   //   model: Model object for training.
   BinaryCodePredictor(
       const unsigned input_size,
       boost::shared_ptr<BinaryCode> & bc,
       boost::shared_ptr<ErrorCorrectingCode> & ecc,
+      const std::string & loss_type,
       dynet::Model * model);
 
   ~BinaryCodePredictor() override {}
@@ -66,6 +71,7 @@ private:
     ar & num_encoded_bits_;
     ar & bc_;
     ar & ecc_;
+    ar & loss_type_;
     ar & converter_;
   }
 
@@ -73,6 +79,7 @@ private:
   unsigned num_encoded_bits_;
   boost::shared_ptr<BinaryCode> bc_;
   boost::shared_ptr<ErrorCorrectingCode> ecc_;
+  std::string loss_type_;
   MultilayerPerceptron converter_;
 };
 
