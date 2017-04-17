@@ -183,9 +183,14 @@ boost::shared_ptr<Predictor> Factory::createPredictor(
     const unsigned softmax_size = config.get<unsigned>(
         "Model.hybrid_softmax_size");
     const string loss_type = config.get<string>("Model.binary_code_loss_type");
+    const float softmax_weight = config.get<float>(
+        "Model.hybrid_softmax_weight");
+    const float binary_weight = config.get<float>(
+        "Model.hybrid_binary_weight");
     return boost::shared_ptr<Predictor>(
         new HybridPredictor(
-          decoder.getOutputSize(), softmax_size, bc, ecc, loss_type, model));
+          decoder.getOutputSize(), softmax_size, bc, ecc,
+          loss_type, softmax_weight, binary_weight, model));
   } else if (name == "softmax") {
     return boost::shared_ptr<Predictor>(
         new SoftmaxPredictor(decoder.getOutputSize(), vocab.size(), model));

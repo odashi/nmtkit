@@ -19,6 +19,8 @@ HybridPredictor::HybridPredictor(
     boost::shared_ptr<BinaryCode> & bc,
     boost::shared_ptr<ErrorCorrectingCode> & ecc,
     const string & loss_type,
+    const float softmax_weight,
+    const float binary_weight,
     dynet::Model * model)
 : softmax_size_(softmax_size)
 , num_original_bits_(bc->getNumBits())
@@ -26,6 +28,8 @@ HybridPredictor::HybridPredictor(
 , bc_(bc)
 , ecc_(ecc)
 , loss_type_(loss_type)
+, softmax_weight_(softmax_weight)
+, binary_weight_(binary_weight)
 , converter_(
     {input_size, softmax_size + ecc->getNumBits(bc->getNumBits())}, model) {}
 
@@ -41,10 +45,10 @@ DE::Expression HybridPredictor::computeLoss(
 
   // Calculates inner variables.
   vector<unsigned> inner_ids(batch_size);
-  vector<float> binary_weights(batch_size);
+  vector<float> word_weights_vals(batch_size);
   for (unsigned i = 0; i < batch_size; ++i) {
     inner_ids[i] = target_ids[i] < softmax_size_ ? target_ids[i] : 0;
-    binary_weights[i] = static_cast<float>(inner_ids[i] == 0);
+    word_weights_vals[i] = static_cast<float>(inner_ids[i] == 0);
   }
 
   // Retrieves target bits.
@@ -80,9 +84,11 @@ DE::Expression HybridPredictor::computeLoss(
     NMTKIT_FATAL("unknown loss type: " + loss_type_);
   }
 
-  const DE::Expression weight = DE::input(
-      *cg, dynet::Dim({1}, batch_size), binary_weights);
-  return softmax_loss + weight * binary_loss;
+  const DE::Expression word_weights = DE::input(
+      *cg, dynet::Dim({1}, batch_size), word_weights_vals);
+  return
+    softmax_weight_ * softmax_loss +
+    binary_weight_ * word_weights * binary_loss;
 }
 
 vector<Predictor::Result> HybridPredictor::predictKBest(

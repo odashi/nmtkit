@@ -35,6 +35,8 @@ public:
   //              Available values:
   //                "squared": Squared loss
   //                "xent": Cross entropy loss
+  //   softmax_weight: Weight factor of the softmax layer.
+  //   binary_weight: Weight factor of the binary code layer.
   //   model: Model object for training.
   HybridPredictor(
       const unsigned input_size,
@@ -42,6 +44,8 @@ public:
       boost::shared_ptr<BinaryCode> & bc,
       boost::shared_ptr<ErrorCorrectingCode> & ecc,
       const std::string & loss_type,
+      const float softmax_weight,
+      const float binary_weight,
       dynet::Model * model);
 
   ~HybridPredictor() override {}
@@ -75,6 +79,8 @@ private:
     ar & bc_;
     ar & ecc_;
     ar & loss_type_;
+    ar & softmax_weight_;
+    ar & binary_weight_;
     ar & converter_;
   }
 
@@ -84,6 +90,8 @@ private:
   boost::shared_ptr<BinaryCode> bc_;
   boost::shared_ptr<ErrorCorrectingCode> ecc_;
   std::string loss_type_;
+  float softmax_weight_;
+  float binary_weight_;
   MultilayerPerceptron converter_;
 };
 
