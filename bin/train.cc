@@ -411,6 +411,7 @@ int main(int argc, char * argv[]) {
     global_config.parameter_memory_mb = config.get<unsigned>(
         "Global.parameter_memory_mb");
     global_config.force_run = !!args.count("force");
+    global_config.weight_decay = config.get<float>("Train.weight_decay");
     nmtkit::initialize(global_config);
 
     // Creates vocabularies.

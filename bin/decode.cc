@@ -180,6 +180,7 @@ int main(int argc, char * argv[]) {
     global_config.parameter_memory_mb = config.get<unsigned>(
         "Global.parameter_memory_mb");
     global_config.force_run = !!args.count("force");
+    global_config.weight_decay = 0.0; // Need not to use this parameter.
     nmtkit::initialize(global_config);
 
     // Retrieves the formatter.
