@@ -35,10 +35,12 @@ public:
 
   void prepare(
       const std::vector<dynet::expr::Expression> & memories,
-      dynet::ComputationGraph * cg) override;
+      dynet::ComputationGraph * cg,
+      const bool is_training) override;
 
   std::vector<dynet::expr::Expression> compute(
-      const dynet::expr::Expression & controller) override;
+      const dynet::expr::Expression & controller,
+      const bool is_training) override;
 
 private:
   // Boost serialization interface.

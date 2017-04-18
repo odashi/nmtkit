@@ -26,22 +26,26 @@ public:
   //   vocab_size: Vocabulary size of the input sequences.
   //   embed_size: Number of units in the embedding layer.
   //   hidden_size: Number of units in each RNN hidden layer.
+  //   dropout_rate: Dropout probability.
   //   model: Model object for training.
   BackwardEncoder(
-      unsigned num_layers,
-      unsigned vocab_size,
-      unsigned embed_size,
-      unsigned hidden_size,
+      const unsigned num_layers,
+      const unsigned vocab_size,
+      const unsigned embed_size,
+      const unsigned hidden_size,
+      const float dropout_rate,
       dynet::Model * model);
 
   ~BackwardEncoder() override {}
 
   void prepare(
       const float dropout_ratio,
-      dynet::ComputationGraph * cg) override;
+      dynet::ComputationGraph * cg,
+      const bool is_training) override;
   std::vector<dynet::expr::Expression> compute(
       const std::vector<std::vector<unsigned>> & input_ids,
-      dynet::ComputationGraph * cg) override;
+      dynet::ComputationGraph * cg,
+      const bool is_training) override;
 
   std::vector<dynet::expr::Expression> getStates() const override;
   unsigned getOutputSize() const override { return hidden_size_; }
@@ -57,6 +61,7 @@ private:
     ar & vocab_size_;
     ar & embed_size_;
     ar & hidden_size_;
+    ar & dropout_rate_;
     ar & rnn_;
     ar & p_lookup_;
   }
@@ -65,6 +70,7 @@ private:
   unsigned vocab_size_;
   unsigned embed_size_;
   unsigned hidden_size_;
+  float dropout_rate_;
   LSTM_MODULE rnn_;
   dynet::LookupParameter p_lookup_;
 };
