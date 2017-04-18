@@ -23,6 +23,7 @@ MultilayerPerceptron::MultilayerPerceptron(
     const unsigned out_size = spec_[i + 1];
     w_.emplace_back(model->add_parameters({out_size, in_size}));
     b_.emplace_back(model->add_parameters({out_size}));
+    b_.back().zero();
   }
 }
 
