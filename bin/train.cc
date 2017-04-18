@@ -311,6 +311,10 @@ void saveArchive(
 //
 // Returns:
 //   The log perplexity score.
+//
+// NOTE(odashi):
+//   This function might not return correct log(PPL) when using
+//   not entropy-based loss functions (e.g. squared loss).
 float evaluateLogPerplexity(
     nmtkit::EncoderDecoder & encdec,
     nmtkit::MonotoneSampler & sampler,
