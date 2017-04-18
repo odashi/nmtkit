@@ -22,8 +22,8 @@ MultilayerPerceptron::MultilayerPerceptron(
     const unsigned in_size = spec_[i];
     const unsigned out_size = spec_[i + 1];
     w_.emplace_back(model->add_parameters({out_size, in_size}));
-    b_.emplace_back(model->add_parameters({out_size}));
-    b_.back().zero();
+    b_.emplace_back(
+        model->add_parameters({out_size}, dynet::ParameterInitConst(0.0f)));
   }
 }
 
