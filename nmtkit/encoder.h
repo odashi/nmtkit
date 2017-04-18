@@ -23,11 +23,11 @@ public:
   // Initializes internal states.
   //
   // Arguments:
-  //   dropout_ratio: Dropout probability.
   //   cg: Computation graph.
+  //   is_training: true when training, false otherwise.
   virtual void prepare(
-      const float dropout_ratio,
-      dynet::ComputationGraph * cg) = 0;
+      dynet::ComputationGraph * cg,
+      const bool is_training) = 0;
 
   // Calculates outputs of all inputs.
   //
@@ -38,12 +38,14 @@ public:
   //       ...,
   //       { sample_1[m], sample_2[m], ..., sample_n[m] } }
   //   cg: Computation graph.
+  //   is_training: true when training, false otherwise.
   //
   // Returns:
   //   List of expressions representing the output of each input.
   virtual std::vector<dynet::expr::Expression> compute(
       const std::vector<std::vector<unsigned>> & input_ids,
-      dynet::ComputationGraph * cg) = 0;
+      dynet::ComputationGraph * cg,
+      const bool is_training) = 0;
 
   // Retrieves the list of final states.
   virtual std::vector<dynet::expr::Expression> getStates() const = 0;
