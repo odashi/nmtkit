@@ -39,7 +39,6 @@ public:
   ~BackwardEncoder() override {}
 
   void prepare(
-      const float dropout_ratio,
       dynet::ComputationGraph * cg,
       const bool is_training) override;
   std::vector<dynet::expr::Expression> compute(
