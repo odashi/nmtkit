@@ -43,26 +43,28 @@ EncoderDecoder::EncoderDecoder(
 
 Expression EncoderDecoder::buildTrainGraph(
     const Batch & batch,
-    const float dropout_ratio,
-    dynet::ComputationGraph * cg) {
+    dynet::ComputationGraph * cg,
+    const bool is_training) {
   // Encode
-  encoder_->prepare(dropout_ratio, cg);
+  encoder_->prepare(cg, is_training);
   const vector<Expression> enc_outputs = encoder_->compute(
-      batch.source_ids, cg);
+      batch.source_ids, cg, is_training);
 
   // Decode
-  attention_->prepare(enc_outputs, cg);
-  predictor_->prepare(cg);
+  attention_->prepare(enc_outputs, cg, is_training);
+  predictor_->prepare(cg, is_training);
   Decoder::State state = decoder_->prepare(
-      encoder_->getStates(), dropout_ratio, cg);
+      encoder_->getStates(), cg, is_training);
   vector<Expression> losses;
 
   for (unsigned i = 0; i < batch.target_ids.size() - 1; ++i) {
     Expression out_embed;
     state = decoder_->oneStep(
-        state, batch.target_ids[i], attention_.get(), cg, nullptr, &out_embed);
+        state, batch.target_ids[i], attention_.get(),
+        nullptr, &out_embed, cg, is_training);
     losses.emplace_back(
-        predictor_->computeLoss(out_embed, batch.target_ids[i + 1], cg));
+        predictor_->computeLoss(
+          out_embed, batch.target_ids[i + 1], cg, is_training));
   }
 
   // Calculates integrated loss value.
@@ -93,7 +95,7 @@ InferenceGraph EncoderDecoder::beamSearch(
     // The "<s>" node
     {nullptr,
      {bos_id, 0.0f, 0.0f, {}},
-     decoder_->prepare(encoder_->getStates(), 0.0f, cg)},
+     decoder_->prepare(encoder_->getStates(), cg, false)},
   };
   float best_accum_log_prob = -1e10f;
 
@@ -119,7 +121,8 @@ InferenceGraph EncoderDecoder::beamSearch(
         Expression atten_probs;
         Expression out_embed;
         Decoder::State next_state = decoder_->oneStep(
-            prev.state, inputs, attention_.get(), cg, &atten_probs, &out_embed);
+            prev.state, inputs, attention_.get(),
+            &atten_probs, &out_embed, cg, false);
 
         // Obtains attention probabilities.
         const vector<float> out_atten_probs = dynet::as_vector(
@@ -194,13 +197,13 @@ InferenceGraph EncoderDecoder::infer(
   dynet::ComputationGraph cg;
 
   // Encode
-  encoder_->prepare(0.0f, &cg);
+  encoder_->prepare(&cg, false);
   const vector<Expression> enc_outputs = encoder_->compute(
-      source_ids_inner, &cg);
+      source_ids_inner, &cg, false);
 
   // Infer output words
-  attention_->prepare(enc_outputs, &cg);
-  predictor_->prepare(&cg);
+  attention_->prepare(enc_outputs, &cg, false);
+  predictor_->prepare(&cg, false);
   return beamSearch(
       target_bos_id, target_eos_id, max_length, beam_width, word_penalty, &cg);
 }
@@ -228,14 +231,14 @@ InferenceGraph EncoderDecoder::forceDecode(
   dynet::ComputationGraph cg;
 
   // Encode
-  encoder_->prepare(0.0f, &cg);
+  encoder_->prepare(&cg, false);
   const vector<Expression> enc_outputs = encoder_->compute(
-      source_ids_inner, &cg);
+      source_ids_inner, &cg, false);
 
   // Prepare decoding.
-  attention_->prepare(enc_outputs, &cg);
-  predictor_->prepare(&cg);
-  Decoder::State state = decoder_->prepare(encoder_->getStates(), 0.0f, &cg);
+  attention_->prepare(enc_outputs, &cg, false);
+  predictor_->prepare(&cg, false);
+  Decoder::State state = decoder_->prepare(encoder_->getStates(), &cg, false);
   InferenceGraph ig;
   InferenceGraph::Label prev_label {target_bos_id, 0.0, 0.0, {}};
   auto prev_node = ig.addNode(prev_label);
@@ -247,7 +250,7 @@ InferenceGraph EncoderDecoder::forceDecode(
     Expression out_embed;
     state = decoder_->oneStep(
         state, target_ids_inner[i], attention_.get(),
-        &cg, &atten_probs, &out_embed);
+        &atten_probs, &out_embed, &cg, false);
 
     // Obtains attention probabilities.
     const vector<float> out_atten_probs = dynet::as_vector(

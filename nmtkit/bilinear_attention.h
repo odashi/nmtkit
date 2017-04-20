@@ -27,8 +27,8 @@ public:
   //   controller_size: Number of units in the controller input.
   //   model: Model object for training.
   BilinearAttention(
-      unsigned memory_size,
-      unsigned controller_size,
+      const unsigned memory_size,
+      const unsigned controller_size,
       dynet::Model * model);
 
   ~BilinearAttention() override {}

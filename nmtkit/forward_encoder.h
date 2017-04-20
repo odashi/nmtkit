@@ -43,7 +43,7 @@ public:
       const bool is_training) override;
   std::vector<dynet::expr::Expression> compute(
       const std::vector<std::vector<unsigned>> & input_ids,
-      dynet::ComputationGraph * cg
+      dynet::ComputationGraph * cg,
       const bool is_training) override;
 
   std::vector<dynet::expr::Expression> getStates() const override;

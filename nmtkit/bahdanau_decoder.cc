@@ -10,13 +10,14 @@ namespace DE = dynet::expr;
 namespace nmtkit {
 
 BahdanauDecoder::BahdanauDecoder(
-    unsigned num_layers,
-    unsigned vocab_size,
-    unsigned in_embed_size,
-    unsigned out_embed_size,
-    unsigned hidden_size,
-    unsigned seed_size,
-    unsigned context_size,
+    const unsigned num_layers,
+    const unsigned vocab_size,
+    const unsigned in_embed_size,
+    const unsigned out_embed_size,
+    const unsigned hidden_size,
+    const unsigned seed_size,
+    const unsigned context_size,
+    const float dropout_rate,
     dynet::Model * model)
 : num_layers_(num_layers)
 , vocab_size_(vocab_size)
@@ -25,6 +26,7 @@ BahdanauDecoder::BahdanauDecoder(
 , hidden_size_(hidden_size)
 , seed_size_(seed_size)
 , context_size_(context_size)
+, dropout_rate_(dropout_rate)
 , dec2out_({in_embed_size + context_size + hidden_size, out_embed_size}, model)
 , rnn_(num_layers, in_embed_size + context_size, hidden_size, *model)
 , p_lookup_(model->add_lookup_parameters(vocab_size, {in_embed_size}))
@@ -37,8 +39,8 @@ BahdanauDecoder::BahdanauDecoder(
 
 Decoder::State BahdanauDecoder::prepare(
     const vector<DE::Expression> & seed,
-    const float dropout_ratio,
-    dynet::ComputationGraph * cg) {
+    dynet::ComputationGraph * cg,
+    const bool is_training) {
   NMTKIT_CHECK_EQ(2 * num_layers_, seed.size(), "Invalid number of initial states.");
   vector<DE::Expression> states;
   for (unsigned i = 0; i < num_layers_; ++i) {
@@ -48,7 +50,7 @@ Decoder::State BahdanauDecoder::prepare(
   for (unsigned i = 0; i < num_layers_; ++i) {
     states.emplace_back(DE::tanh(states[i]));
   }
-  rnn_.set_dropout(dropout_ratio);
+  rnn_.set_dropout(is_training ? dropout_rate_ : 0.0f);
   rnn_.new_graph(*cg);
   rnn_.start_new_sequence(states);
   dec2out_.prepare(cg);
@@ -59,9 +61,10 @@ Decoder::State BahdanauDecoder::oneStep(
     const Decoder::State & state,
     const vector<unsigned> & input_ids,
     Attention * attention,
-    dynet::ComputationGraph * cg,
     dynet::expr::Expression * atten_probs,
-    dynet::expr::Expression * output) {
+    dynet::expr::Expression * output,
+    dynet::ComputationGraph * cg,
+    const  bool is_training) {
   NMTKIT_CHECK_EQ(
       1, state.positions.size(), "Invalid number of RNN positions.");
   NMTKIT_CHECK_EQ(
@@ -73,7 +76,8 @@ Decoder::State BahdanauDecoder::oneStep(
 
   // Calculation
   const DE::Expression in_embed = DE::lookup(*cg, p_lookup_, input_ids);
-  const vector<DE::Expression> atten_info = attention->compute(prev_h);
+  const vector<DE::Expression> atten_info = attention->compute(
+      prev_h, is_training);
   const DE::Expression next_h = rnn_.add_input(
       prev_pos, DE::concatenate({in_embed, atten_info[1]}));
   // Note: In the original implementation, the MaxOut function is used for the

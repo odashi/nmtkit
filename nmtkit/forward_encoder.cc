@@ -9,30 +9,33 @@ namespace DE = dynet::expr;
 namespace nmtkit {
 
 ForwardEncoder::ForwardEncoder(
-    unsigned num_layers,
-    unsigned vocab_size,
-    unsigned embed_size,
-    unsigned hidden_size,
+    const unsigned num_layers,
+    const unsigned vocab_size,
+    const unsigned embed_size,
+    const unsigned hidden_size,
+    const float dropout_rate,
     dynet::Model * model)
 : num_layers_(num_layers)
 , vocab_size_(vocab_size)
 , embed_size_(embed_size)
 , hidden_size_(hidden_size)
+, dropout_rate_(dropout_rate)
 , rnn_(num_layers, embed_size, hidden_size, *model) {
   p_lookup_ = model->add_lookup_parameters(vocab_size_, {embed_size_});
 }
 
 void ForwardEncoder::prepare(
-    const float dropout_ratio,
-    dynet::ComputationGraph * cg) {
-  rnn_.set_dropout(dropout_ratio);
+    dynet::ComputationGraph * cg,
+    const bool is_training) {
+  rnn_.set_dropout(is_training ? dropout_rate_ : 0.0f);
   rnn_.new_graph(*cg);
   rnn_.start_new_sequence();
 }
 
 vector<DE::Expression> ForwardEncoder::compute(
     const vector<vector<unsigned>> & input_ids,
-    dynet::ComputationGraph * cg) {
+    dynet::ComputationGraph * cg,
+    const bool /* is_training */) {
   vector<DE::Expression> outputs;
   for (const vector<unsigned> & ith_input : input_ids) {
     const DE::Expression embed = DE::lookup(*cg, p_lookup_, ith_input);
