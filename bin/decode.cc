@@ -41,7 +41,7 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
      PO::value<string>(),
      "(required) Location of the model directory.")
     ("model-prefix",
-     PO::value<string>()->default_value("best_dev_log_ppl"),
+     PO::value<string>()->default_value("best_dev_loss"),
      "Prefix of the model parameter file.")
     ("format",
      PO::value<string>()->default_value("text"),

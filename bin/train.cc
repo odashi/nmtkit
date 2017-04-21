@@ -302,7 +302,7 @@ void saveArchive(
   }
 }
 
-// Calculates the log perplexity of given encoder-decoder model.
+// Calculates the averaged sample loss of given encoder-decoder model.
 //
 // Arguments:
 //   encdec: Target encoder-decoder object.
@@ -310,12 +310,12 @@ void saveArchive(
 //   converter: BatchConverter object to be used to convert samples.
 //
 // Returns:
-//   The log perplexity score.
+//   The averaged loss score over each outputs.
 //
 // NOTE(odashi):
 //   This function might not return correct log(PPL) when using
 //   not entropy-based loss functions (e.g. squared loss).
-float evaluateLogPerplexity(
+float evaluateAveragedLoss(
     nmtkit::EncoderDecoder & encdec,
     nmtkit::MonotoneSampler & sampler,
     nmtkit::BatchConverter & converter) {
@@ -537,7 +537,7 @@ int main(int argc, char * argv[]) {
 
     const bool skip_saving = static_cast<bool>(args.count("skip-saving"));
 
-    float best_dev_log_ppl = 1e100;
+    float best_dev_loss = 1e100;
     float best_dev_bleu = -1e100;
     logger->info("Start training.");
 
@@ -595,12 +595,12 @@ int main(int argc, char * argv[]) {
 
         logger->info("Evaluating...");
 
-        const float dev_log_ppl = ::evaluateLogPerplexity(
+        const float dev_loss = ::evaluateAveragedLoss(
             encdec, dev_sampler, batch_converter);
-        const auto fmt_dev_log_ppl = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d dev-log-ppl=%.6e")
-            % iteration % num_trained_words % elapsed_time_seconds % dev_log_ppl;
-        logger->info(fmt_dev_log_ppl.str());
+        const auto fmt_dev_loss = boost::format(
+            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d dev-loss=%.6e")
+            % iteration % num_trained_words % elapsed_time_seconds % dev_loss;
+        logger->info(fmt_dev_loss.str());
 
         const float dev_bleu = ::evaluateBLEU(
             *src_vocab, *trg_vocab, encdec, dev_sampler, train_max_length);
@@ -609,12 +609,12 @@ int main(int argc, char * argv[]) {
             % iteration % num_trained_words % elapsed_time_seconds % dev_bleu;
         logger->info(fmt_dev_bleu.str());
 
-        const float test_log_ppl = ::evaluateLogPerplexity(
+        const float test_loss = ::evaluateAveragedLoss(
             encdec, test_sampler, batch_converter);
-        const auto fmt_test_log_ppl = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d test-log-ppl=%.6e")
-            % iteration % num_trained_words % elapsed_time_seconds % test_log_ppl;
-        logger->info(fmt_test_log_ppl.str());
+        const auto fmt_test_loss = boost::format(
+            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d test-loss=%.6e")
+            % iteration % num_trained_words % elapsed_time_seconds % test_loss;
+        logger->info(fmt_test_loss.str());
 
         const float test_bleu = ::evaluateBLEU(
             *src_vocab, *trg_vocab, encdec, test_sampler, train_max_length);
@@ -635,19 +635,19 @@ int main(int argc, char * argv[]) {
           logger->info("Saved 'latest' model.");
         }
 
-        if (dev_log_ppl < best_dev_log_ppl) {
-          best_dev_log_ppl = dev_log_ppl;
+        if (dev_loss < best_dev_loss) {
+          best_dev_loss = dev_loss;
           if (!skip_saving) {
-            FS::path trainer_path = model_dir / "best_dev_log_ppl.trainer.params";
-            FS::path model_path = model_dir / "best_dev_log_ppl.model.params";
+            FS::path trainer_path = model_dir / "best_dev_loss.trainer.params";
+            FS::path model_path = model_dir / "best_dev_loss.model.params";
             FS::remove(trainer_path);
             FS::remove(model_path);
             FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
             FS::copy_file(model_dir / "latest.model.params", model_path);
-            logger->info("Saved 'best_dev_log_ppl' model.");
+            logger->info("Saved 'best_dev_loss' model.");
           }
         } else {
-          if (lr_decay_type == "logppl") {
+          if (lr_decay_type == "loss") {
             lr_decay *= lr_decay_ratio;
           }
         }
