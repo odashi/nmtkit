@@ -12,8 +12,8 @@ namespace DE = dynet::expr;
 namespace nmtkit {
 
 BilinearAttention::BilinearAttention(
-    unsigned memory_size,
-    unsigned controller_size,
+    const unsigned memory_size,
+    const unsigned controller_size,
     dynet::Model * model) {
   NMTKIT_CHECK(
       memory_size > 0, "memory_size should be greater than 0.");
@@ -25,7 +25,8 @@ BilinearAttention::BilinearAttention(
 
 void BilinearAttention::prepare(
     const vector<DE::Expression> & memories,
-    dynet::ComputationGraph * cg) {
+    dynet::ComputationGraph * cg,
+    const bool /* is_training */) {
   // Concatenated memory matrix.
   // Shape: {memory_size, seq_length}
   i_concat_mem_ = DE::concatenate_cols(memories);
@@ -40,7 +41,8 @@ void BilinearAttention::prepare(
 }
 
 vector<DE::Expression> BilinearAttention::compute(
-    const DE::Expression & controller) {
+    const DE::Expression & controller,
+    const bool /* is_training */) {
   // Computes attention.
   // Shape: {seq_length, 1}
   DE::Expression atten_probs_inner = DE::softmax(i_converted_mem_ * controller);

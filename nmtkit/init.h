@@ -25,6 +25,9 @@ struct GlobalConfig {
 
   // Force to run the command regardless the amount of the requested memory.
   bool force_run;
+
+  // L2 regularization factor for all parameters.
+  float weight_decay;
 };
 
 // Initializes NMTKit.

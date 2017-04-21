@@ -103,7 +103,7 @@ void initialize(const GlobalConfig & config) {
           % config.backward_memory_mb
           % config.parameter_memory_mb
       ).str();
-  params.weight_decay = 0.0f;
+  params.weight_decay = config.weight_decay;
   params.shared_parameters = false;
 
 #ifdef USE_GPU

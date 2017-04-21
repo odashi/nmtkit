@@ -11,25 +11,28 @@ namespace DE = dynet::expr;
 namespace nmtkit {
 
 BidirectionalEncoder::BidirectionalEncoder(
-    unsigned num_layers,
-    unsigned vocab_size,
-    unsigned embed_size,
-    unsigned hidden_size,
+    const unsigned num_layers,
+    const unsigned vocab_size,
+    const unsigned embed_size,
+    const unsigned hidden_size,
+    const float dropout_rate,
     dynet::Model * model)
 : num_layers_(num_layers)
 , vocab_size_(vocab_size)
 , embed_size_(embed_size)
 , hidden_size_(hidden_size)
+, dropout_rate_(dropout_rate)
 , rnn_fw_(num_layers, embed_size, hidden_size, *model)
 , rnn_bw_(num_layers, embed_size, hidden_size, *model) {
   p_lookup_ = model->add_lookup_parameters(vocab_size_, {embed_size_});
 }
 
 void BidirectionalEncoder::prepare(
-    const float dropout_ratio,
-    dynet::ComputationGraph * cg) {
-  rnn_fw_.set_dropout(dropout_ratio);
-  rnn_bw_.set_dropout(dropout_ratio);
+    dynet::ComputationGraph * cg,
+    const bool is_training) {
+  const float dr = is_training ? dropout_rate_ : 0.0f;
+  rnn_fw_.set_dropout(dr);
+  rnn_bw_.set_dropout(dr);
   rnn_fw_.new_graph(*cg);
   rnn_bw_.new_graph(*cg);
   rnn_fw_.start_new_sequence();
@@ -38,7 +41,8 @@ void BidirectionalEncoder::prepare(
 
 vector<DE::Expression> BidirectionalEncoder::compute(
     const vector<vector<unsigned>> & input_ids,
-    dynet::ComputationGraph * cg) {
+    dynet::ComputationGraph * cg,
+    const bool /* is_training */) {
   const int input_len = input_ids.size();
 
   // Embedding lookup

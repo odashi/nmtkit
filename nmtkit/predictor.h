@@ -30,7 +30,10 @@ public:
   //
   // Arguments:
   //   cg: Computation graph.
-  virtual void prepare(dynet::ComputationGraph * cg) = 0;
+  //   is_training: true when training, false otherwise.
+  virtual void prepare(
+      dynet::ComputationGraph * cg,
+      const bool is_training) = 0;
 
   // Calculates loss values.
   //
@@ -38,13 +41,15 @@ public:
   //   input: Expression object representing input vector.
   //   target_ids: Target word IDs.
   //   cg: Computation graph.
+  //   is_training: true when training, false otherwise.
   //
   // Returns:
   //   Expression object representing loss values.
   virtual dynet::expr::Expression computeLoss(
       const dynet::expr::Expression & input,
       const std::vector<unsigned> & target_ids,
-      dynet::ComputationGraph * cg) = 0;
+      dynet::ComputationGraph * cg,
+      const bool is_training) = 0;
 
   // Predicts k-best words.
   //

@@ -53,15 +53,15 @@ public:
   //
   // Arguments:
   //   batch: Batch data to be trained.
-  //   dropout_ratio: Dropout probability.
   //   cg: Computation graph.
+  //   is_training: true when training, false otherwise.
   //
   // Returns:
   //   dynet::Expression object representing total loss value.
   dynet::expr::Expression buildTrainGraph(
       const Batch & batch,
-      const float dropout_ratio,
-      dynet::ComputationGraph * cg);
+      dynet::ComputationGraph * cg,
+      const bool is_training);
 
   // Generates output sentence using given input sentence.
   //

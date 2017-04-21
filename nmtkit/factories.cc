@@ -89,19 +89,23 @@ boost::shared_ptr<Encoder> Factory::createEncoder(
       "Model.source_embedding_size");
   const unsigned hidden_size = config.get<unsigned>(
       "Model.encoder_hidden_size");
+  const float dropout_rate = config.get<float>("Train.dropout_rate");
 
   if (name == "backward") {
     return boost::shared_ptr<Encoder>(
         new BackwardEncoder(
-            num_layers, vocab_size, embed_size, hidden_size, model));
+            num_layers, vocab_size, embed_size, hidden_size,
+            dropout_rate, model));
   } else if (name == "bidirectional") {
     return boost::shared_ptr<Encoder>(
         new BidirectionalEncoder(
-            num_layers, vocab_size, embed_size, hidden_size, model));
+            num_layers, vocab_size, embed_size, hidden_size,
+            dropout_rate, model));
   } else if (name == "forward") {
     return boost::shared_ptr<Encoder>(
         new ForwardEncoder(
-            num_layers, vocab_size, embed_size, hidden_size, model));
+            num_layers, vocab_size, embed_size, hidden_size,
+            dropout_rate, model));
   }
   NMTKIT_FATAL("Invalid encoder name: " + name);
 }
@@ -122,22 +126,23 @@ boost::shared_ptr<Decoder> Factory::createDecoder(
       "Model.decoder_hidden_size");
   const unsigned seed_size = encoder.getStateSize();
   const unsigned context_size = encoder.getOutputSize();
+  const float dropout_rate = config.get<float>("Train.dropout_rate");
 
   if (name == "bahdanau") {
     return boost::shared_ptr<Decoder>(
         new BahdanauDecoder(
             num_layers, vocab_size, in_embed_size, out_embed_size, hidden_size,
-            seed_size, context_size, model));
+            seed_size, context_size, dropout_rate, model));
   } else if (name == "default") {
     return boost::shared_ptr<Decoder>(
         new DefaultDecoder(
             num_layers, vocab_size, in_embed_size, hidden_size,
-            seed_size, context_size, model));
+            seed_size, context_size, dropout_rate, model));
   } else if (name == "luong") {
     return boost::shared_ptr<Decoder>(
         new LuongDecoder(
             num_layers, vocab_size, in_embed_size, out_embed_size, hidden_size,
-            seed_size, context_size, model));
+            seed_size, context_size, dropout_rate, model));
   }
   NMTKIT_FATAL("Invalid decoder name: " + name);
 }

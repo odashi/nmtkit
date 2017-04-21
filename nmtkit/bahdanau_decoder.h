@@ -33,31 +33,34 @@ public:
   //   hidden_size: Number of units in each RNN hidden layer.
   //   seed_size: Number of units in the seed vector.
   //   context_size: Number of units in the context vector.
+  //   dropout_rate: Dropout probability.
   //   model: Model object for training.
   BahdanauDecoder(
-      unsigned num_layers,
-      unsigned vocab_size,
-      unsigned in_embed_size,
-      unsigned out_embed_size,
-      unsigned hidden_size,
-      unsigned seed_size,
-      unsigned context_size,
+      const unsigned num_layers,
+      const unsigned vocab_size,
+      const unsigned in_embed_size,
+      const unsigned out_embed_size,
+      const unsigned hidden_size,
+      const unsigned seed_size,
+      const unsigned context_size,
+      const float dropout_rate,
       dynet::Model * model);
 
   ~BahdanauDecoder() override {}
 
   Decoder::State prepare(
       const std::vector<dynet::expr::Expression> & seed,
-      const float dropout_ratio,
-      dynet::ComputationGraph * cg) override;
+      dynet::ComputationGraph * cg,
+      const bool is_training) override;
 
   Decoder::State oneStep(
       const Decoder::State & state,
       const std::vector<unsigned> & input_ids,
       Attention * attention,
-      dynet::ComputationGraph * cg,
       dynet::expr::Expression * atten_probs,
-      dynet::expr::Expression * output) override;
+      dynet::expr::Expression * output,
+      dynet::ComputationGraph * cg,
+      const bool is_training) override;
 
   unsigned getOutputSize() const override { return out_embed_size_; }
 
@@ -74,6 +77,7 @@ private:
     ar & hidden_size_;
     ar & seed_size_;
     ar & context_size_;
+    ar & dropout_rate_;
     ar & enc2dec_;
     ar & dec2out_;
     ar & rnn_;
@@ -87,6 +91,7 @@ private:
   unsigned hidden_size_;
   unsigned seed_size_;
   unsigned context_size_;
+  float dropout_rate_;
   std::vector<MultilayerPerceptron> enc2dec_;
   MultilayerPerceptron dec2out_;
   LSTM_MODULE rnn_;

@@ -20,14 +20,17 @@ SoftmaxPredictor::SoftmaxPredictor(
 , converter_({input_size, vocab_size}, model) {
 }
 
-void SoftmaxPredictor::prepare(dynet::ComputationGraph * cg) {
+void SoftmaxPredictor::prepare(
+    dynet::ComputationGraph * cg,
+    const bool /* is_training */) {
   converter_.prepare(cg);
 }
 
 DE::Expression SoftmaxPredictor::computeLoss(
     const DE::Expression & input,
     const vector<unsigned> & target_ids,
-    dynet::ComputationGraph * /*cg*/) {
+    dynet::ComputationGraph * /*cg*/,
+    const bool /* is_training */) {
   const DE::Expression score = converter_.compute(input);
   return DE::pickneglogsoftmax(score, target_ids);
 }

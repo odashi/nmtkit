@@ -27,18 +27,20 @@ public:
   //   controller_size: Number of units in the controller input.
   //   model: Model object for training.
   BilinearAttention(
-      unsigned memory_size,
-      unsigned controller_size,
+      const unsigned memory_size,
+      const unsigned controller_size,
       dynet::Model * model);
 
   ~BilinearAttention() override {}
 
   void prepare(
       const std::vector<dynet::expr::Expression> & memories,
-      dynet::ComputationGraph * cg) override;
+      dynet::ComputationGraph * cg,
+      const bool is_training) override;
 
   std::vector<dynet::expr::Expression> compute(
-      const dynet::expr::Expression & controller) override;
+      const dynet::expr::Expression & controller,
+      const bool is_training) override;
 
 private:
   // Boost serialization interface.

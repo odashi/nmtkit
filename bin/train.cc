@@ -311,6 +311,10 @@ void saveArchive(
 //
 // Returns:
 //   The log perplexity score.
+//
+// NOTE(odashi):
+//   This function might not return correct log(PPL) when using
+//   not entropy-based loss functions (e.g. squared loss).
 float evaluateLogPerplexity(
     nmtkit::EncoderDecoder & encdec,
     nmtkit::MonotoneSampler & sampler,
@@ -323,7 +327,7 @@ float evaluateLogPerplexity(
     const nmtkit::Batch batch = converter.convert(samples);
     dynet::ComputationGraph cg;
     dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
-        batch, 0.0, &cg);
+        batch, &cg, false);
     num_outputs += batch.target_ids.size() - 1;
     total_loss += static_cast<float>(
         dynet::as_scalar(cg.forward(total_loss_expr)));
@@ -411,6 +415,7 @@ int main(int argc, char * argv[]) {
     global_config.parameter_memory_mb = config.get<unsigned>(
         "Global.parameter_memory_mb");
     global_config.force_run = !!args.count("force");
+    global_config.weight_decay = config.get<float>("Train.weight_decay");
     nmtkit::initialize(global_config);
 
     // Creates vocabularies.
@@ -509,10 +514,7 @@ int main(int argc, char * argv[]) {
     // Decaying factors
     float lr_decay = 1.0f;
     const float lr_decay_ratio = config.get<float>("Train.lr_decay_ratio");
-
-    const float dropout_ratio = config.get<float>("Train.dropout_ratio");
     const unsigned max_iteration = config.get<unsigned>("Train.max_iteration");
-
     const string eval_type = config.get<string>("Train.evaluation_type");
     const unsigned eval_interval = config.get<unsigned>(
         "Train.evaluation_interval");
@@ -546,7 +548,7 @@ int main(int argc, char * argv[]) {
         const nmtkit::Batch batch = batch_converter.convert(samples);
         dynet::ComputationGraph cg;
         dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
-            batch, dropout_ratio, &cg);
+            batch, &cg, true);
         cg.forward(total_loss_expr);
         cg.backward(total_loss_expr);
         trainer->update(lr_decay);

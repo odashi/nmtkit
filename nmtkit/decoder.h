@@ -32,15 +32,15 @@ public:
   //
   // Arguments:
   //   seed: Seed values of initial states, e.g., final encoder states.
-  //   dropout_ratio: Dropout probability.
   //   cg: Computation graph.
+  //   is_training: true when training, false otherwise.
   //
   // Returns:
   //   Initial state of the decoder.
   virtual State prepare(
       const std::vector<dynet::expr::Expression> & seed,
-      const float dropout_ratio,
-      dynet::ComputationGraph * cg) = 0;
+      dynet::ComputationGraph * cg,
+      const bool is_training) = 0;
 
   // Proceeds one decoding step.
   //
@@ -48,11 +48,12 @@ public:
   //   state: Previous decoder state.
   //   input_ids: List of input symbols in the current step.
   //   attention: Attention object.
-  //   cg: Computation graph.
   //   atten_probs: Placeholder of the attention probability vector. If the
   //                value is nullptr, this argument would be ignored.
   //   output: Placeholder of the output embedding. If the value is nullptr,
   //           this argument would be ignored.
+  //   cg: Computation graph.
+  //   is_training: true when training, false otherwise.
   //
   // Returns:
   //   Next state of the decoder.
@@ -60,9 +61,10 @@ public:
       const State & state,
       const std::vector<unsigned> & input_ids,
       Attention * attention,
-      dynet::ComputationGraph * cg,
       dynet::expr::Expression * atten_probs,
-      dynet::expr::Expression * output) = 0;
+      dynet::expr::Expression * output,
+      dynet::ComputationGraph * cg,
+      const bool is_training) = 0;
 
   // Returns the number of units in the output embedding.
   virtual unsigned getOutputSize() const = 0;

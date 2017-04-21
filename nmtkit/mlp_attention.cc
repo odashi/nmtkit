@@ -11,9 +11,9 @@ namespace DE = dynet::expr;
 namespace nmtkit {
 
 MLPAttention::MLPAttention(
-    unsigned memory_size,
-    unsigned controller_size,
-    unsigned hidden_size,
+    const unsigned memory_size,
+    const unsigned controller_size,
+    const unsigned hidden_size,
     dynet::Model * model) {
   NMTKIT_CHECK(
       memory_size > 0, "memory_size should be greater than 0.");
@@ -29,7 +29,8 @@ MLPAttention::MLPAttention(
 
 void MLPAttention::prepare(
     const vector<DE::Expression> & memories,
-    dynet::ComputationGraph * cg) {
+    dynet::ComputationGraph * cg,
+    const bool /* is_training */) {
   // Concatenated memory matrix.
   // Shape: {memory_size, seq_length}
   i_concat_mem_ = DE::concatenate_cols(memories);
@@ -51,7 +52,8 @@ void MLPAttention::prepare(
 }
 
 vector<DE::Expression> MLPAttention::compute(
-    const DE::Expression & controller) {
+    const DE::Expression & controller,
+    const bool /* is_training */) {
   // Computes the attention distribution.
   // Shape: {hidden_size, 1}
   DE::Expression h_ctrl = i_ctrl2h_ * controller;
