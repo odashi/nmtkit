@@ -50,12 +50,15 @@ public:
 
   ~HybridPredictor() override {}
 
-  void prepare(dynet::ComputationGraph * cg) override;
+  void prepare(
+      dynet::ComputationGraph * cg,
+      const bool is_training) override;
 
   dynet::expr::Expression computeLoss(
       const dynet::expr::Expression & input,
       const std::vector<unsigned> & target_ids,
-      dynet::ComputationGraph * cg) override;
+      dynet::ComputationGraph * cg,
+      const bool is_training) override;
 
   std::vector<Predictor::Result> predictKBest(
       const dynet::expr::Expression & input,

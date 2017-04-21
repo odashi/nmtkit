@@ -25,14 +25,17 @@ BinaryCodePredictor::BinaryCodePredictor(
 , loss_type_(loss_type)
 , converter_({input_size, ecc->getNumBits(bc->getNumBits())}, model) {}
 
-void BinaryCodePredictor::prepare(dynet::ComputationGraph * cg) {
+void BinaryCodePredictor::prepare(
+    dynet::ComputationGraph * cg,
+    const bool /* is_training */) {
   converter_.prepare(cg);
 }
 
 DE::Expression BinaryCodePredictor::computeLoss(
     const DE::Expression & input,
     const vector<unsigned> & target_ids,
-    dynet::ComputationGraph * cg) {
+    dynet::ComputationGraph * cg,
+    const bool /* is_training */) {
   const unsigned batch_size = target_ids.size();
 
   // Retrieves target bits.

@@ -33,14 +33,17 @@ HybridPredictor::HybridPredictor(
 , converter_(
     {input_size, softmax_size + ecc->getNumBits(bc->getNumBits())}, model) {}
 
-void HybridPredictor::prepare(dynet::ComputationGraph * cg) {
+void HybridPredictor::prepare(
+    dynet::ComputationGraph * cg,
+    const bool /* is_training */) {
   converter_.prepare(cg);
 }
 
 DE::Expression HybridPredictor::computeLoss(
     const DE::Expression & input,
     const vector<unsigned> & target_ids,
-    dynet::ComputationGraph * cg) {
+    dynet::ComputationGraph * cg,
+    const bool /* is_training */) {
   const unsigned batch_size = target_ids.size();
 
   // Calculates inner variables.
