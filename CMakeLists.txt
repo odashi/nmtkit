@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
-project(nmtkit VERSION 0.1.2 LANGUAGES CXX)
+project(nmtkit VERSION 0.1.3 LANGUAGES CXX)
 
 # utility to check if required option is set.
 function(my_check_option name)
