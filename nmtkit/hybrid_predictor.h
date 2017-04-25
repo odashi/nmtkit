@@ -1,7 +1,7 @@
 #ifndef NMTKIT_HYBRID_PREDICTOR_H_
 #define NMTKIT_HYBRID_PREDICTOR_H_
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/shared_ptr.hpp>
@@ -41,8 +41,8 @@ public:
   HybridPredictor(
       const unsigned input_size,
       const unsigned softmax_size,
-      boost::shared_ptr<BinaryCode> & bc,
-      boost::shared_ptr<ErrorCorrectingCode> & ecc,
+      std::shared_ptr<BinaryCode> & bc,
+      std::shared_ptr<ErrorCorrectingCode> & ecc,
       const std::string & loss_type,
       const float softmax_weight,
       const float binary_weight,
@@ -90,8 +90,8 @@ private:
   unsigned softmax_size_;
   unsigned num_original_bits_;
   unsigned num_encoded_bits_;
-  boost::shared_ptr<BinaryCode> bc_;
-  boost::shared_ptr<ErrorCorrectingCode> ecc_;
+  std::shared_ptr<BinaryCode> bc_;
+  std::shared_ptr<ErrorCorrectingCode> ecc_;
   std::string loss_type_;
   float softmax_weight_;
   float binary_weight_;

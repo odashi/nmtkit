@@ -15,18 +15,19 @@
  *                                            Decoder Outputs
  */
 
-using dynet::expr::Expression;
+using std::shared_ptr;
 using std::vector;
+using dynet::expr::Expression;
 
 namespace DE = dynet::expr;
 
 namespace nmtkit {
 
 EncoderDecoder::EncoderDecoder(
-    boost::shared_ptr<Encoder> & encoder,
-    boost::shared_ptr<Decoder> & decoder,
-    boost::shared_ptr<Attention> & attention,
-    boost::shared_ptr<Predictor> & predictor,
+    shared_ptr<Encoder> & encoder,
+    shared_ptr<Decoder> & decoder,
+    shared_ptr<Attention> & attention,
+    shared_ptr<Predictor> & predictor,
     const std::string & loss_integration_type)
 : encoder_(encoder)
 , decoder_(decoder)

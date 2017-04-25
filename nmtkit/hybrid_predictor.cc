@@ -7,7 +7,9 @@
 #include <nmtkit/array.h>
 #include <nmtkit/exception.h>
 
-using namespace std;
+using std::shared_ptr;
+using std::string;
+using std::vector;
 
 namespace DE = dynet::expr;
 
@@ -16,8 +18,8 @@ namespace nmtkit {
 HybridPredictor::HybridPredictor(
     const unsigned input_size,
     const unsigned softmax_size,
-    boost::shared_ptr<BinaryCode> & bc,
-    boost::shared_ptr<ErrorCorrectingCode> & ecc,
+    shared_ptr<BinaryCode> & bc,
+    shared_ptr<ErrorCorrectingCode> & ecc,
     const string & loss_type,
     const float softmax_weight,
     const float binary_weight,

@@ -1,9 +1,9 @@
 #ifndef NMTKIT_ENCODER_DECODER_H_
 #define NMTKIT_ENCODER_DECODER_H_
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <dynet/dynet.h>
@@ -43,10 +43,10 @@ public:
   //       'sum': Sum all losses.
   //       'mean': Sum all losses, then divides by batch size.
   EncoderDecoder(
-      boost::shared_ptr<Encoder> & encoder,
-      boost::shared_ptr<Decoder> & decoder,
-      boost::shared_ptr<Attention> & attention,
-      boost::shared_ptr<Predictor> & predictor,
+      std::shared_ptr<Encoder> & encoder,
+      std::shared_ptr<Decoder> & decoder,
+      std::shared_ptr<Attention> & attention,
+      std::shared_ptr<Predictor> & predictor,
       const std::string & loss_integration_type);
 
   // Constructs computation graph for the batch data.
@@ -140,10 +140,10 @@ private:
   }
 
   bool mean_by_samples_;
-  boost::shared_ptr<Encoder> encoder_;
-  boost::shared_ptr<Decoder> decoder_;
-  boost::shared_ptr<Attention> attention_;
-  boost::shared_ptr<Predictor> predictor_;
+  std::shared_ptr<Encoder> encoder_;
+  std::shared_ptr<Decoder> decoder_;
+  std::shared_ptr<Attention> attention_;
+  std::shared_ptr<Predictor> predictor_;
 };
 
 }  // namespace nmtkit

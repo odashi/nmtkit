@@ -11,8 +11,6 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/serialization/scoped_ptr.hpp>
 #include <dynet/dynet.h>
 #include <nmtkit/corpus.h>
 #include <nmtkit/encoder_decoder.h>
@@ -24,6 +22,8 @@
 
 using std::cerr;
 using std::endl;
+using std::make_shared;
+using std::shared_ptr;
 using std::string;
 using std::vector;
 
@@ -127,11 +127,11 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
   return args;
 }
 
-std::shared_ptr<nmtkit::Formatter> getFormatter(const std::string & name) {
+shared_ptr<nmtkit::Formatter> getFormatter(const std::string & name) {
   if (name == "text") {
-    return std::shared_ptr<nmtkit::Formatter>(new nmtkit::SingleTextFormatter());
+    return make_shared<nmtkit::SingleTextFormatter>();
   } else if (name == "html") {
-    return std::shared_ptr<nmtkit::Formatter>(new nmtkit::HTMLFormatter());
+    return make_shared<nmtkit::HTMLFormatter>();
   }
   NMTKIT_FATAL("Unknown formatter name: " + name);
 }
@@ -187,7 +187,7 @@ int main(int argc, char * argv[]) {
     auto formatter = ::getFormatter(args["format"].as<string>());
 
     // Loads vocabularies.
-    boost::scoped_ptr<nmtkit::Vocabulary> src_vocab, trg_vocab;
+    shared_ptr<nmtkit::Vocabulary> src_vocab, trg_vocab;
     ::loadArchive(model_dir / "source.vocab", archive_format, &src_vocab);
     ::loadArchive(model_dir / "target.vocab", archive_format, &trg_vocab);
 

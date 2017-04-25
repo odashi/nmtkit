@@ -1,9 +1,9 @@
 #ifndef NMTKIT_FACTORIES_H_
 #define NMTKIT_FACTORIES_H_
 
+#include <memory>
 #include <string>
 #include <boost/property_tree/ptree.hpp>
-#include <boost/shared_ptr.hpp>
 #include <dynet/model.h>
 #include <nmtkit/attention.h>
 #include <nmtkit/decoder.h>
@@ -30,7 +30,7 @@ public:
   //
   // Returns:
   //   A shared pointer of selected Encoder object.
-  static boost::shared_ptr<Encoder> createEncoder(
+  static std::shared_ptr<Encoder> createEncoder(
       const boost::property_tree::ptree & config,
       const Vocabulary & vocab,
       dynet::Model * model);
@@ -45,7 +45,7 @@ public:
   //
   // Returns:
   //   A shared pointer of selected Decoder object.
-  static boost::shared_ptr<Decoder> createDecoder(
+  static std::shared_ptr<Decoder> createDecoder(
       const boost::property_tree::ptree & config,
       const Vocabulary & vocab,
       const Encoder & encoder,
@@ -60,7 +60,7 @@ public:
   //
   // Returns:
   //   A shared pointer of selected Attention object.
-  static boost::shared_ptr<Attention> createAttention(
+  static std::shared_ptr<Attention> createAttention(
       const boost::property_tree::ptree & config,
       const Encoder & encoder,
       dynet::Model * model);
@@ -75,7 +75,7 @@ public:
   //
   // Returns:
   //   A shared pointer of selected Predictor object.
-  static boost::shared_ptr<Predictor> createPredictor(
+  static std::shared_ptr<Predictor> createPredictor(
       const boost::property_tree::ptree & config,
       const Vocabulary & vocab,
       const Decoder & decoder,

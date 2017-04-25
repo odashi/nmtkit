@@ -5,7 +5,7 @@
 #include <nmtkit/exception.h>
 #include <nmtkit/frequency_code.h>
 
-using namespace std;
+using std::vector;
 
 namespace nmtkit {
 

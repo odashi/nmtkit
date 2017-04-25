@@ -1,6 +1,7 @@
 #include <chrono>
 #include <fstream>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 #include <boost/archive/binary_oarchive.hpp>
@@ -12,8 +13,6 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/serialization/scoped_ptr.hpp>
 #include <dynet/dynet.h>
 #include <dynet/expr.h>
 #include <dynet/model.h>
@@ -36,7 +35,9 @@
 using std::cerr;
 using std::endl;
 using std::exception;
+using std::make_shared;
 using std::ofstream;
+using std::shared_ptr;
 using std::string;
 using std::vector;
 
@@ -152,14 +153,14 @@ void initializeLogger(
   // Registers sinks.
   vector<spdlog::sink_ptr> sinks;
   sinks.emplace_back(
-      std::make_shared<spdlog::sinks::simple_file_sink_st>(
+      make_shared<spdlog::sinks::simple_file_sink_st>(
           (dirpath / "training.log").string()));
   if (log_to_stderr) {
-    sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_sink_st>());
+    sinks.emplace_back(make_shared<spdlog::sinks::stderr_sink_st>());
   }
 
   // Configures and registers the combined logger object.
-  auto logger = std::make_shared<spdlog::logger>(
+  auto logger = make_shared<spdlog::logger>(
       "status", begin(sinks), end(sinks));
   logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e]\t[%l]\t%v");
   logger->flush_on(spdlog::level::trace);
@@ -190,20 +191,17 @@ void initializeLogger(
 //
 // Returns:
 //   A new pointer of the vocabulary object.
-//
-// TODO: This is a workaround for old Boost libraries. The function should
-//       return a smart pointer, but boost::scoped_ptr is not movable, and the
-//       serialization library does not support std::unique_ptr.
-nmtkit::Vocabulary * createVocabulary(
+shared_ptr<nmtkit::Vocabulary> createVocabulary(
     const string & corpus_filepath,
     const string & vocab_type,
     const unsigned vocab_size) {
   if (vocab_type == "character") {
-    return new nmtkit::CharacterVocabulary(corpus_filepath, vocab_size);
+    return make_shared<nmtkit::CharacterVocabulary>(
+        corpus_filepath, vocab_size);
   } else if (vocab_type == "word") {
-    return new nmtkit::WordVocabulary(corpus_filepath, vocab_size);
+    return make_shared<nmtkit::WordVocabulary>(corpus_filepath, vocab_size);
   } else if (vocab_type == "bpe") {
-    return new nmtkit::BPEVocabulary(corpus_filepath, vocab_size);
+    return make_shared<nmtkit::BPEVocabulary>(corpus_filepath, vocab_size);
   }
   NMTKIT_FATAL("Invalid vocabulary type: " + vocab_type);
 }
@@ -243,31 +241,31 @@ PT::ptree mergeConfigs(const vector<string> & cfg_filepaths) {
 //
 // Returns:
 //   A new pointer of the trainer object.
-//
-// TODO: Ditto as createVocabulary().
-dynet::Trainer * createTrainer(const PT::ptree & config, dynet::Model * model) {
+shared_ptr<dynet::Trainer> createTrainer(
+    const PT::ptree & config,
+    dynet::Model * model) {
   const string opt_type = config.get<string>("Train.optimizer_type");
   if (opt_type == "sgd") {
-    return new dynet::SimpleSGDTrainer(
+    return make_shared<dynet::SimpleSGDTrainer>(
         *model,
         config.get<float>("Train.sgd_eta"));
   } else if (opt_type == "momentum") {
-    return new dynet::MomentumSGDTrainer(
+    return make_shared<dynet::MomentumSGDTrainer>(
         *model,
         config.get<float>("Train.sgd_eta"),
         config.get<float>("Train.sgd_momentum"));
   } else if (opt_type == "adagrad") {
-    return new dynet::AdagradTrainer(
+    return make_shared<dynet::AdagradTrainer>(
         *model,
         config.get<float>("Train.adagrad_eta"),
         config.get<float>("Train.adagrad_eps"));
   } else if (opt_type == "adadelta") {
-    return new dynet::AdadeltaTrainer(
+    return make_shared<dynet::AdadeltaTrainer>(
         *model,
         config.get<float>("Train.adadelta_eps"),
         config.get<float>("Train.adadelta_rho"));
   } else if (opt_type == "adam") {
-    return new dynet::AdamTrainer(
+    return make_shared<dynet::AdamTrainer>(
         *model,
         config.get<float>("Train.adam_alpha"),
         config.get<float>("Train.adam_beta1"),
@@ -419,16 +417,14 @@ int main(int argc, char * argv[]) {
     nmtkit::initialize(global_config);
 
     // Creates vocabularies.
-    boost::scoped_ptr<nmtkit::Vocabulary> src_vocab(
-        ::createVocabulary(
+    shared_ptr<nmtkit::Vocabulary> src_vocab = ::createVocabulary(
             config.get<string>("Corpus.train_source"),
             config.get<string>("Model.source_vocabulary_type"),
-            config.get<unsigned>("Model.source_vocabulary_size")));
-    boost::scoped_ptr<nmtkit::Vocabulary> trg_vocab(
-        ::createVocabulary(
+            config.get<unsigned>("Model.source_vocabulary_size"));
+    shared_ptr<nmtkit::Vocabulary> trg_vocab = ::createVocabulary(
             config.get<string>("Corpus.train_target"),
             config.get<string>("Model.target_vocabulary_type"),
-            config.get<unsigned>("Model.target_vocabulary_size")));
+            config.get<unsigned>("Model.target_vocabulary_size"));
     ::saveArchive(model_dir / "source.vocab", archive_format, src_vocab);
     ::saveArchive(model_dir / "target.vocab", archive_format, trg_vocab);
 
@@ -471,7 +467,7 @@ int main(int argc, char * argv[]) {
     dynet::Model model;
 
     // Creates a new trainer.
-    boost::scoped_ptr<dynet::Trainer> trainer(::createTrainer(config, &model));
+    shared_ptr<dynet::Trainer> trainer(::createTrainer(config, &model));
     // Disable sparse updates.
     // By default, DyNet udpates parameters over the only used values.
     // However, if we use sparse updates with a momentum optimization function
