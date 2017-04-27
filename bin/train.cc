@@ -27,6 +27,7 @@
 #include <nmtkit/factories.h>
 #include <nmtkit/inference_graph.h>
 #include <nmtkit/init.h>
+#include <nmtkit/loss_evaluator.h>
 #include <nmtkit/monotone_sampler.h>
 #include <nmtkit/sorted_random_sampler.h>
 #include <nmtkit/word_vocabulary.h>
@@ -300,39 +301,6 @@ void saveArchive(
   }
 }
 
-// Calculates the averaged sample loss of given encoder-decoder model.
-//
-// Arguments:
-//   encdec: Target encoder-decoder object.
-//   sampler: Sampler object for the corpus to be evaluated.
-//   converter: BatchConverter object to be used to convert samples.
-//
-// Returns:
-//   The averaged loss score over each outputs.
-//
-// NOTE(odashi):
-//   This function might not return correct log(PPL) when using
-//   not entropy-based loss functions (e.g. squared loss).
-float evaluateAveragedLoss(
-    nmtkit::EncoderDecoder & encdec,
-    nmtkit::MonotoneSampler & sampler,
-    nmtkit::BatchConverter & converter) {
-  unsigned num_outputs = 0;
-  float total_loss = 0.0f;
-  sampler.rewind();
-  while (sampler.hasSamples()) {
-    const vector<nmtkit::Sample> samples = sampler.getSamples();
-    const nmtkit::Batch batch = converter.convert(samples);
-    dynet::ComputationGraph cg;
-    dynet::expr::Expression total_loss_expr = encdec.buildTrainGraph(
-        batch, &cg, false);
-    num_outputs += batch.target_ids.size() - 1;
-    total_loss += static_cast<float>(
-        dynet::as_scalar(cg.forward(total_loss_expr)));
-  }
-  return total_loss / num_outputs;
-}
-
 // Calculates the BLEU score of given encoder-decoder model.
 //
 // Arguments:
@@ -447,6 +415,7 @@ int main(int argc, char * argv[]) {
         config.get<unsigned>("Global.random_seed"));
     const unsigned corpus_size = train_sampler.getNumSamples();
     logger->info("Loaded 'train' corpus.");
+
     nmtkit::MonotoneSampler dev_sampler(
         config.get<string>("Corpus.dev_source"),
         config.get<string>("Corpus.dev_target"),
@@ -463,6 +432,16 @@ int main(int argc, char * argv[]) {
         % test_sampler.getNumSamples();
     logger->info(fmt_corpus_size.str());
     nmtkit::BatchConverter batch_converter(*src_vocab, *trg_vocab);
+
+    // Creates evaluators.
+    nmtkit::LossEvaluator ev_dev_loss(
+        config.get<string>("Corpus.dev_source"),
+        config.get<string>("Corpus.dev_target"),
+        *src_vocab, *trg_vocab);
+    nmtkit::LossEvaluator ev_test_loss(
+        config.get<string>("Corpus.test_source"),
+        config.get<string>("Corpus.test_target"),
+        *src_vocab, *trg_vocab);
 
     dynet::Model model;
 
@@ -591,8 +570,7 @@ int main(int argc, char * argv[]) {
 
         logger->info("Evaluating...");
 
-        const float dev_loss = ::evaluateAveragedLoss(
-            encdec, dev_sampler, batch_converter);
+        const float dev_loss = ev_dev_loss.evaluate(&encdec);
         const auto fmt_dev_loss = boost::format(
             "Evaluated: batch=%d words=%d elapsed-time(sec)=%d dev-loss=%.6e")
             % iteration % num_trained_words % elapsed_time_seconds % dev_loss;
@@ -605,8 +583,7 @@ int main(int argc, char * argv[]) {
             % iteration % num_trained_words % elapsed_time_seconds % dev_bleu;
         logger->info(fmt_dev_bleu.str());
 
-        const float test_loss = ::evaluateAveragedLoss(
-            encdec, test_sampler, batch_converter);
+        const float test_loss = ev_test_loss.evaluate(&encdec);
         const auto fmt_test_loss = boost::format(
             "Evaluated: batch=%d words=%d elapsed-time(sec)=%d test-loss=%.6e")
             % iteration % num_trained_words % elapsed_time_seconds % test_loss;

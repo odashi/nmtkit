@@ -20,6 +20,7 @@ set(nmtkit_LIBRARY_HDRS
   encoder.h
   encoder_decoder.h
   error_correcting_code.h
+  evaluator.h
   exception.h
   factories.h
   formatter.h
@@ -31,6 +32,7 @@ set(nmtkit_LIBRARY_HDRS
   identity_ecc.h
   inference_graph.h
   init.h
+  loss_evaluator.h
   luong_decoder.h
   mlp_attention.h
   monotone_sampler.h
@@ -74,6 +76,7 @@ set(nmtkit_LIBRARY_SRCS
   identity_ecc.cc
   inference_graph.cc
   init.cc
+  loss_evaluator.cc
   luong_decoder.cc
   mlp_attention.cc
   monotone_sampler.cc
