@@ -18,8 +18,8 @@
 #include <dynet/model.h>
 #include <dynet/tensor.h>
 #include <dynet/training.h>
-#include <mteval/EvaluatorFactory.h>
 #include <nmtkit/batch_converter.h>
+#include <nmtkit/bleu_evaluator.h>
 #include <nmtkit/bpe_vocabulary.h>
 #include <nmtkit/character_vocabulary.h>
 #include <nmtkit/encoder_decoder.h>
@@ -28,7 +28,6 @@
 #include <nmtkit/inference_graph.h>
 #include <nmtkit/init.h>
 #include <nmtkit/loss_evaluator.h>
-#include <nmtkit/monotone_sampler.h>
 #include <nmtkit/sorted_random_sampler.h>
 #include <nmtkit/word_vocabulary.h>
 #include <spdlog/spdlog.h>
@@ -301,49 +300,6 @@ void saveArchive(
   }
 }
 
-// Calculates the BLEU score of given encoder-decoder model.
-//
-// Arguments:
-//   src_vocab: Vocabulary object for the source language.
-//   trg_vocab: Vocabulary object for the target language.
-//   encdec: Target encoder-decoder object.
-//   sampler: Sampler object for the corpus to be evaluated.
-//   max_length: Maximum number of words in each hypothesis.
-//
-// Returns:
-//   The BLEU score.
-float evaluateBLEU(
-    const nmtkit::Vocabulary & src_vocab,
-    const nmtkit::Vocabulary & trg_vocab,
-    nmtkit::EncoderDecoder & encdec,
-    nmtkit::MonotoneSampler & sampler,
-    const unsigned max_length) {
-  const auto evaluator = MTEval::EvaluatorFactory::create("BLEU");
-  const unsigned src_bos_id = src_vocab.getID("<s>");
-  const unsigned src_eos_id = src_vocab.getID("</s>");
-  const unsigned trg_bos_id = trg_vocab.getID("<s>");
-  const unsigned trg_eos_id = trg_vocab.getID("</s>");
-  MTEval::Statistics stats;
-  sampler.rewind();
-  while (sampler.hasSamples()) {
-    vector<nmtkit::Sample> samples = sampler.getSamples();
-    nmtkit::InferenceGraph ig = encdec.infer(
-        samples[0].source,
-        src_bos_id, src_eos_id,
-        trg_bos_id, trg_eos_id,
-        max_length, 1, 0.0f);
-    const auto hyp_nodes = ig.findOneBestPath(trg_bos_id, trg_eos_id);
-    vector<unsigned> hyp_ids;
-    // Note: Ignore <s> and </s>.
-    for (unsigned i = 1; i < hyp_nodes.size() - 1; ++i) {
-      hyp_ids.emplace_back(hyp_nodes[i]->label().word_id);
-    }
-    MTEval::Sample eval_sample {hyp_ids, {samples[0].target}};
-    stats += evaluator->map(eval_sample);
-  }
-  return evaluator->integrate(stats);
-}
-
 }  // namespace
 
 int main(int argc, char * argv[]) {
@@ -398,10 +354,8 @@ int main(int argc, char * argv[]) {
 
     // Maximum lengths
     const unsigned train_max_length = config.get<unsigned>("Batch.max_length");
-    const unsigned test_max_length = 1024;
     const float train_max_length_ratio = config.get<float>(
         "Batch.max_length_ratio");
-    const float test_max_length_ratio = 1e10;
 
     // Creates samplers and batch converter.
     nmtkit::SortedRandomSampler train_sampler(
@@ -416,33 +370,33 @@ int main(int argc, char * argv[]) {
     const unsigned corpus_size = train_sampler.getNumSamples();
     logger->info("Loaded 'train' corpus.");
 
-    nmtkit::MonotoneSampler dev_sampler(
-        config.get<string>("Corpus.dev_source"),
-        config.get<string>("Corpus.dev_target"),
-        *src_vocab, *trg_vocab, test_max_length, test_max_length_ratio, 1);
-    logger->info("Loaded 'dev' corpus.");
-    nmtkit::MonotoneSampler test_sampler(
-        config.get<string>("Corpus.test_source"),
-        config.get<string>("Corpus.test_target"),
-        *src_vocab, *trg_vocab, test_max_length, test_max_length_ratio, 1);
-    logger->info("Loaded 'test' corpus.");
     const auto fmt_corpus_size = boost::format(
-        "Cleaned corpus size: train=%d dev=%d test=%d")
-        % train_sampler.getNumSamples() % dev_sampler.getNumSamples()
-        % test_sampler.getNumSamples();
+        "Cleaned train corpus size: %d") % train_sampler.getNumSamples();
     logger->info(fmt_corpus_size.str());
-    nmtkit::BatchConverter batch_converter(*src_vocab, *trg_vocab);
 
     // Creates evaluators.
     nmtkit::LossEvaluator ev_dev_loss(
         config.get<string>("Corpus.dev_source"),
         config.get<string>("Corpus.dev_target"),
         *src_vocab, *trg_vocab);
+    logger->info("Created dev-loss evaluator.");
+    nmtkit::BLEUEvaluator ev_dev_bleu(
+        config.get<string>("Corpus.dev_source"),
+        config.get<string>("Corpus.dev_target"),
+        *src_vocab, *trg_vocab);
+    logger->info("Created dev-bleu evaluator.");
     nmtkit::LossEvaluator ev_test_loss(
         config.get<string>("Corpus.test_source"),
         config.get<string>("Corpus.test_target"),
         *src_vocab, *trg_vocab);
+    logger->info("Created test-loss evaluator.");
+    nmtkit::BLEUEvaluator ev_test_bleu(
+        config.get<string>("Corpus.test_source"),
+        config.get<string>("Corpus.test_target"),
+        *src_vocab, *trg_vocab);
+    logger->info("Created test-bleu evaluator.");
 
+    nmtkit::BatchConverter batch_converter(*src_vocab, *trg_vocab);
     dynet::Model model;
 
     // Creates a new trainer.
@@ -576,8 +530,7 @@ int main(int argc, char * argv[]) {
             % iteration % num_trained_words % elapsed_time_seconds % dev_loss;
         logger->info(fmt_dev_loss.str());
 
-        const float dev_bleu = ::evaluateBLEU(
-            *src_vocab, *trg_vocab, encdec, dev_sampler, train_max_length);
+        const float dev_bleu = ev_dev_bleu.evaluate(&encdec);
         const auto fmt_dev_bleu = boost::format(
             "Evaluated: batch=%d words=%d elapsed-time(sec)=%d dev-bleu=%.6f")
             % iteration % num_trained_words % elapsed_time_seconds % dev_bleu;
@@ -589,8 +542,7 @@ int main(int argc, char * argv[]) {
             % iteration % num_trained_words % elapsed_time_seconds % test_loss;
         logger->info(fmt_test_loss.str());
 
-        const float test_bleu = ::evaluateBLEU(
-            *src_vocab, *trg_vocab, encdec, test_sampler, train_max_length);
+        const float test_bleu = ev_test_bleu.evaluate(&encdec);
         const auto fmt_test_bleu = boost::format(
             "Evaluated: batch=%d words=%d elapsed-time(sec)=%d test-bleu=%.6f")
             % iteration % num_trained_words % elapsed_time_seconds % test_bleu;

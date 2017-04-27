@@ -8,7 +8,7 @@ using std::vector;
 
 namespace {
   const unsigned MAX_SEQUENCE_LENGTH = 1024;
-  const float MAX_SEQUENCE_RATIO = 16.0f;
+  const float MAX_SEQUENCE_RATIO = 1024.0f;
   const unsigned BATCH_SIZE = 1;
 } // namespace
 

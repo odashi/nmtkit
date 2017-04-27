@@ -11,6 +11,7 @@ set(nmtkit_LIBRARY_HDRS
   bilinear_attention.h
   binary_code.h
   binary_code_predictor.h
+  bleu_evaluator.h
   bpe_vocabulary.h
   character_vocabulary.h
   convolutional_ecc.h
@@ -58,6 +59,7 @@ set(nmtkit_LIBRARY_SRCS
   bilinear_attention.cc
   binary_code.cc
   binary_code_predictor.cc
+  bleu_evaluator.cc
   bpe_vocabulary.cc
   character_vocabulary.cc
   convolutional_ecc.cc
@@ -92,4 +94,4 @@ set(nmtkit_LIBRARY_SRCS
 )
 
 add_library(nmtkit ${nmtkit_LIBRARY_HDRS} ${nmtkit_LIBRARY_SRCS})
-target_link_libraries(nmtkit ${Boost_LIBRARIES} ${DYNET_LIBRARIES})
+target_link_libraries(nmtkit ${Boost_LIBRARIES} ${DYNET_LIBRARIES} mteval)
