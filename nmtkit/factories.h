@@ -21,6 +21,20 @@ class Factory {
   Factory & operator=(Factory &&) = delete;
 
 public:
+  // Creates an Vocabulary object.
+  //
+  // Arguments:
+  //   corpus_filepath: Location of the corpus file to be analyzed.
+  //   type: Name of the vocabulary type.
+  //   size: Number of entries in the vocabulary.
+  //
+  // Returns:
+  //   A shared pointer of the vocabulary object.
+  static std::shared_ptr<Vocabulary> createVocabulary(
+      const std::string & corpus_filepath,
+      const std::string & type,
+      const unsigned size);
+
   // Creates an Encoder object.
   //
   // Arguments:

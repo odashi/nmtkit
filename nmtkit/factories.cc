@@ -3,6 +3,10 @@
 #include <nmtkit/exception.h>
 #include <nmtkit/factories.h>
 
+#include <nmtkit/character_vocabulary.h>
+#include <nmtkit/word_vocabulary.h>
+#include <nmtkit/bpe_vocabulary.h>
+
 #include <nmtkit/backward_encoder.h>
 #include <nmtkit/bidirectional_encoder.h>
 #include <nmtkit/forward_encoder.h>
@@ -75,6 +79,20 @@ shared_ptr<nmtkit::ErrorCorrectingCode> createErrorCorrectingCode(
 }  // namespace
 
 namespace nmtkit {
+
+shared_ptr<Vocabulary> Factory::createVocabulary(
+    const string & corpus_filepath,
+    const string & type,
+    const unsigned size) {
+  if (type == "bpe") {
+    return make_shared<BPEVocabulary>(corpus_filepath, size);
+  } else if (type == "character") {
+    return make_shared<CharacterVocabulary>(corpus_filepath, size);
+  } else if (type == "word") {
+    return make_shared<WordVocabulary>(corpus_filepath, size);
+  }
+  NMTKIT_FATAL("Invalid vocabulary type: " + type);
+}
 
 shared_ptr<Encoder> Factory::createEncoder(
     const boost::property_tree::ptree & config,

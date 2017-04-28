@@ -182,30 +182,6 @@ void initializeLogger(
   spdlog::register_logger(logger);
 }
 
-// Initialize a vocabulary object using a corpus.
-//
-// Arguments:
-//   corpus_filepath: Location of the corpus file to be analyzed.
-//   vocab_type: Name of the vocabulary type.
-//   vocab_size: Number of entries in the vocabulary.
-//
-// Returns:
-//   A new pointer of the vocabulary object.
-shared_ptr<nmtkit::Vocabulary> createVocabulary(
-    const string & corpus_filepath,
-    const string & vocab_type,
-    const unsigned vocab_size) {
-  if (vocab_type == "character") {
-    return make_shared<nmtkit::CharacterVocabulary>(
-        corpus_filepath, vocab_size);
-  } else if (vocab_type == "word") {
-    return make_shared<nmtkit::WordVocabulary>(corpus_filepath, vocab_size);
-  } else if (vocab_type == "bpe") {
-    return make_shared<nmtkit::BPEVocabulary>(corpus_filepath, vocab_size);
-  }
-  NMTKIT_FATAL("Invalid vocabulary type: " + vocab_type);
-}
-
 // Merge multiple configurations into one property tree.
 //
 // Arguments:
@@ -341,14 +317,16 @@ int main(int argc, char * argv[]) {
     nmtkit::initialize(global_config);
 
     // Creates vocabularies.
-    shared_ptr<nmtkit::Vocabulary> src_vocab = ::createVocabulary(
-            config.get<string>("Corpus.train_source"),
-            config.get<string>("Model.source_vocabulary_type"),
-            config.get<unsigned>("Model.source_vocabulary_size"));
-    shared_ptr<nmtkit::Vocabulary> trg_vocab = ::createVocabulary(
-            config.get<string>("Corpus.train_target"),
-            config.get<string>("Model.target_vocabulary_type"),
-            config.get<unsigned>("Model.target_vocabulary_size"));
+    shared_ptr<nmtkit::Vocabulary> src_vocab =
+      nmtkit::Factory::createVocabulary(
+          config.get<string>("Corpus.train_source"),
+          config.get<string>("Model.source_vocabulary_type"),
+          config.get<unsigned>("Model.source_vocabulary_size"));
+    shared_ptr<nmtkit::Vocabulary> trg_vocab =
+      nmtkit::Factory::createVocabulary(
+          config.get<string>("Corpus.train_target"),
+          config.get<string>("Model.target_vocabulary_type"),
+          config.get<unsigned>("Model.target_vocabulary_size"));
     ::saveArchive(model_dir / "source.vocab", archive_format, src_vocab);
     ::saveArchive(model_dir / "target.vocab", archive_format, trg_vocab);
 
