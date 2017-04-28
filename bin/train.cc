@@ -20,8 +20,6 @@
 #include <dynet/training.h>
 #include <nmtkit/batch_converter.h>
 #include <nmtkit/bleu_evaluator.h>
-#include <nmtkit/bpe_vocabulary.h>
-#include <nmtkit/character_vocabulary.h>
 #include <nmtkit/encoder_decoder.h>
 #include <nmtkit/exception.h>
 #include <nmtkit/factories.h>
@@ -29,7 +27,6 @@
 #include <nmtkit/init.h>
 #include <nmtkit/loss_evaluator.h>
 #include <nmtkit/sorted_random_sampler.h>
-#include <nmtkit/word_vocabulary.h>
 #include <spdlog/spdlog.h>
 
 using std::cerr;
@@ -251,7 +248,7 @@ shared_ptr<dynet::Trainer> createTrainer(
   NMTKIT_FATAL("Invalid optimizer type: " + opt_type);
 }
 
-// Saves an serializable object.
+// Saves a serializable object.
 //
 // Arguments:
 //   filepath: Location of the file to save the object.
