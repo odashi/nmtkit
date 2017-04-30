@@ -277,6 +277,66 @@ InferenceGraph EncoderDecoder::forceDecode(
   return ig;
 }
 
+InferenceGraph EncoderDecoder::sample(
+    const vector<unsigned> & source_ids,
+    const unsigned source_bos_id,
+    const unsigned source_eos_id,
+    const unsigned target_bos_id,
+    const unsigned target_eos_id) {
+
+  // Make batch data.
+  vector<vector<unsigned>> source_ids_inner {{source_bos_id}};
+  for (const unsigned s : source_ids) {
+    source_ids_inner.emplace_back(vector<unsigned> {s});
+  }
+  source_ids_inner.emplace_back(vector<unsigned> {source_eos_id});
+
+  dynet::ComputationGraph cg;
+
+  // Encode
+  encoder_->prepare(&cg, false);
+  const vector<Expression> enc_outputs = encoder_->compute(
+      source_ids_inner, &cg, false);
+
+  // Prepare decoding.
+  attention_->prepare(enc_outputs, &cg, false);
+  predictor_->prepare(&cg, false);
+  Decoder::State state = decoder_->prepare(encoder_->getStates(), &cg, false);
+  InferenceGraph ig;
+  InferenceGraph::Label prev_label {target_bos_id, 0.0, 0.0, {}};
+  auto prev_node = ig.addNode(prev_label);
+
+  // Do sampling.
+  while (prev_label.word_id != target_eos_id) {
+    // Expands the node.
+    Expression atten_probs, out_embed;
+    state = decoder_->oneStep(
+        state, vector<unsigned> {prev_label.word_id}, attention_.get(),
+        &atten_probs, &out_embed, &cg, false);
+
+    // Obtains attention probabilities.
+    const vector<float> out_atten_probs = dynet::as_vector(
+        cg.incremental_forward(atten_probs));
+
+    // Obtains next word.
+    const Predictor::Result next_word = predictor_->sample(out_embed, &cg);
+
+    // Make next node.
+    InferenceGraph::Label next_label {
+      next_word.word_id,
+      next_word.log_prob,
+      prev_label.accum_log_prob + next_word.log_prob,
+      out_atten_probs,
+    };
+    auto next_node = ig.addNode(next_label);
+    ig.connect(prev_node, next_node);
+    prev_label = std::move(next_label);
+    prev_node = std::move(next_node);
+  }
+
+  return ig;
+}
+
 }  // namespace nmtkit
 
 NMTKIT_SERIALIZATION_IMPL(nmtkit::EncoderDecoder);

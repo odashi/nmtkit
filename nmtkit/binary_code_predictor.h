@@ -64,6 +64,10 @@ public:
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) override;
 
+  Predictor::Result sample(
+      const dynet::expr::Expression & input,
+      dynet::ComputationGraph * cg) override;
+
 private:
   // Boost serialization interface.
   friend class boost::serialization::access;

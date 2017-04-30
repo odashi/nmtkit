@@ -188,6 +188,12 @@ vector<Predictor::Result> HybridPredictor::predictByIDs(
   return results;
 }
 
+Predictor::Result HybridPredictor::sample(
+    const DE::Expression & /* input */,
+    dynet::ComputationGraph * /* cg */) {
+  NMTKIT_FATAL("Not implemented.");
+}
+
 }  // namespace nmtkit
 
 NMTKIT_SERIALIZATION_IMPL(nmtkit::HybridPredictor);

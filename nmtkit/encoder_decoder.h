@@ -107,6 +107,24 @@ public:
       const unsigned target_bos_id,
       const unsigned target_eos_id);
 
+  // Sample a target sentence.
+  //
+  // Arguments:
+  //   source_ids: List of source word IDs.
+  //   source_bos_id: "<s>" ID in the source language.
+  //   source_eos_id: "</s>" ID in the source language.
+  //   target_bos_id: "<s>" ID in the target language.
+  //   target_eos_id: "</s>" ID in the target language.
+  //
+  // Returns:
+  //   Inference graph representing the decoder results.
+  InferenceGraph sample(
+      const std::vector<unsigned> & source_ids,
+      const unsigned source_bos_id,
+      const unsigned source_eos_id,
+      const unsigned target_bos_id,
+      const unsigned target_eos_id);
+
 private:
   // Generates output sequence using encoder results.
   //

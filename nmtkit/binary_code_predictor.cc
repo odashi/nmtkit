@@ -127,6 +127,12 @@ vector<Predictor::Result> BinaryCodePredictor::predictByIDs(
   return results;
 }
 
+Predictor::Result BinaryCodePredictor::sample(
+    const DE::Expression & /* input */,
+    dynet::ComputationGraph * /* cg */) {
+  NMTKIT_FATAL("Not implemented.");
+}
+
 }  // namespace nmtkit
 
 NMTKIT_SERIALIZATION_IMPL(nmtkit::BinaryCodePredictor);

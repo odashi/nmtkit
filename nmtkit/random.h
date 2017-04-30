@@ -32,6 +32,15 @@ public:
   //   Generated integer value.
   int uniform(int minval, int maxval);
 
+  // Generates an float with range [minval, maxval) by sampling from the
+  // uniform distribution.
+  // Arguments:
+  //   minval: Lower bound of generated values.
+  //   maxval: Upper bound of generated values.
+  // Returns:
+  //   Generated double value.
+  double funiform(double minval, double maxval);
+
 private:
   std::mt19937 gen_;
 };

@@ -39,4 +39,12 @@ int Random::uniform(int minval, int maxval) {
   return minval + static_cast<int>(sample / divisor);
 }
 
+// TODO(odashi): Make unit tests for this function.
+double Random::funiform(double minval, double maxval) {
+  NMTKIT_CHECK(minval < maxval, "Arguments should satisfy minval < maxval.");
+
+  static const double divisor = static_cast<double>(0x100000000);
+  return gen_() * (maxval - minval) / divisor + minval;
+}
+
 }  // namespace nmtkit

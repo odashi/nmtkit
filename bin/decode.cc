@@ -53,6 +53,8 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
     ("force-decoding",
      "Forcely decode given reference texts.\n"
      "This flag also require specifying --reference.")
+    ("sampling",
+     "Random-sample a target sentence from the output distribution.")
     ("beam-width",
      PO::value<unsigned>()->default_value(1),
      "Beam search width in the decoder inference.")
@@ -243,8 +245,14 @@ int main(int argc, char * argv[]) {
     }
 
     const bool force_decoding = !!args.count("force-decoding");
+    const bool sampling = !!args.count("sampling");
+    NMTKIT_CHECK(
+        !(force_decoding && sampling),
+        "Cannot perform both force decoding and sampling simultaneously.");
 
     formatter->initialize(out_os.get());
+
+    std::cerr << "Ready." << std::endl;
 
     // Consumes input lines and decodes them.
     string input_line;
@@ -262,9 +270,12 @@ int main(int argc, char * argv[]) {
 
       // Obtain results.
       nmtkit::InferenceGraph ig =
-          force_decoding ?
-          encdec.forceDecode(
+          force_decoding ? encdec.forceDecode(
               input_ids, ref_ids,
+              src_bos_id, src_eos_id,
+              trg_bos_id, trg_eos_id) :
+          sampling ? encdec.sample(
+              input_ids,
               src_bos_id, src_eos_id,
               trg_bos_id, trg_eos_id) :
           encdec.infer(

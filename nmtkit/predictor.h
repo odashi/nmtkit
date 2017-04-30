@@ -81,6 +81,18 @@ public:
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) = 0;
 
+  // Sample a candidate words.
+  //
+  // Arguments:
+  //   input: Expression object representing input vector.
+  //   cg: Computation graph.
+  //
+  // Returns:
+  //   Sampled candidate.
+  virtual Result sample(
+      const dynet::expr::Expression & input,
+      dynet::ComputationGraph * cg) = 0;
+
 private:
   // Boost serialization interface.
   friend class boost::serialization::access;

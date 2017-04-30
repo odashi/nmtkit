@@ -2,9 +2,11 @@
 
 #include <nmtkit/softmax_predictor.h>
 
+#include <cmath>
 #include <dynet/tensor.h>
 #include <nmtkit/array.h>
 #include <nmtkit/exception.h>
+#include <nmtkit/random.h>
 
 using std::vector;
 
@@ -82,6 +84,29 @@ vector<Predictor::Result> SoftmaxPredictor::predictByIDs(
   }
 
   return results;
+}
+
+Predictor::Result SoftmaxPredictor::sample(
+    const DE::Expression & input,
+    dynet::ComputationGraph * cg) {
+  const DE::Expression score = converter_.compute(input);
+  const DE::Expression log_probs_expr = DE::log_softmax(score);
+  vector<float> log_probs = dynet::as_vector(
+      cg->incremental_forward(log_probs_expr));
+  NMTKIT_CHECK(
+      log_probs.size() == vocab_size_,
+      "Size of resulting log-prob array is incorrect. "
+      "Attempting to decode multiple sentences?");
+
+  // Sample
+  vector<float> aug_log_probs(vocab_size_);
+  Random rnd;
+  for (unsigned i = 0; i < vocab_size_; ++i) {
+    aug_log_probs[i] = log_probs[i] - std::log(-std::log(rnd.funiform(1e-8, 1.0)));
+  }
+  const unsigned argmax_id = Array::argmax(aug_log_probs);
+
+  return Predictor::Result { argmax_id, log_probs[argmax_id] };
 }
 
 }  // namespace nmtkit
