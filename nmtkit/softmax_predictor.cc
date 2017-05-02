@@ -2,11 +2,9 @@
 
 #include <nmtkit/softmax_predictor.h>
 
-#include <cmath>
 #include <dynet/tensor.h>
 #include <nmtkit/array.h>
 #include <nmtkit/exception.h>
-#include <nmtkit/random.h>
 
 using std::vector;
 
@@ -90,6 +88,8 @@ Predictor::Result SoftmaxPredictor::sample(
     const DE::Expression & input,
     dynet::ComputationGraph * cg) {
   const DE::Expression score = converter_.compute(input);
+
+  // log(P)
   const DE::Expression log_probs_expr = DE::log_softmax(score);
   vector<float> log_probs = dynet::as_vector(
       cg->incremental_forward(log_probs_expr));
@@ -98,13 +98,12 @@ Predictor::Result SoftmaxPredictor::sample(
       "Size of resulting log-prob array is incorrect. "
       "Attempting to decode multiple sentences?");
 
-  // Sample
-  vector<float> aug_log_probs(vocab_size_);
-  Random rnd;
-  for (unsigned i = 0; i < vocab_size_; ++i) {
-    aug_log_probs[i] = log_probs[i] - std::log(-std::log(rnd.funiform(1e-8, 1.0)));
-  }
-  const unsigned argmax_id = Array::argmax(aug_log_probs);
+  // Gumbel-softmax sampling
+  const DE::Expression noise = DE::random_gumbel(
+      *cg, log_probs_expr.dim(), 0.0f, 1.0f);
+  vector<float> id_scores = dynet::as_vector(
+      cg->incremental_forward(log_probs_expr + noise));
+  const unsigned argmax_id = Array::argmax(id_scores);
 
   return Predictor::Result { argmax_id, log_probs[argmax_id] };
 }

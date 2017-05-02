@@ -81,7 +81,7 @@ public:
       const std::vector<unsigned> word_ids,
       dynet::ComputationGraph * cg) = 0;
 
-  // Sample a candidate words.
+  // Sample a candidate sentence from a whole translation probability.
   //
   // Arguments:
   //   input: Expression object representing input vector.
