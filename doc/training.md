@@ -75,7 +75,7 @@ Some files would be generated while training in the output directory:
 
 <dl>
   <dt>config.ini</dt><dd>Copy of the configuration script specified by `--config`.</dd>
-  <dt>training.log</dt><dd>Proceeding logs of the training process.</dd>
+  <dt>training.log</dt><dd>Progress logs of the training process. Similar contents would be output to the stderr.</dd>
   <dt>source.vocab</dt><dd>List of vocabularies in the source language.</dd>
   <dt>target.vocab</dt><dd>List of vocabularies in the target language.</dd>
   <dt>*.model.params</dt><dd>Parameters of the translation model.</dd>
@@ -88,11 +88,3 @@ The prefix of the `*.params` files means:
   <dt>latest</dt><dd>The newest model of the traiing process.</dd>
   <dt>best_dev_log_ppl</dt><dd>The best model according to the translation probability over the *dev* data.</dd>
 </dl>
-
-We also could output similar contents as `training.log` to stderr by specifying
-`--log-to-stderr` option:
-
-    $ /path/to/train \
-        --config /path/to/nmtkit/sample_data/sample_config.ini \
-        --model model \
-        --log-to-stderr

@@ -56,18 +56,6 @@ PO::variables_map parseArgs(int argc, char * argv[]) {
   PO::options_description opt_generic("Generic options");
   opt_generic.add_options()
     ("help", "Print this manual and exit.")
-    ("log-level",
-     PO::value<string>()->default_value("info"),
-     "Logging level to output.\n"
-     "Available options:\n"
-     "  trace (most frequent)\n"
-     "  debug\n"
-     "  info\n"
-     "  warn\n"
-     "  error\n"
-     "  critical (fewest)")
-    ("log-to-stderr",
-     "Print logs to the stderr as well as the 'training.log' file.")
     ("config",
      PO::value<vector<string>>()->multitoken(),
      "(required) Location of the training configuration file(s). "
@@ -135,48 +123,31 @@ void makeDirectory(const FS::path & dirpath) {
       "Could not create directory: " + dirpath.string());
 }
 
-// Initializes the global logger object.
+// Make a logger object.
 //
 // Arguments:
-//   dirpath: Location of the directory to put log file.
-//   log_level: Name of the logging level.
-//   log_to_stderr: If true, the logger outputs the status to stderr as well as
-//                  the log file. Otherwise, the logger only outputs to the log
-//                  file.
-void initializeLogger(
-    const FS::path & dirpath,
-    const string & log_level,
-    bool log_to_stderr) {
-  // Registers sinks.
+//   name: Name of the logger.
+//   filepath: Location of the log file.
+//   format: Formatting string.
+//   enable_stderr: Whether or not to output string to stderr.
+//
+// Returns:
+//   A pointer of a logger object.
+shared_ptr<spdlog::logger> initializeLogger(
+    const string & name,
+    const string & filepath,
+    const string & format,
+    const bool enable_stderr) {
   vector<spdlog::sink_ptr> sinks;
-  sinks.emplace_back(
-      make_shared<spdlog::sinks::simple_file_sink_st>(
-          (dirpath / "training.log").string()));
-  if (log_to_stderr) {
+  sinks.emplace_back(make_shared<spdlog::sinks::simple_file_sink_st>(filepath));
+  if (enable_stderr) {
     sinks.emplace_back(make_shared<spdlog::sinks::stderr_sink_st>());
   }
-
-  // Configures and registers the combined logger object.
-  auto logger = make_shared<spdlog::logger>(
-      "status", begin(sinks), end(sinks));
-  logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e]\t[%l]\t%v");
+  auto logger = make_shared<spdlog::logger>(name, begin(sinks), end(sinks));
+  logger->set_pattern(format);
+  logger->set_level(spdlog::level::trace);
   logger->flush_on(spdlog::level::trace);
-  if (log_level == "trace") {
-    logger->set_level(spdlog::level::trace);
-  } else if (log_level == "debug") {
-    logger->set_level(spdlog::level::debug);
-  } else if (log_level == "info") {
-    logger->set_level(spdlog::level::info);
-  } else if (log_level == "warn") {
-    logger->set_level(spdlog::level::warn);
-  } else if (log_level == "error") {
-    logger->set_level(spdlog::level::err);
-  } else if (log_level == "critical") {
-    logger->set_level(spdlog::level::critical);
-  } else {
-    NMTKIT_FATAL("Invalid log-level value: " + log_level);
-  }
-  spdlog::register_logger(logger);
+  return logger;
 }
 
 // Merge multiple configurations into one property tree.
@@ -285,11 +256,11 @@ int main(int argc, char * argv[]) {
     ::makeDirectory(model_dir);
 
     // Initializes the logger.
-    ::initializeLogger(
-        model_dir,
-        args["log-level"].as<string>(),
-        static_cast<bool>(args.count("log-to-stderr")));
-    auto logger = spdlog::get("status");
+    auto logger = ::initializeLogger(
+        "global",
+        (model_dir / "training.log").string(),
+        "[%Y-%m-%d %H:%M:%S.%e]\t[%l]\t%v",
+        true);
 
     // Copies and parses the config file.
     FS::path cfg_filepath = model_dir / "config.ini";
