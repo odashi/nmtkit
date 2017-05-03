@@ -33,6 +33,7 @@ set(nmtkit_LIBRARY_HDRS
   identity_ecc.h
   inference_graph.h
   init.h
+  logger.h
   loss_evaluator.h
   luong_decoder.h
   mlp_attention.h

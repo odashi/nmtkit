@@ -1,6 +1,7 @@
 #include <chrono>
 #include <fstream>
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -25,6 +26,7 @@
 #include <nmtkit/factories.h>
 #include <nmtkit/inference_graph.h>
 #include <nmtkit/init.h>
+#include <nmtkit/logger.h>
 #include <nmtkit/loss_evaluator.h>
 #include <nmtkit/sorted_random_sampler.h>
 #include <spdlog/spdlog.h>
@@ -33,6 +35,7 @@ using std::cerr;
 using std::endl;
 using std::exception;
 using std::make_shared;
+using std::map;
 using std::ofstream;
 using std::shared_ptr;
 using std::string;
@@ -256,7 +259,7 @@ int main(int argc, char * argv[]) {
     ::makeDirectory(model_dir);
 
     // Initializes the logger.
-    auto logger = ::initializeLogger(
+    auto glog = ::initializeLogger(
         "global",
         (model_dir / "training.log").string(),
         "[%Y-%m-%d %H:%M:%S.%e]\t[%l]\t%v",
@@ -314,33 +317,52 @@ int main(int argc, char * argv[]) {
         train_max_length, train_max_length_ratio,
         config.get<unsigned>("Global.random_seed"));
     const unsigned corpus_size = train_sampler.getNumSamples();
-    logger->info("Loaded 'train' corpus.");
+    glog->info("Loaded training corpus.");
 
     const auto fmt_corpus_size = boost::format(
         "Cleaned train corpus size: %d") % train_sampler.getNumSamples();
-    logger->info(fmt_corpus_size.str());
+    glog->info(fmt_corpus_size.str());
 
     // Creates evaluators.
-    nmtkit::LossEvaluator ev_dev_loss(
-        config.get<string>("Corpus.dev_source"),
-        config.get<string>("Corpus.dev_target"),
-        *src_vocab, *trg_vocab);
-    logger->info("Created dev-loss evaluator.");
-    nmtkit::BLEUEvaluator ev_dev_bleu(
-        config.get<string>("Corpus.dev_source"),
-        config.get<string>("Corpus.dev_target"),
-        *src_vocab, *trg_vocab);
-    logger->info("Created dev-bleu evaluator.");
-    nmtkit::LossEvaluator ev_test_loss(
-        config.get<string>("Corpus.test_source"),
-        config.get<string>("Corpus.test_target"),
-        *src_vocab, *trg_vocab);
-    logger->info("Created test-loss evaluator.");
-    nmtkit::BLEUEvaluator ev_test_bleu(
-        config.get<string>("Corpus.test_source"),
-        config.get<string>("Corpus.test_target"),
-        *src_vocab, *trg_vocab);
-    logger->info("Created test-bleu evaluator.");
+    const string dev_src_file = config.get<string>("Corpus.dev_source");
+    const string dev_trg_file = config.get<string>("Corpus.dev_target");
+    const string test_src_file = config.get<string>("Corpus.test_source");
+    const string test_trg_file = config.get<string>("Corpus.test_target");
+    const map<string, shared_ptr<nmtkit::Evaluator>> evaluators = {
+      { "dev-loss",
+        make_shared<nmtkit::LossEvaluator>(
+            dev_src_file, dev_trg_file, *src_vocab, *trg_vocab) },
+      { "dev-bleu",
+        make_shared<nmtkit::BLEUEvaluator>(
+            dev_src_file, dev_trg_file, *src_vocab, *trg_vocab) },
+      { "test-loss",
+        make_shared<nmtkit::LossEvaluator>(
+            test_src_file, test_trg_file, *src_vocab, *trg_vocab) },
+      { "test-bleu",
+        make_shared<nmtkit::BLEUEvaluator>(
+            test_src_file, test_trg_file, *src_vocab, *trg_vocab) },
+    };
+    glog->info("Created evaluators.");
+
+    // Creates score loggers.
+    const map<string, shared_ptr<nmtkit::Logger>> loggers = {
+      { "batch",
+        make_shared<nmtkit::Logger>(
+            (model_dir / "batch.log").string(), "%d") },
+      { "dev-loss",
+        make_shared<nmtkit::Logger>(
+            (model_dir / "dev_loss.log").string(), "%.8e") },
+      { "dev-bleu",
+        make_shared<nmtkit::Logger>(
+            (model_dir / "dev_bleu.log").string(), "%.8f") },
+      { "test-loss",
+        make_shared<nmtkit::Logger>(
+            (model_dir / "test_loss.log").string(), "%.8e") },
+      { "test-bleu",
+        make_shared<nmtkit::Logger>(
+            (model_dir / "test_bleu.log").string(), "%.8f") },
+    };
+    glog->info("Created loggers.");
 
     nmtkit::BatchConverter batch_converter(*src_vocab, *trg_vocab);
     dynet::Model model;
@@ -355,7 +377,7 @@ int main(int argc, char * argv[]) {
     // For more details, see
     // http://dynet.readthedocs.io/en/latest/unorthodox.html#sparse-updates
     trainer->sparse_updates_enabled = false;
-    logger->info("Created new trainer.");
+    glog->info("Created new trainer.");
 
     // Create a new encoder-decoder model.
     auto encoder = nmtkit::Factory::createEncoder(config, *src_vocab, &model);
@@ -367,7 +389,7 @@ int main(int argc, char * argv[]) {
     nmtkit::EncoderDecoder encdec(
         encoder, decoder, attention, predictor,
         config.get<string>("Train.loss_integration_type"));
-    logger->info("Created new encoder-decoder model.");
+    glog->info("Created new encoder-decoder model.");
 
     // Gradient clipping
     const float gradient_clipping = config.get<float>("Train.gradient_clipping");
@@ -414,7 +436,7 @@ int main(int argc, char * argv[]) {
 
     float best_dev_loss = 1e100;
     float best_dev_bleu = -1e100;
-    logger->info("Start training.");
+    glog->info("Start training.");
 
     for (unsigned iteration = 1; iteration <= max_iteration; ++iteration) {
       // Training
@@ -436,14 +458,14 @@ int main(int argc, char * argv[]) {
           const auto elapsed_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
           const auto fmt_corpus_time = boost::format(
                   "Corpus finished: elapsed-time(sec)=%d") % elapsed_time_seconds;
-          logger->info(fmt_corpus_time.str());
+          glog->info(fmt_corpus_time.str());
           epoch_start_time = std::chrono::system_clock::now();
         }
 
         const string fmt_str = "Trained: batch=%d samples=%d words=%d lr=%.6e";
         const auto fmt = boost::format(fmt_str)
             % iteration % num_trained_samples % num_trained_words % lr_decay;
-        logger->info(fmt.str());
+        glog->info(fmt.str());
       }
 
       if (lr_decay_type == "batch") {
@@ -465,34 +487,18 @@ int main(int argc, char * argv[]) {
           next_eval_samples += eval_interval;
         }
         auto elapsed_time = std::chrono::system_clock::now() - training_start_time;
-        auto elapsed_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
         std::chrono::system_clock::time_point eval_start_time = std::chrono::system_clock::now();
 
-        logger->info("Evaluating...");
+        glog->info("Evaluating...");
+        loggers.at("batch")->log(iteration);
 
-        const float dev_loss = ev_dev_loss.evaluate(&encdec);
-        const auto fmt_dev_loss = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d dev-loss=%.6e")
-            % iteration % num_trained_words % elapsed_time_seconds % dev_loss;
-        logger->info(fmt_dev_loss.str());
-
-        const float dev_bleu = ev_dev_bleu.evaluate(&encdec);
-        const auto fmt_dev_bleu = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d dev-bleu=%.6f")
-            % iteration % num_trained_words % elapsed_time_seconds % dev_bleu;
-        logger->info(fmt_dev_bleu.str());
-
-        const float test_loss = ev_test_loss.evaluate(&encdec);
-        const auto fmt_test_loss = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d test-loss=%.6e")
-            % iteration % num_trained_words % elapsed_time_seconds % test_loss;
-        logger->info(fmt_test_loss.str());
-
-        const float test_bleu = ev_test_bleu.evaluate(&encdec);
-        const auto fmt_test_bleu = boost::format(
-            "Evaluated: batch=%d words=%d elapsed-time(sec)=%d test-bleu=%.6f")
-            % iteration % num_trained_words % elapsed_time_seconds % test_bleu;
-        logger->info(fmt_test_bleu.str());
+        map<string, float> scores;
+        for (const auto & kv : evaluators) {
+          const float score = kv.second->evaluate(&encdec);
+          scores[kv.first] = score;
+          loggers.at(kv.first)->log(score);
+          glog->info("Evaluated: " + kv.first);
+        }
 
         if (lr_decay_type == "eval") {
           lr_decay *= lr_decay_ratio;
@@ -503,11 +509,11 @@ int main(int argc, char * argv[]) {
               model_dir / "latest.trainer.params", archive_format, trainer);
           ::saveArchive(
               model_dir / "latest.model.params", archive_format, encdec);
-          logger->info("Saved 'latest' model.");
+          glog->info("Saved 'latest' model.");
         }
 
-        if (dev_loss < best_dev_loss) {
-          best_dev_loss = dev_loss;
+        if (scores.at("dev-loss") < best_dev_loss) {
+          best_dev_loss = scores.at("dev-loss");
           if (!skip_saving) {
             FS::path trainer_path = model_dir / "best_dev_loss.trainer.params";
             FS::path model_path = model_dir / "best_dev_loss.model.params";
@@ -515,7 +521,7 @@ int main(int argc, char * argv[]) {
             FS::remove(model_path);
             FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
             FS::copy_file(model_dir / "latest.model.params", model_path);
-            logger->info("Saved 'best_dev_loss' model.");
+            glog->info("Saved 'best_dev_loss' model.");
           }
         } else {
           if (lr_decay_type == "loss") {
@@ -523,8 +529,8 @@ int main(int argc, char * argv[]) {
           }
         }
 
-        if (dev_bleu > best_dev_bleu) {
-          best_dev_bleu = dev_bleu;
+        if (scores.at("dev-bleu") > best_dev_bleu) {
+          best_dev_bleu = scores.at("dev-bleu");
           if (!skip_saving) {
             FS::path trainer_path = model_dir / "best_dev_bleu.trainer.params";
             FS::path model_path = model_dir / "best_dev_bleu.model.params";
@@ -532,7 +538,7 @@ int main(int argc, char * argv[]) {
             FS::remove(model_path);
             FS::copy_file(model_dir / "latest.trainer.params", trainer_path);
             FS::copy_file(model_dir / "latest.model.params", model_path);
-            logger->info("Saved 'best_dev_bleu' model.");
+            glog->info("Saved 'best_dev_bleu' model.");
           }
         } else {
           if (lr_decay_type == "bleu") {
@@ -553,7 +559,7 @@ int main(int argc, char * argv[]) {
       }
     }
 
-    logger->info("Finished.");
+    glog->info("Finished.");
 
   } catch (exception & ex) {
     cerr << ex.what() << endl;
