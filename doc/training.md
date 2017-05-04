@@ -76,6 +76,8 @@ Some files would be generated while training in the output directory:
 <dl>
   <dt>config.ini</dt><dd>Copy of the configuration script specified by `--config`.</dd>
   <dt>training.log</dt><dd>Progress logs of the training process. Similar contents would be output to the stderr.</dd>
+  <dt>batch.log</dt><dd>records evaluation timings, i.e., number of trained minibatches.</dd>
+  <dt>{dev,test}_{loss,bleu}.log</dt><dd>record evaluation scores.</dd>
   <dt>source.vocab</dt><dd>List of vocabularies in the source language.</dd>
   <dt>target.vocab</dt><dd>List of vocabularies in the target language.</dd>
   <dt>*.model.params</dt><dd>Parameters of the translation model.</dd>
