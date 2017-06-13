@@ -107,7 +107,7 @@ vector<float> ConvolutionalECC::decode(
     for (unsigned last = 0; last < 2; ++last) {
       const unsigned prev = (cur >> 1) | (last << (num_registers_ - 1));
       vector<bool> ss = s;
-      ss.emplace_back(static_cast<bool>(last));
+      ss.push_back(static_cast<bool>(last));
       trans[cur][last] = {prev, convolute(ss)};
       NMTKIT_CHECK(convolute(ss).size() == 2, "check");
     }
