@@ -32,6 +32,7 @@
 #include <spdlog/spdlog.h>
 
 using std::cerr;
+using std::chrono::system_clock;
 using std::endl;
 using std::exception;
 using std::make_shared;
@@ -425,12 +426,12 @@ int main(int argc, char * argv[]) {
       next_eval_samples = eval_interval;
     }
 
-    std::chrono::system_clock::time_point current_time = std::chrono::system_clock::now();
+    system_clock::time_point current_time = system_clock::now();
     auto next_eval_time =
-        std::chrono::system_clock::to_time_t(
+        system_clock::to_time_t(
         (current_time + std::chrono::minutes(eval_interval)));
-    std::chrono::system_clock::time_point training_start_time = current_time;
-    std::chrono::system_clock::time_point epoch_start_time = current_time;
+    system_clock::time_point training_start_time = current_time;
+    system_clock::time_point epoch_start_time = current_time;
 
     const bool skip_saving = static_cast<bool>(args.count("skip-saving"));
 
@@ -454,12 +455,12 @@ int main(int argc, char * argv[]) {
         num_trained_words +=  (batch.target_ids.size() - 1) * batch.target_ids[0].size();
         if (!train_sampler.hasSamples()) {
           train_sampler.rewind();
-          const auto elapsed_time = std::chrono::system_clock::now() - epoch_start_time;
+          const auto elapsed_time = system_clock::now() - epoch_start_time;
           const auto elapsed_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
           const auto fmt_corpus_time = boost::format(
                   "Corpus finished: elapsed-time(sec)=%d") % elapsed_time_seconds;
           glog->info(fmt_corpus_time.str());
-          epoch_start_time = std::chrono::system_clock::now();
+          epoch_start_time = system_clock::now();
         }
 
         const string fmt_str = "Trained: batch=%d samples=%d words=%d lr=%.6e";
@@ -476,7 +477,7 @@ int main(int argc, char * argv[]) {
       do_eval = do_eval or (eval_type == "step" and iteration % eval_interval == 0);
       do_eval = do_eval or (eval_type == "word" and num_trained_words >= next_eval_words);
       do_eval = do_eval or (eval_type == "time" and
-        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) >= next_eval_time);
+        system_clock::to_time_t(system_clock::now()) >= next_eval_time);
       do_eval = do_eval or ((eval_type == "corpus" or eval_type == "sample") and num_trained_samples >= next_eval_samples);
 
       if (do_eval){
@@ -486,8 +487,7 @@ int main(int argc, char * argv[]) {
         } else if (eval_type == "sample") {
           next_eval_samples += eval_interval;
         }
-        auto elapsed_time = std::chrono::system_clock::now() - training_start_time;
-        std::chrono::system_clock::time_point eval_start_time = std::chrono::system_clock::now();
+        system_clock::time_point eval_start_time = system_clock::now();
 
         glog->info("Evaluating...");
         loggers.at("batch")->log(iteration);
@@ -547,14 +547,14 @@ int main(int argc, char * argv[]) {
         }
 
         // not to include evaluation time in epoch elapsed time.
-        current_time = std::chrono::system_clock::now();
+        current_time = system_clock::now();
         auto eval_took_time = current_time - eval_start_time;
         epoch_start_time += eval_took_time;
 
         num_trained_words = 0;
         training_start_time = current_time;
         next_eval_time =
-            std::chrono::system_clock::to_time_t(
+            system_clock::to_time_t(
             current_time + std::chrono::minutes(eval_interval));
       }
     }
