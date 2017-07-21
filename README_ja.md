@@ -7,7 +7,7 @@ NMTKit
 
 **NMTKit**はニューラルネットワークを用いた統計的機械翻訳のツールキットです。
 全体がC++で書かれており、内部の主な計算機構には
-[DyNet](https://github.com/clab/dynet)を使用しています。
+[DyNet v1.1](https://github.com/clab/dynet)を使用しています。
 
 NMTKitを使うには
 [doc](https://github.com/odashi/nmtkit/tree/master/doc)

@@ -6,7 +6,7 @@ NMTKit
 
 **NMTKit** is a neural network-based statistical machine translation toolkit.
 This toolkit is written by C++, and the main computation architecture is based
-on [DyNet](https://github.com/clab/dynet).
+on [DyNet v1.1](https://github.com/clab/dynet).
 
 To get started, see files in the
 [doc](https://github.com/odashi/nmtkit/tree/master/doc) directory, which

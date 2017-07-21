@@ -10,7 +10,7 @@ NMTKit needs following libraries:
 * **GNU C++** ... v4.9 or later (or other compatible compilers)
 * **Boost C++ Library** ... v1.50 or later
 * **[Eigen](http://eigen.tuxfamily.org/)** ... The newest development version
-* **[DyNet](https://github.com/clab/dynet)** ... v1.0-rc1 or later
+* **[DyNet](https://github.com/clab/dynet)** ... v1 series (v2 is not available)
 * **[MTEval](https://github.com/odashi/mteval)** ... v1.0.0 or later
 * **CUDA** ... v7.5 or later
 
