@@ -33,7 +33,7 @@ public:
   // Arguments:
   //   os: Target output stream.
   virtual void initialize(std::ostream * os) = 0;
-  
+
   // Outputs the final information.
   //
   // Arguments:

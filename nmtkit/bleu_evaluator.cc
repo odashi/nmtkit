@@ -36,7 +36,7 @@ float BLEUEvaluator::evaluate(EncoderDecoder * encdec) {
   const auto evaluator = MTEval::EvaluatorFactory::create("BLEU");
   MTEval::Statistics stats;
   sampler_.rewind();
-  
+
   while (sampler_.hasSamples()) {
     vector<nmtkit::Sample> samples = sampler_.getSamples();
     nmtkit::InferenceGraph ig = encdec->infer(

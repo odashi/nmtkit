@@ -20,6 +20,7 @@
 
 #include <nmtkit/binary_code_predictor.h>
 #include <nmtkit/hybrid_predictor.h>
+#include <nmtkit/separated_softmax_predictor.h>
 #include <nmtkit/softmax_predictor.h>
 
 #include <nmtkit/huffman_code.h>
@@ -200,6 +201,11 @@ shared_ptr<Predictor> Factory::createPredictor(
     return make_shared<HybridPredictor>(
         decoder.getOutputSize(), softmax_size, bc, ecc,
         loss_type, softmax_weight, binary_weight, model);
+  } else if (name == "separated_softmax") {
+    const unsigned first_size = config.get<unsigned>(
+        "Model.separated_softmax_first_size");
+    return make_shared<SeparatedSoftmaxPredictor>(
+        decoder.getOutputSize(), vocab.size(), first_size, model);
   } else if (name == "softmax") {
     return make_shared<SoftmaxPredictor>(
         decoder.getOutputSize(), vocab.size(), model);

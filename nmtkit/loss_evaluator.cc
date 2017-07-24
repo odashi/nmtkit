@@ -41,7 +41,7 @@ float LossEvaluator::evaluate(EncoderDecoder * encdec) {
     num_outputs += batch.target_ids.size() - 1;
     total_loss += dynet::as_scalar(cg.forward(total_loss_expr));
   }
-  
+
   NMTKIT_CHECK(num_outputs > 0, "Empty corpus is given.");
   return total_loss / num_outputs;
 }

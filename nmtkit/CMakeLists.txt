@@ -42,6 +42,7 @@ set(nmtkit_LIBRARY_HDRS
   predictor.h
   random.h
   sampler.h
+  separated_softmax_predictor.h
   serialization_utils.h
   single_text_formatter.h
   softmax_predictor.h
@@ -86,6 +87,7 @@ set(nmtkit_LIBRARY_SRCS
   multilayer_perceptron.cc
   predictor.cc
   random.cc
+  separated_softmax_predictor.cc
   single_text_formatter.cc
   softmax_predictor.cc
   sorted_random_sampler.cc
